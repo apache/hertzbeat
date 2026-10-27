@@ -37,7 +37,16 @@ export function AgentProviderDialog({
 }) {
   const { t } = useTranslation();
   return (
-    <Modal width={760} footer={null} open={open} title={t('aiWorkspace.providers.title')} onCancel={onClose}>
+    <Modal
+      width={760}
+      footer={null}
+      open={open}
+      title={t('aiWorkspace.providers.title')}
+      onCancel={() => {
+        controller.connectionTest?.reset();
+        onClose();
+      }}
+    >
       <Typography.Paragraph type="secondary">{t('aiWorkspace.providers.description')}</Typography.Paragraph>
       <AgentProviderContent controller={controller} />
     </Modal>
@@ -53,7 +62,15 @@ function AgentProviderContent({ controller }: { controller: AgentProviderViewMod
   return (
     <>
       {controller.phase === 'error' ? <ProviderFailure reload={controller.actions.reload} /> : null}
-      {controller.view ? <ProviderList controller={controller} edit={setEditor} /> : null}
+      {controller.view ? (
+        <ProviderList
+          controller={controller}
+          edit={value => {
+            controller.connectionTest?.reset();
+            setEditor(value);
+          }}
+        />
+      ) : null}
       {editor !== undefined ? (
         <AgentProviderEditor
           key={editor?.uid ?? 'new'}

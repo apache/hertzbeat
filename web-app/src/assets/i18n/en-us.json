@@ -4371,29 +4371,61 @@
     }
   },
   "aiWorkspace": {
+    "waiting": {
+      "thinking": "Thinking…",
+      "findingTools": "Finding available tools…",
+      "queryingLogs": "Querying logs…",
+      "executingTool": "Running tool…",
+      "responding": "Writing response…"
+    },
+    "conversationHistory": "Conversation messages",
+    "latestMessages": "Back to latest",
+    "message": {
+      "copy": "Copy message",
+      "copied": "Copied",
+      "copyFailed": "Copy failed. Please select the text and copy manually.",
+      "copyAfterGeneration": "Copy after the response finishes"
+    },
     "title": "AI workspace",
     "description": "Investigate live HertzBeat data and review every proposed action before it runs.",
     "sessions": {
-      "label": "Investigations",
-      "title": "Investigations",
+      "label": "Tasks",
+      "title": "Tasks",
       "new": "New",
-      "loading": "Loading investigations…",
-      "unavailable": "Investigations are unavailable.",
-      "empty": "No investigations yet.",
-      "untitled": "Untitled investigation",
-      "search": "Search investigations",
-      "noMatches": "No matching investigations.",
+      "loading": "Loading tasks…",
+      "unavailable": "Tasks are unavailable.",
+      "empty": "No tasks yet.",
+      "untitled": "Untitled task",
+      "search": "Search tasks",
+      "noMatches": "No matching tasks.",
       "status": {
         "active": "In progress",
         "completed": "Completed",
         "failed": "Failed",
         "cancelled": "Cancelled",
         "recoveryRequired": "Check required",
-        "noRun": "No runs"
+        "noRun": "No runs",
+        "partial": "Partially completed",
+        "unfinished": "Not completed · view details"
+      },
+      "delete": "Delete conversation",
+      "menu": "Conversation actions: {{title}}",
+      "close": "Close history",
+      "clearAll": "Clear all conversations",
+      "deleteTitle": "Delete conversations?",
+      "deleteConfirm": "Delete ({{count}})",
+      "deleteDescription": "Permanently delete {{count}} conversations and their messages, runs and tool records from your account. This cannot be undone.",
+      "activeCannotDelete": "Stop running conversations before deleting. No conversations have been deleted.",
+      "deleteUnavailable": "Could not prepare or complete deletion. Check the connection and try again.",
+      "groups": {
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "week": "Previous 7 days",
+        "older": "Earlier"
       }
     },
     "investigation": {
-      "label": "Investigation"
+      "label": "Task"
     },
     "roles": {
       "you": "You",
@@ -4404,8 +4436,8 @@
       "description": "Ask about a monitor, entity, alert, metric, log stream, trace, or topology scope."
     },
     "composer": {
-      "label": "Investigation prompt",
-      "placeholder": "Ask HertzBeat to inspect an operational problem…"
+      "label": "Task prompt",
+      "placeholder": "Ask anything…"
     },
     "actions": {
       "send": "Send",
@@ -4416,12 +4448,13 @@
       "reject": "Reject",
       "submit": "Submit"
     },
-    "failure": "The investigation stream is unavailable. No action was assumed to have completed.",
-    "sessionLoadIncomplete": "Some saved investigation details could not be loaded. Refresh or select the investigation again.",
+    "failure": "The task stream is unavailable. No action was assumed to have completed.",
+    "loadOlder": "Load earlier messages",
+    "sessionLoadIncomplete": "Some saved task details could not be loaded. Refresh or select the task again.",
     "recoveryRequired": "The tool may have completed, but HertzBeat could not save the result. Check the target before continuing.",
-    "targetMismatch": "This investigation target is no longer valid. Return to its source and start a new investigation.",
-    "targetUnavailable": "HertzBeat cannot verify this investigation target right now. No investigation was started.",
-    "invalidTarget": "This investigation link has an invalid or unsupported target. Return to the source page and start again.",
+    "targetMismatch": "This task target is no longer valid. Return to its source and start a new task.",
+    "targetUnavailable": "HertzBeat cannot verify this task target right now. No task was started.",
+    "invalidTarget": "This task link has an invalid or unsupported target. Return to the source page and start again.",
     "activeObservationPaused": "Live observation paused. The durable run is still in progress; no completion was assumed.",
     "context": {
       "label": "Run context",
@@ -4443,10 +4476,99 @@
       "noApprovals": "No pending approvals",
       "inputs": "Requested input",
       "noInputs": "No input requested",
-      "statusUnknown": "Status not recorded"
+      "statusUnknown": "Status not recorded",
+      "cancelledBeforeExecution": "Cancelled before execution",
+      "viewSource": "View source",
+      "pageScope": "Page {{page}} · {{size}} records per page",
+      "internalHidden": "Internal telemetry excluded",
+      "noiseHidden": "Noise excluded",
+      "rawOutput": "Raw result"
     },
     "approval": {
-      "adminRequired": "Administrator approval required"
+      "adminRequired": "Administrator approval required",
+      "decisionUnavailable": "This account cannot decide this approval",
+      "recoveryUnavailable": "Unable to restore approval details. Retry reading this task; do not resend it.",
+      "expired": "Approval expired. No operation was authorized.",
+      "runtimeUnavailable": "The original approval runtime is no longer available.",
+      "summary": {
+        "title": "Approval details",
+        "unavailable": "A readable summary is unavailable. Review the original request and native page before deciding.",
+        "operationCount": "{{operation}} · {{count}} targets",
+        "unknownTarget": "Target unavailable",
+        "intervals": "Interval: {{value}} seconds",
+        "timeout": "Timeout: {{value}} ms",
+        "pathFingerprint": "Path fingerprint",
+        "keyFingerprint": "Idempotency key fingerprint",
+        "inputHash": "Bound input SHA-256",
+        "masked": "Sensitive values and free text are omitted; paths and keys are represented by fingerprints.",
+        "incomplete": "This summary does not cover every requested field. Verify unsupported fields in the native page before approving.",
+        "operation": {
+          "CREATE": "Create",
+          "UPDATE": "Update",
+          "DELETE": "Delete",
+          "PAUSE": "Pause",
+          "RESUME": "Resume",
+          "REVIEW": "Review"
+        },
+        "field": {
+          "INTERVALS": "Requested interval (seconds)",
+          "TIMEOUT": "Requested timeout (ms)",
+          "RETRY_PREFLIGHT": "Retry known preflight failures"
+        }
+      },
+      "collection": {
+        "title": "Confirm exact collection command",
+        "risk": "One collection runs on the main Collector as its operating-system account. The command can read or change files and access the network with that account's permissions. Review every line and do not embed credentials. FULL cannot skip approval. Remote Collectors, files and recurring execution are unsupported.",
+        "target": "Target / Collector",
+        "account": "Execution account / operating system",
+        "directory": "Working directory",
+        "revision": "Template and parameter revision",
+        "hash": "Immutable plan hash",
+        "expires": "Expires",
+        "confirm": "I have reviewed the complete command, target, account and possible effects."
+      },
+      "personal": {
+        "title": "Personal workspace change",
+        "scope": "Changes to the current user’s monitor workspace",
+        "monitor": "Monitor",
+        "metric": "Metric group",
+        "action": "Action",
+        "favorite": "Add favorite",
+        "unfavorite": "Remove favorite",
+        "application": "Application",
+        "revision": "Expected current revision",
+        "save": "Save layout",
+        "reset": "Reset saved layout",
+        "document": "Complete versioned layout request"
+      },
+      "inhibition": {
+        "title": "Alert inhibition policy",
+        "impact": "Matching target alerts may stop notifying. Deleting this policy may resume notifications.",
+        "versionLimit": "The source hash binds a checked snapshot; the native API does not provide atomic version CAS.",
+        "target": "Policy ID",
+        "newTarget": "New policy (ID assigned by server)",
+        "snapshot": "Checked source hash",
+        "configuration": "Complete native configuration",
+        "deleting": "Permanently delete this exact policy."
+      },
+      "revision": {
+        "creating": "Creates one new policy.",
+        "beforeUnavailable": "Verified prior values are unavailable; no before-state is inferred.",
+        "noChanges": "No editable fields change in the verified snapshot.",
+        "changes": "Saved, verified prior values → proposed values (not a live read)",
+        "field": "Field",
+        "before": "Before",
+        "after": "After",
+        "removed": "Removed",
+        "action": "Cancel run and revise",
+        "title": "Cancel this run before revising",
+        "confirm": "Cancel run and prepare draft",
+        "scope": "This stops the entire current run, including {{count}} pending proposals. It does not approve any operation.",
+        "effects": "Completed changes are not rolled back. Check uncertain results before requesting another change.",
+        "instructions": "Describe the complete revised request",
+        "manualSend": "After server-confirmed cancellation, your text goes into the composer. Review and send it yourself; the new proposal needs its own approval.",
+        "failed": "Cancellation could not be verified. No revised request was sent. Refresh the run and inspect its state."
+      }
     },
     "providers": {
       "action": "Model providers",
@@ -4468,7 +4590,167 @@
       "model": "Model",
       "apiKey": "API key",
       "apiKeyHint": "Leave blank to keep the existing key.",
-      "save": "Save provider"
+      "save": "Save provider",
+      "protocol": "API protocol",
+      "protocolHint": "Select Responses only when this endpoint supports it. Start a new task after changing the protocol.",
+      "testConnection": "Test connection",
+      "cancelTest": "Cancel test",
+      "testRunning": "Testing connection…",
+      "testHint": "Sends one short synthetic text request using this unsaved form. No business data or tools. Does not save or activate. A successful test does not verify streaming or tool calling. Saved keys are reused only for the same provider origin.",
+      "testMetadata": "Protocol: {{protocol}} · Model: {{model}} · {{elapsed}} ms · HTTP {{status}}",
+      "testResult": {
+        "OK": "Connection succeeded. Text generation responded.",
+        "CONFIGURATION": "Check the provider, model, protocol and complete base URL (http:// or https://).",
+        "CREDENTIAL_REQUIRED": "The destination changed. Enter a key for this destination to test.",
+        "AUTHENTICATION": "Authentication failed. Check the API key and access permissions.",
+        "ADDRESS_PATH": "Endpoint path failed or redirected. Check the base URL and protocol path.",
+        "MODEL": "Model is unknown or unavailable to this key.",
+        "PROTOCOL": "The endpoint did not accept or return the selected protocol. No fallback was attempted.",
+        "TIMEOUT": "Connection test timed out.",
+        "CANCELLED": "Connection test cancelled.",
+        "BUSY": "A connection test is already running. Try again shortly.",
+        "RATE_LIMIT": "Provider rate limit reached.",
+        "UPSTREAM": "Provider service failed. Try again later.",
+        "TLS": "TLS verification failed. Check the endpoint certificate.",
+        "NETWORK": "Connection test unavailable. Check the network and signed-in session."
+      },
+      "chatCompletions": "Chat Completions",
+      "responses": "Responses"
+    },
+    "evidence": {
+      "title": "Evidence",
+      "collecting": "Waiting for verified evidence…",
+      "unrecorded": "Evidence references were not recorded for this run",
+      "empty": "No verified observations were recorded. This does not mean the system is healthy.",
+      "partial": "Partial evidence",
+      "complete": "No truncation reported",
+      "coverageUnknown": "Coverage not reported",
+      "observations": "{{count}} observations",
+      "incidentScope": "Alert facts only · policy {{id}}",
+      "investigationScope": "Bounded cross-signal task",
+      "investigationLimit": "Select a time range of 24 hours or less"
+    },
+    "toolFailureWarning": "Failed or rejected tool calls: {{count}}. These errors are not evidence of an empty or healthy result.",
+    "executionSummary": {
+      "UNKNOWN": "Execution status unknown: complete tool records unavailable",
+      "IN_PROGRESS": "Execution in progress",
+      "NO_RECORDS": "No tool execution records found",
+      "PARTIAL": "PARTIAL · Execution or query coverage incomplete: inspect failures, budgets and scope limits",
+      "RECOVERED": "Historical failures recovered by later successful identical requests",
+      "NO_FAILED_ATTEMPTS": "No failed attempts in tool records",
+      "counts": "{{total}} attempts; {{succeeded}} succeeded, {{failed}} historical failures, {{recovered}} recovered, {{unresolved}} unresolved/unverified, {{unfinished}} unfinished.",
+      "coverage": "Generated from server tool records. Conclusions apply only to successful queries with verified scope. Successful execution or empty results do not establish system health or complete coverage.",
+      "UNRESOLVED": "Unresolved",
+      "SAME_REQUEST_SUCCEEDED": "Identical request later succeeded; historical failure retained",
+      "CHANGED_REQUEST_SUCCEEDED_SCOPE_UNVERIFIED": "Changed request succeeded; original failed scope unverified",
+      "truncated": "Showing the first 20 failures; totals include all records.",
+      "queryCoverage": "Query scope and returned limits (server records)",
+      "stopReason": "Stop reason",
+      "countUnknown": "unknown",
+      "absoluteWindowUnknown": "The tool did not provide absolute time bounds; refer to the listed scope",
+      "rangeCounts": "Returned {{returned}} / total {{total}} {{unit}}; offset {{offset}}",
+      "coverageTruncated": "Only the first40 query scopes are shown; omitted scopes cannot establish complete coverage.",
+      "rows": "rows",
+      "points": "points",
+      "groups": "groups",
+      "coverageStates": {
+        "EMPTY_RESULT": "Successful empty result for these query conditions only",
+        "PARTIAL_PAGE": "Partial results; not complete coverage",
+        "BOUNDED_RESULTS": "Bounded results; total not provided",
+        "OBSERVED_ROWS": "Returned query data",
+        "UNKNOWN": "Coverage unknown; do not infer zero or health"
+      },
+      "details": "View details",
+      "toolFailed": "Tool failed — view details",
+      "runFailed": "Task failed; the answer may be incomplete",
+      "compact": {
+        "UNKNOWN": "Execution status unavailable",
+        "IN_PROGRESS": "Task in progress",
+        "NO_RECORDS": "No tool execution records",
+        "PARTIAL": "Partial result — some queries remain unverified",
+        "RECOVERED": "Earlier failures recovered",
+        "NO_FAILED_ATTEMPTS": "Execution records"
+      }
+    },
+    "batch": {
+      "title": "Batch progress",
+      "counts": "{{verified}} / {{total}} verified · {{pending}} remaining · {{reviewRequired}} require review",
+      "segment": "Segment {{segment}} · {{calls}} / {{budget}} tool calls",
+      "target": "Frozen target",
+      "interval": "Interval (s)",
+      "status": "Status",
+      "receipt": "Resource / evidence",
+      "continue": "Continue remaining items",
+      "reconcile": "Read-only reconciliation",
+      "reconnect": "Reconnect to current segment",
+      "frozen": "Targets and parameters are frozen. Each segment uses the original run budget and requires an explicit action. Completed or uncertain writes are never repeated.",
+      "cancelled": "Cancelled. This run has ended. Its history is retained; it will not continue or retry automatically.",
+      "unknown": "Some results require review. A matching resource does not prove that this task created it. Reconciliation never repeats a write.",
+      "unavailable": "Progress is unavailable. Refresh before continuing; do not resubmit the original request.",
+      "stopping": "Waiting for the current executor to stop before another segment can begin.",
+      "stage": {
+        "RUNNING": "Current segment is running",
+        "WAITING_APPROVAL": "Waiting for approval",
+        "COMPLETE": "All frozen items verified",
+        "REVIEW_REQUIRED": "Paused: results need review",
+        "PAUSED": "Segment paused; remaining items need explicit continuation"
+      },
+      "receiptKind": {
+        "NATIVE_RECEIPT": "Native receipt",
+        "STATE_READBACK": "State readback",
+        "MATCH_ONLY": "Candidate only; review required",
+        "NONE": "No receipt"
+      },
+      "item": {
+        "PENDING": "Pending",
+        "READY": "Validated",
+        "RECEIPT": "Saved; checking state",
+        "VERIFIED": "Verified",
+        "WAITING_APPROVAL": "Waiting for approval",
+        "FAILED": "Failed; review required",
+        "UNCERTAIN": "Unknown outcome",
+        "REJECTED": "Approval rejected",
+        "VALIDATION_FAILED": "Validation failed",
+        "MATCHED_REVIEW": "Matching candidate; review required",
+        "UNRESOLVED_REVIEW": "Unresolved; review required",
+        "RUNNING": "Running",
+        "VALIDATING": "Validating",
+        "EXECUTING": "Executing",
+        "CHECKING": "Checking state"
+      },
+      "monitor": "Monitor {{id}}",
+      "parameters": "Frozen parameters",
+      "retryPreflight": "Retry failed preflight checks",
+      "preflightStopped": "This segment ended with preflight failures. Verified resources will not be created again.",
+      "ended": "This segment has ended. No continuation action is available."
+    },
+    "permission": {
+      "label": "Approval mode",
+      "manual": "Approve each change",
+      "full": "Full mode (15 minutes)",
+      "loading": "Checking permission mode",
+      "unavailable": "Mode unavailable",
+      "selectSession": "Select or start a task first.",
+      "scope": "Applies only to you in this conversation for 15 minutes. You can restore per-action approval at any time.",
+      "boundaries": "Roles, task scope, budgets and mandatory approvals remain in force. Dangerous operations and other protected operations still need separate approval.",
+      "riskTitle": "Review full-mode access",
+      "risk": "While enabled, eligible application changes can run without a separate confirmation. Review this scope before enabling.",
+      "acknowledge": "I understand and allow eligible changes in this conversation.",
+      "wait": "Read the risks for {{seconds}} more seconds before confirming.",
+      "ready": "The review period has elapsed. Confirm explicitly to enable full mode.",
+      "enable": "Enable full mode",
+      "expired": "This confirmation expired. Close and open it again.",
+      "error": "Could not verify the response. Refresh the current mode before continuing."
+    },
+    "transportFailure": {
+      "QUEUE_TIMEOUT": "The request was not sent: browser session admission timed out.",
+      "HEADER_TIMEOUT": "The request reached browser transport, but no response headers arrived. Verify server state before retrying.",
+      "REQUEST_PREPARATION_FAILED": "The request could not be prepared and was not sent.",
+      "HTTP_REJECTED": "The server rejected the request (HTTP {{status}}). Task admission is not confirmed.",
+      "TRANSPORT_FAILURE": "Browser transport failed; server admission is not confirmed.",
+      "STREAM_CONTRACT": "The response could not be verified as a task stream. Verify server state first.",
+      "STREAM_READ_FAILED": "The task stream was interrupted. Verify the server task before retrying.",
+      "requestId": "Request ID: {{id}}"
     }
   },
   "alertInvestigation": {
@@ -4553,15 +4835,15 @@
     }
   },
   "aiSchedules": {
-    "title": "Scheduled investigations",
-    "description": "Run a fixed investigation on a schedule and deliver the result through configured notification receivers.",
-    "workspaceAction": "Scheduled investigations",
+    "title": "Scheduled tasks",
+    "description": "Run a fixed task on a schedule and deliver the result through configured notification receivers.",
+    "workspaceAction": "Scheduled tasks",
     "create": "Create schedule",
     "never": "Not scheduled",
     "receiverCount": "{{count}} receivers",
     "columns": {
       "schedule": "Schedule",
-      "instruction": "Investigation instruction",
+      "instruction": "Task instruction",
       "delivery": "Delivery",
       "nextRun": "Next run",
       "enabled": "Enabled",
@@ -4575,17 +4857,17 @@
       "deleteConfirm": "Delete this schedule?"
     },
     "states": {
-      "loading": "Loading scheduled investigations…",
-      "empty": "No scheduled investigations yet.",
-      "emptyDescription": "Create a schedule to run the same investigation and notify the same receivers automatically.",
-      "unavailable": "Scheduled investigations are unavailable.",
+      "loading": "Loading scheduled tasks…",
+      "empty": "No scheduled tasks yet.",
+      "emptyDescription": "Create a schedule to run the same task and notify the same receivers automatically.",
+      "unavailable": "Scheduled tasks are unavailable.",
       "mutationFailed": "The schedule change could not be confirmed. Refresh before trying again."
     },
     "editor": {
-      "createTitle": "Create scheduled investigation",
-      "editTitle": "Edit scheduled investigation",
+      "createTitle": "Create scheduled task",
+      "editTitle": "Edit scheduled task",
       "name": "Name",
-      "instruction": "Investigation instruction",
+      "instruction": "Task instruction",
       "cron": "Schedule expression",
       "cronHint": "Six-field Spring cron; seconds must be 0",
       "receivers": "Notification receivers",
@@ -4917,5 +5199,6 @@
   "dashboard.v3.traceSamplesFailed": "Failed to load anomalous traces",
   "dashboard.v3.traceSamplesUnsupported": "Anomalous trace queries are unsupported by this backend",
   "dashboard.v3.traceSamplesMissing": "No anomalous samples were retrieved for this window",
-  "dashboard.v3.errorSpans": "Error spans {{count}}"
+  "dashboard.v3.errorSpans": "Error spans {{count}}",
+  "aiWorkspace.composer.tooLarge": "Message exceeds the limit (32,768 characters or 48 KiB). Your draft is retained; shorten it before sending."
 }

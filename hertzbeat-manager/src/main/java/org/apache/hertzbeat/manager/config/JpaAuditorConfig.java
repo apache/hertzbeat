@@ -20,6 +20,7 @@ package org.apache.hertzbeat.manager.config;
 import com.usthe.sureness.subject.SubjectSum;
 import com.usthe.sureness.util.SurenessContextHolder;
 import java.util.Optional;
+import org.apache.hertzbeat.common.support.TrustedAuditActorContext;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.domain.AuditorAware;
 
@@ -31,6 +32,9 @@ public class JpaAuditorConfig implements AuditorAware<String> {
 
     @Override
     public Optional<String> getCurrentAuditor() {
+        if (TrustedAuditActorContext.isBound()) {
+            return TrustedAuditActorContext.currentActor();
+        }
         SubjectSum subjectSum = SurenessContextHolder.getBindSubject();
         String username = null;
         if (subjectSum != null) {

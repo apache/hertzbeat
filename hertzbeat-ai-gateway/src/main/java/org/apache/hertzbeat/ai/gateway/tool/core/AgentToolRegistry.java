@@ -37,6 +37,11 @@ public class AgentToolRegistry {
         RegisteredTool registeredTool = Objects.requireNonNull(tool, "Registered tool is required");
         AgentToolDescriptor descriptor = registeredTool.descriptor();
         String toolName = descriptor.getName();
+        // Not part of the enabled delivery scope until native atomic source preconditions and
+        // durable create outcome/idempotency are available. ADMIN/FULL cannot re-enable them.
+        if (java.util.Set.of("entity.create", "entity.update", "entity.delete").contains(toolName)) {
+            return;
+        }
         if (handlers.containsKey(toolName)) {
             throw new IllegalStateException("Duplicate Agent tool: " + toolName);
         }
@@ -65,20 +70,32 @@ public class AgentToolRegistry {
     }
 
     public List<AgentToolDescriptor> discoverableDescriptors(String namespace, String query) {
-        // An unscoped discovery call would inject the entire on-demand catalog into the model context.
+        return discoverablePage(namespace, query, 0).tools();
+    }
+
+    public DiscoveryPage discoverablePage(String namespace, String query, int offset) {
         if ((namespace == null || namespace.isBlank()) && (query == null || query.isBlank())) {
             throw new IllegalArgumentException("tool discovery requires namespace or query");
         }
-        // Tool descriptions use author-defined casing, while model search text is case-insensitive.
+        if (offset < 0 || offset > 10000) {
+            throw new IllegalArgumentException("tool discovery offset must be between 0 and 10000");
+        }
         String searchText = query == null ? null : query.toLowerCase(java.util.Locale.ROOT);
-        return handlers.values().stream()
-            .map(RegisteredTool::descriptor)
-            .filter(descriptor -> descriptor.getExposure() == AgentToolExposure.MODEL_ON_DEMAND)
-            .filter(descriptor -> namespace == null || namespace.isBlank()
-                || namespace.equalsIgnoreCase(descriptor.getNamespace()))
-            .filter(descriptor -> matchesSearchText(descriptor, searchText))
-            .limit(MAX_DISCOVERED_TOOLS_PER_SEARCH)
-            .toList();
+        List<AgentToolDescriptor> matching = handlers.values().stream()
+                .map(RegisteredTool::descriptor)
+                .filter(descriptor -> descriptor.getExposure() == AgentToolExposure.MODEL_ON_DEMAND)
+                .filter(descriptor -> namespace == null || namespace.isBlank()
+                        || namespace.equalsIgnoreCase(descriptor.getNamespace()))
+                .filter(descriptor -> matchesSearchText(descriptor, searchText))
+                .toList();
+        List<AgentToolDescriptor> page = matching.stream().skip(offset)
+                .limit(MAX_DISCOVERED_TOOLS_PER_SEARCH).toList();
+        return new DiscoveryPage(page, offset, matching.size(), offset + page.size() < matching.size());
+    }
+
+
+    /** Discovery Page typed projection. */
+    public record DiscoveryPage(List<AgentToolDescriptor> tools, int offset, int total, boolean hasMore) {
     }
 
     private boolean matchesSearchText(AgentToolDescriptor descriptor, String searchText) {

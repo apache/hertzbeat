@@ -67,36 +67,48 @@
   align-items: end;
   gap: var(--hb-space-2);
   width: min(880px, calc(100% - 40px));
-  margin: 0 auto var(--hb-space-5);
-  padding: 10px;
+  margin: 0 auto var(--hb-space-3);
+  padding: 7px;
   border: 1px solid var(--ai-divider);
-  border-radius: 12px;
+  border-radius: 20px;
   background: var(--hb-bg-chrome);
   box-shadow: var(--hb-shadow-surface);
 }
+.composer:focus-within {
+  border-color: var(--hb-brand-accent);
+}
 .composer :global(.ant-input) {
+  min-height: 36px;
+  padding: 6px 8px;
   border: 0;
+  background: transparent;
+  font-size: 15px;
+  line-height: 24px;
   box-shadow: none;
+  resize: none;
 }
 .composer :global(.ant-btn-primary) {
+  width: 36px;
+  height: 36px;
   min-height: 36px;
-  border-radius: 8px;
+  border-radius: 50%;
 }
-:global([data-empty='true']) .composer {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  margin: 82px 0 0;
-  transform: translate(-50%, -50%);
+.mobileHistory {
+  display: none;
 }
 @media (max-width: 700px) {
+  .mobileHistory {
+    display: inline-flex;
+    flex-shrink: 0;
+  }
+  .headerCopy {
+    flex: 1;
+  }
+  .investigationHeader {
+    padding-inline: var(--hb-space-2);
+  }
   .investigationHeader {
     align-items: flex-start;
-  }
-  :global([data-empty='true']) .composer {
-    position: static;
-    margin: 0 auto var(--hb-space-5);
-    transform: none;
   }
   .headerCopy > :global(.ant-typography-secondary) {
     display: none;

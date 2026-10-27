@@ -119,6 +119,13 @@ class AgentToolRegistryTest {
         }
 
         assertEquals(10, registry.discoverableDescriptors("jdbc", null).size());
+        assertTrue(registry.discoverablePage("jdbc", null, 0).hasMore());
+        assertEquals(12, registry.discoverablePage("jdbc", null, 0).total());
+        assertEquals(2, registry.discoverablePage("jdbc", null, 10).tools().size());
+        org.junit.jupiter.api.Assertions.assertFalse(registry.discoverablePage("jdbc", null, 10).hasMore());
+        assertTrue(registry.discoverablePage("jdbc", null, 12).tools().isEmpty());
+        assertThrows(IllegalArgumentException.class, () -> registry.discoverablePage("jdbc", null, -1));
+        assertThrows(IllegalArgumentException.class, () -> registry.discoverablePage("jdbc", null, 10001));
     }
 
     private RegisteredTool handler(String name) {

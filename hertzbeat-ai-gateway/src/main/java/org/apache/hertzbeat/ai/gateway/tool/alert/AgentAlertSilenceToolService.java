@@ -22,9 +22,11 @@ import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolContextSupport;
+import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolAccess;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolExposure;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolPolicy;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolRisk;
@@ -36,6 +38,7 @@ import org.apache.hertzbeat.common.util.JsonUtil;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Service;
+import org.apache.hertzbeat.ai.gateway.tool.label.AgentManagementOutputSupport;
 
 /**
  * One-time alert silence management tools.
@@ -76,7 +79,7 @@ public class AgentAlertSilenceToolService {
 
     @Tool(name = "alert_silence.create_once",
             description = "Create a one-time alert silence using an explicit timezone-aware interval.")
-    @AgentToolPolicy(risk = AgentToolRisk.CHANGE,
+    @AgentToolPolicy(risk = AgentToolRisk.CHANGE, access = AgentToolAccess.USER,
             exposure = AgentToolExposure.MODEL_ON_DEMAND)
     public Map<String, Object> createOnce(
             @ToolParam(description = "Silence policy name; maximum 100 characters.") String name,
@@ -112,7 +115,7 @@ public class AgentAlertSilenceToolService {
     }
 
     @Tool(name = "alert_silence.toggle", description = "Enable or disable an exact alert silence policy.")
-    @AgentToolPolicy(risk = AgentToolRisk.CHANGE,
+    @AgentToolPolicy(risk = AgentToolRisk.CHANGE, access = AgentToolAccess.USER,
             exposure = AgentToolExposure.MODEL_ON_DEMAND)
     public Map<String, Object> toggleSilence(
             @ToolParam(description = "Alert silence id.") Long silenceId,
@@ -127,7 +130,7 @@ public class AgentAlertSilenceToolService {
     }
 
     @Tool(name = "alert_silence.delete", description = "Permanently delete an exact alert silence policy.")
-    @AgentToolPolicy(risk = AgentToolRisk.DANGEROUS,
+    @AgentToolPolicy(risk = AgentToolRisk.DANGEROUS, access = AgentToolAccess.ADMIN,
             exposure = AgentToolExposure.MODEL_ON_DEMAND)
     public Map<String, Object> deleteSilence(
             @ToolParam(description = "Alert silence id.") Long silenceId,
@@ -139,6 +142,38 @@ public class AgentAlertSilenceToolService {
         AlertSilenceResponse silence = requiredSilence(silenceId);
         alertSilenceService.delete(Set.of(silence.id()));
         return Map.of("operation", "delete", "silenceId", silence.id(), "name", silence.name());
+    }
+
+    @Tool(name = "alert_silence.create_recurring", description = "Create a recurring weekly silence. Days use ISO 1 Monday to 7 Sunday; times include a timezone.")
+    @AgentToolPolicy(risk = AgentToolRisk.CHANGE, access = AgentToolAccess.USER,
+            exposure = AgentToolExposure.MODEL_ON_DEMAND)
+    public Map<String, Object> createRecurring(String name, Map<String, String> labels, List<Byte> days,
+                                              String startsAt, String endsAt, Boolean enabled) {
+        if (startsAt == null || endsAt == null || enabled == null) {
+            throw new IllegalArgumentException("Explicit start, end, and enabled are required");
+        }
+        AlertSilenceRequest request = new AlertSilenceRequest();
+        request.setName(name);
+        request.setEnable(enabled);
+        request.setMatchAll(labels == null || labels.isEmpty());
+        request.setLabels(labels == null ? Map.of() : new LinkedHashMap<>(labels));
+        request.setType((byte) 1);
+        request.setDays(days);
+        request.setPeriodStart(dateTime(startsAt, null));
+        request.setPeriodEnd(dateTime(endsAt, null));
+        return AgentManagementOutputSupport.view(silenceRow(alertSilenceService.create(request)));
+    }
+
+    @Tool(name = "alert_silence.update", description = "Replace an exact silence configuration, including one-time or weekly recurrence.")
+    @AgentToolPolicy(risk = AgentToolRisk.CHANGE, access = AgentToolAccess.USER,
+            exposure = AgentToolExposure.MODEL_ON_DEMAND)
+    public Map<String, Object> updateSilence(Long silenceId, AlertSilenceRequest configuration) {
+        requiredSilence(silenceId);
+        if (configuration == null || configuration.getId() != null && !silenceId.equals(configuration.getId())) {
+            throw new IllegalArgumentException("Configuration id must match silenceId");
+        }
+        configuration.setId(silenceId);
+        return AgentManagementOutputSupport.view(silenceRow(alertSilenceService.update(configuration)));
     }
 
     private AlertSilenceResponse requiredSilence(Long silenceId) {
@@ -189,6 +224,7 @@ public class AgentAlertSilenceToolService {
         row.put("enabled", silence.enable());
         row.put("type", silence.type() != null && silence.type() == 1 ? "recurring" : "once");
         row.put("matchAll", silence.matchAll());
+        row.put("days", silence.days() == null ? List.of() : silence.days());
         row.put("labels", silence.labels() == null ? Map.of() : silence.labels());
         row.put("startsAt", silence.periodStart());
         row.put("endsAt", silence.periodEnd());

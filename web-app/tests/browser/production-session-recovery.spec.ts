@@ -89,6 +89,7 @@ test('production contended Web Lock fails within admission budget and retry reco
   page,
   context
 }, testInfo) => {
+  test.setTimeout(45_000);
   const holder = await context.newPage();
   await installSession(holder, { access: true, refreshValid: true, refreshes: 0 });
   await holder.goto('/monitors');
@@ -102,7 +103,6 @@ test('production contended Web Lock fails within admission budget and retry reco
       });
     `);
     await expect.poll(() => holder.evaluate('window.__syntheticSessionLockHeld === true')).toBe(true);
-    await page.clock.install();
     const session = { access: false, refreshValid: true, refreshes: 0 };
     let sessionRequests = 0;
     page.on('request', request => {
@@ -113,8 +113,9 @@ test('production contended Web Lock fails within admission budget and retry reco
     await expect
       .poll(() => page.evaluate<boolean>('navigator.locks.query().then(state => state.pending.length > 0)'))
       .toBe(true);
-    await page.clock.runFor(30_001);
-    await expect(page.getByRole('button', { name: 'Retry', exact: true })).toBeVisible();
+    // AbortSignal.timeout uses the browser's native clock, not Playwright's
+    // patched setTimeout clock. Exercise the real 30-second admission deadline.
+    await expect(page.getByRole('button', { name: 'Retry', exact: true })).toBeVisible({ timeout: 35_000 });
     expect(sessionRequests).toBe(0);
     await page.screenshot({ path: testInfo.outputPath('contended-session-unavailable.png') });
     await holder.close();

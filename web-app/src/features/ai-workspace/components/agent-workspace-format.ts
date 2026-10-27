@@ -15,17 +15,25 @@
  * limitations under the License.
  */
 
+import type { AgentWorkspaceViewModel } from '../model/agent-workspace-view-model';
 import type { TFunction } from 'i18next';
 
 export function formatAgentTimestamp(value: string) {
   const timestamp = new Date(value);
   if (Number.isNaN(timestamp.getTime())) return value;
-  return new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' }).format(timestamp);
+  return new Intl.DateTimeFormat(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZoneName: 'short'
+  }).format(timestamp);
 }
 
 export function toolStatusColor(status: string) {
   const normalized = status.toUpperCase();
-  if (normalized === 'UNKNOWN') return 'default';
+  if (normalized === 'UNKNOWN' || normalized === 'CANCELLED') return 'default';
   if (normalized === 'SUCCEEDED' || normalized === 'COMPLETED') return 'success';
   if (normalized === 'FAILED' || normalized === 'DENIED') return 'error';
   if (normalized.includes('WAITING')) return 'warning';
@@ -40,9 +48,39 @@ export function sessionStatusLabel(status: string, t: TFunction) {
   const normalized = status.toUpperCase();
   if (normalized === 'ACTIVE' || normalized === 'RUNNING') return t('aiWorkspace.sessions.status.active');
   if (normalized === 'COMPLETED' || normalized === 'SUCCEEDED') return t('aiWorkspace.sessions.status.completed');
+  if (normalized === 'PARTIAL') return t('aiWorkspace.sessions.status.partial');
   if (normalized === 'FAILED') return t('aiWorkspace.sessions.status.failed');
   if (normalized === 'CANCELLED') return t('aiWorkspace.sessions.status.cancelled');
   if (normalized === 'RECOVERY_REQUIRED') return t('aiWorkspace.sessions.status.recoveryRequired');
   if (normalized === 'NO_RUN') return t('aiWorkspace.sessions.status.noRun');
   return status;
+}
+
+export function formatAgentScopeWindow(start: number, end: number, timeZone = 'UTC') {
+  const options: Intl.DateTimeFormatOptions = {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    timeZoneName: 'short',
+    timeZone
+  };
+  try {
+    const formatter = new Intl.DateTimeFormat(undefined, options);
+    return `${formatter.format(start)} – ${formatter.format(end)}`;
+  } catch {
+    return '—';
+  }
+}
+
+export function toolStatusLabel(status: string, t: TFunction) {
+  if (status === 'UNKNOWN') return t('aiWorkspace.context.statusUnknown');
+  if (status === 'CANCELLED') return t('aiWorkspace.context.cancelledBeforeExecution');
+  return status;
+}
+
+export function executionIdentity(controller: AgentWorkspaceViewModel) {
+  return controller.run.runUid ?? controller.selectedSessionUid ?? 'new';
 }
