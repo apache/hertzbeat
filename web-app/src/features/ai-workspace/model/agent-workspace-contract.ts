@@ -15,6 +15,18 @@
  * limitations under the License.
  */
 
+import type { AgentApprovalSummary } from './agent-approval-summary';
+
+import type {
+  AgentEntityInvestigationSource,
+  AgentEntityInvestigationTarget,
+  AgentIncidentTarget
+} from './agent-investigation-target';
+import type { AgentMessagePart } from './agent-message-parts';
+import type { AgentEvidence } from './agent-evidence';
+import type { AgentExecutionSummary } from './agent-execution-summary';
+export type { AgentExecutionSummary, AgentQueryCoverage } from './agent-execution-summary';
+
 type AgentMonitorMetricSignal = {
   type: 'metrics';
   query: string;
@@ -96,6 +108,7 @@ export type AgentLogRef = {
 export type AgentLogSourceTarget = { log: AgentLogRef };
 
 export type AgentSourceTarget =
+  | AgentEntityInvestigationSource
   | AgentMonitorMetricSourceTarget
   | AgentSingleAlertSourceTarget
   | AgentEntitySourceTarget
@@ -142,7 +155,8 @@ type AgentCanonicalTarget =
   | AgentCanonicalTraceTarget
   | AgentCanonicalLogTarget;
 
-export type AgentTargetRef = AgentSourceTarget | AgentCanonicalTarget;
+export type AgentTargetRef =
+  AgentSourceTarget | AgentCanonicalTarget | AgentEntityInvestigationTarget | AgentIncidentTarget;
 
 export const agentGatewayEventTypes = [
   'RUN_STARTED',
@@ -168,6 +182,7 @@ export type AgentGatewayEvent = {
   runUid: string | null;
   itemId: string | null;
   payload: Record<string, unknown>;
+  messageParts?: AgentMessagePart[];
   timestamp: number;
 };
 
@@ -200,7 +215,21 @@ export type AgentSession = {
   gmtUpdate: string | null;
 };
 
+type AgentRecoveredApproval = {
+  summary?: AgentApprovalSummary | null | undefined;
+  approvalId: string;
+  toolCallId: string;
+  toolName: string;
+  status: 'WAITING_APPROVAL' | 'EXPIRED' | 'UNAVAILABLE' | 'APPROVED' | 'REJECTED' | 'PENDING' | 'NOT_REQUIRED';
+  expiresAt: string | null;
+  canDecide: boolean;
+};
+
 export type AgentRunSnapshot = {
+  recoveredApprovals?: AgentRecoveredApproval[];
+  approvalRecoveryUnavailable?: boolean;
+  executionSummary?: AgentExecutionSummary | null | undefined;
+  evidence?: AgentEvidence[] | undefined;
   runUid: string;
   sessionUid: string;
   messageId: string;
@@ -216,44 +245,23 @@ export type AgentRunSnapshot = {
 
 export type AgentTranscriptMessage = {
   id: number;
+  recordedRunUid?: string;
   sequence: number;
   role: 'user' | 'assistant' | 'toolResult' | 'compactionSummary';
   text: string;
+  parts?: AgentMessagePart[];
   toolCalls?: { toolCallId: string; toolName: string }[];
+  toolStatus?: 'RUNNING' | 'WAITING_APPROVAL' | 'SUCCEEDED' | 'FAILED' | 'DENIED';
+  toolElapsedMs?: number;
   toolCallId?: string;
   toolName?: string;
   errorMessage?: string;
   createdAt: string | null;
 };
 
-export type AgentProviderOption = {
-  type: string;
-  code: string;
-  label: string;
-  defaultBaseUrl: string | null;
-  defaultModel: string | null;
-  requiredFields: string[];
-};
-
-export type AgentProviderConfiguration = {
-  uid: string;
-  type: string;
-  code: string;
-  baseUrl: string | null;
-  model: string | null;
-  apiKeyConfigured: boolean;
-};
-
-export type AgentProviderConfigurationView = {
-  activeProviderUid: string | null;
-  providers: AgentProviderConfiguration[];
-};
-
-export type AgentProviderInput = {
-  uid?: string;
-  type: string;
-  code: string;
-  baseUrl: string;
-  model: string;
-  apiKey?: string;
-};
+export type {
+  AgentProviderOption,
+  AgentProviderConfiguration,
+  AgentProviderConfigurationView,
+  AgentProviderInput
+} from './agent-provider-contract';

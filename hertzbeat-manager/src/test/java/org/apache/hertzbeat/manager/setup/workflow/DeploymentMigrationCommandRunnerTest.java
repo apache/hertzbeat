@@ -75,6 +75,7 @@ class DeploymentMigrationCommandRunnerTest {
     void returnsOnlyAfterDurableRunningBarrierAndBeforeCopyCompletion() throws Exception {
         Fixture fixture = fixture();
         CountDownLatch preparationReturned = new CountDownLatch(1);
+        CountDownLatch releasePreparationNotification = new CountDownLatch(1);
         CountDownLatch releaseCopy = new CountDownLatch(1);
         when(fixture.coordinator.execute(any(), any(), any(), any(), any(), any(), any()))
                 .thenAnswer(invocation -> {
@@ -82,6 +83,8 @@ class DeploymentMigrationCommandRunnerTest {
                     preparation.prepare(
                             new RetainedCutoverPreparationContext(OPERATION, IDENTITY),
                             invocation.getArgument(1), invocation.getArgument(2));
+                    // The durable future may wake start() before this worker's next instruction.
+                    assertThat(releasePreparationNotification.await(5, SECONDS)).isTrue();
                     preparationReturned.countDown();
                     assertThat(releaseCopy.await(5, SECONDS)).isTrue();
                     return new RetainedCutoverResult(
@@ -92,13 +95,21 @@ class DeploymentMigrationCommandRunnerTest {
             try {
                 MigrationView view = runner.start(request(OPERATION, ApplyMode.MANAGED_WRITE, "password-a"));
 
-                assertThat(preparationReturned.getCount()).isZero();
+                // Read the durable journal before allowing any further worker progress.
+                MigrationOperationSnapshot persisted = fixture.store.find(OPERATION).orElseThrow();
+                assertThat(persisted.state()).isEqualTo(MigrationOperationState.RUNNING);
+                assertThat(persisted.stage()).isEqualTo(MigrationStage.COPYING);
+                assertThat(persisted.progressPercent()).isZero();
+                assertThat(view).isEqualTo(MigrationOperationProjection.view(persisted));
                 assertThat(view.state()).isEqualTo(MigrationOperationState.RUNNING);
                 assertThat(view.stage()).isEqualTo(MigrationStage.COPYING);
                 assertThat(view.progressPercent()).isZero();
-                assertThat(fixture.store.find(OPERATION).orElseThrow().managedCandidateGeneration())
-                        .isEqualTo(generation(OPERATION));
+                assertThat(persisted.managedCandidateGeneration()).isEqualTo(generation(OPERATION));
+                assertThat(releaseCopy.getCount()).isEqualTo(1L);
+                releasePreparationNotification.countDown();
+                assertThat(preparationReturned.await(5, SECONDS)).isTrue();
             } finally {
+                releasePreparationNotification.countDown();
                 releaseCopy.countDown();
             }
         }

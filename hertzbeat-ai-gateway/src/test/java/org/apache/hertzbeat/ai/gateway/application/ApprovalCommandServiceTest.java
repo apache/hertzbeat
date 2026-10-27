@@ -53,6 +53,18 @@ import org.junit.jupiter.api.Test;
 class ApprovalCommandServiceTest {
 
     @Test
+    void inlineCollectionApprovalCannotSkipExactPreviewConfirmation() {
+        AgentToolCallLedgerService ledger = mock(AgentToolCallLedgerService.class);
+        AgentRuntimeApprovalRegistry registry = new AgentRuntimeApprovalRegistry();
+        ApprovalCommandService service = new ApprovalCommandService(ledger, registry);
+        AgentToolCall row = approval();
+        row.setToolName("monitor.collection_detect");
+        when(ledger.findApproval(row.getApprovalId())).thenReturn(java.util.Optional.of(row));
+        org.junit.jupiter.api.Assertions.assertThrows(IllegalArgumentException.class, () -> service.decide(command()));
+        verify(ledger, org.mockito.Mockito.never()).decideApproval(any(), any(), any(), any());
+    }
+
+    @Test
     void cancellationDuringDurableDecisionShouldFailAndCompensateUnconsumedApproval() throws Exception {
         AgentToolCallLedgerService ledger = mock(AgentToolCallLedgerService.class);
         AgentRuntimeApprovalRegistry registry = new AgentRuntimeApprovalRegistry();

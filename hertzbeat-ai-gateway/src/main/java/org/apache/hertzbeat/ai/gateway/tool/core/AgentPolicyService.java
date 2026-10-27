@@ -34,6 +34,10 @@ public class AgentPolicyService {
             return deny(AgentToolRisk.DANGEROUS, "Tool is not registered in Agent Gateway catalog");
         }
         AgentToolRisk risk = descriptor.getRisk();
+        var resourceDenial = AgentToolResourceAuthorizer.denialReason(actor, descriptor);
+        if (resourceDenial.isPresent()) {
+            return deny(risk, resourceDenial.get());
+        }
         if (actor == null) {
             return deny(risk, "Actor is required for tool policy");
         }
@@ -88,7 +92,7 @@ public class AgentPolicyService {
     private AgentPolicyResult decideUser(AgentToolRisk risk) {
         return switch (risk) {
             case READ -> allow(risk, "Users may execute read tools");
-            case CHANGE -> requireApproval(risk, "Change tools require explicit admin approval");
+            case CHANGE -> requireApproval(risk, "Change tools require explicit confirmation by the session owner");
             case DANGEROUS -> deny(risk, "Dangerous tools are denied for users");
         };
     }

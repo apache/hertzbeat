@@ -130,6 +130,12 @@ jobs:
     - name: Verify production build
       working-directory: web-app
       run: pnpm build && pnpm budget && pnpm dead-code && pnpm diff:check
+    - name: Install isolated browser runtime
+      working-directory: web-app
+      run: pnpm exec playwright install --with-deps chromium
+    - name: Verify production AI history, session recovery and five locales
+      working-directory: web-app
+      run: pnpm test:browser:ai
 
   verify:
     if: ${{ always() }}
