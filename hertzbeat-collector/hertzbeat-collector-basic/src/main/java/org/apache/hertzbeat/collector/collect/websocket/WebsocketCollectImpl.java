@@ -40,6 +40,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.collector.util.CollectUtil;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.WebsocketProtocol;
@@ -52,6 +53,8 @@ import org.springframework.util.Assert;
  */
 @Slf4j
 public class WebsocketCollectImpl extends AbstractCollect {
+
+    private static final int DEFAULT_TIMEOUT = 10_000;
 
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {
@@ -78,7 +81,11 @@ public class WebsocketCollectImpl extends AbstractCollect {
         try {
             socket = new Socket();
             SocketAddress socketAddress = new InetSocketAddress(host, Integer.parseInt(port));
-            socket.connect(socketAddress);
+            // Without an explicit timeout a dropped SYN or a peer that never answers the upgrade
+            // request blocks until the OS-level TCP timeout, holding the collection worker.
+            int timeout = CollectUtil.getTimeout(websocketProtocol.getTimeout(), DEFAULT_TIMEOUT);
+            socket.connect(socketAddress, timeout);
+            socket.setSoTimeout(timeout);
 
             if (socket.isConnected()) {
                 long responseTime = System.currentTimeMillis() - startTime;
