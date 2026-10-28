@@ -482,8 +482,9 @@ EPL-2.0 licenses
 The following components are provided under the EPL-2.0 License. See project link for details.
 The text of each license is also included in licenses/LICENSE-[project].txt.
 
+    Project: https://github.com/jakartaee/common-annotations-api
     https://mvnrepository.com/artifact/jakarta.annotation/jakarta.annotation-api/3.0.0 EPL-2.0
-    https://mvnrepository.com/artifact/jakarta.persistence/jakarta.persistence-api/3.2.0 EPL-2.0
+    Project: https://projects.eclipse.org/projects/ee4j.jta
     https://mvnrepository.com/artifact/jakarta.transaction/jakarta.transaction-api/2.0.1 EPL-2.0
     https://mvnrepository.com/artifact/org.aspectj/aspectjweaver/1.9.25.1 EPL-2.0
     https://mvnrepository.com/artifact/org.eclipse.paho/org.eclipse.paho.client.mqttv3/1.2.5 EPL-2.0
@@ -545,3 +546,5 @@ The text of each license is also included in licenses/LICENSE-[project].txt.
     https://mvnrepository.com/artifact/org.glassfish.jaxb/jaxb-core/4.0.6 EDL-1.0
     https://mvnrepository.com/artifact/org.glassfish.jaxb/jaxb-runtime/4.0.6 EDL-1.0
     https://mvnrepository.com/artifact/org.glassfish.jaxb/txw2/4.0.6 EDL-1.0
+    Project: https://github.com/jakartaee/persistence
+    https://mvnrepository.com/artifact/jakarta.persistence/jakarta.persistence-api/3.2.0 EDL-1.0
