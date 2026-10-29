@@ -241,8 +241,12 @@ class EntityFreeObservabilityTransitionContractTest {
     @Test
     void websiteDocsShouldDescribeCanonicalObservabilityRoutes() throws IOException {
         Path websiteRoot = REPOSITORY_ROOT.resolve("home");
-        // The ASF source archive intentionally excludes the website. Skip only these website-only
-        // assertions there; when home exists, every documented path below remains required.
+        // Git checkouts must contain the website. Only exported source archives (which have no
+        // repository metadata) intentionally omit it; a sparse or damaged checkout must fail.
+        assertTrue(Files.isDirectory(websiteRoot) || !Files.exists(REPOSITORY_ROOT.resolve(".git")),
+                "home/ must exist in a Git checkout");
+        // Skip only these website-only assertions in the ASF source archive; when home exists,
+        // every documented path below remains required.
         assumeTrue(Files.isDirectory(websiteRoot), "home/ is intentionally excluded from source archives");
 
         // Integration docs must lead with the canonical route; the 1.8.x ingestion paths may only
