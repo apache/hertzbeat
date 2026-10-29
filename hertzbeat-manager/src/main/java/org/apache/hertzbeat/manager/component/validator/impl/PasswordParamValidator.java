@@ -38,9 +38,7 @@ public class PasswordParamValidator implements ParamValidator {
     public void validate(ParamDefineInfo paramDefine, MonitorParam param) {
         String passwordValue = param.getParamValue();
         boolean currentCiphertext = AesUtil.isCiphertext(passwordValue);
-        boolean legacyCiphertext = !AesUtil.DEFAULT_ENCODE_RULES.equals(AesUtil.getDefaultSecretKey())
-                && AesUtil.isCiphertext(passwordValue, AesUtil.DEFAULT_ENCODE_RULES);
-        if (!currentCiphertext && !legacyCiphertext) {
+        if (!currentCiphertext) {
             passwordValue = AesUtil.aesEncode(passwordValue);
             param.setParamValue(passwordValue);
         }
