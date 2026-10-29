@@ -97,6 +97,27 @@ class PasswordParamValidatorTest {
     }
 
     @Test
+    void validate_AcceptsCiphertextEncryptedWithNonDefaultCurrentKey() {
+        String originalSecret = AesUtil.getDefaultSecretKey();
+        try {
+            AesUtil.setDefaultSecretKey("1234567890123456");
+            String ciphertext = "SEJBMgECAwQFBgcICQoLDA0ODxC4gbtb5ZNSQjc3qJLGD/8I1dytJN9GAvRh0olaiTTX7w==";
+            ParamDefineInfo paramDefine = new ParamDefineInfo();
+            paramDefine.setType("password");
+            MonitorParam param = new MonitorParam();
+            param.setParamValue(ciphertext);
+
+            validator.validate(paramDefine, param);
+
+            assertEquals(ciphertext, param.getParamValue());
+            assertEquals(CommonConstants.PARAM_TYPE_PASSWORD, param.getType());
+            assertEquals("This is a secret message", AesUtil.aesDecodeRequired(param.getParamValue()));
+        } finally {
+            AesUtil.setDefaultSecretKey(originalSecret);
+        }
+    }
+
+    @Test
     void validate_IgnoresLegacyCiphertextUntilMigrationReencryptsIt() {
         String originalSecret = AesUtil.getDefaultSecretKey();
         try {
