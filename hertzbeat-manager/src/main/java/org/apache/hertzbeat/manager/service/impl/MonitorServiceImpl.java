@@ -374,9 +374,7 @@ public class MonitorServiceImpl implements MonitorService {
                     }
                     String storedValue = storedParam.getParamValue();
                     boolean currentCiphertext = AesUtil.isCiphertext(storedValue);
-                    boolean legacyCiphertext = !AesUtil.DEFAULT_ENCODE_RULES.equals(AesUtil.getDefaultSecretKey())
-                            && AesUtil.isCiphertext(storedValue, AesUtil.DEFAULT_ENCODE_RULES);
-                    if (!currentCiphertext && !legacyCiphertext) {
+                    if (!currentCiphertext) {
                         throw new IllegalStateException("The stored credential migration is incomplete.");
                     }
                     validateCredentialDestination(field, paramMap, storedParams);

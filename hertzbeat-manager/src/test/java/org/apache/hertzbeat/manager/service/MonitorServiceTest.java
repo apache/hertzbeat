@@ -45,6 +45,7 @@ import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Param;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.apache.hertzbeat.common.util.AesUtil;
+import org.apache.hertzbeat.common.util.JsonUtil;
 import org.apache.hertzbeat.manager.dao.CollectorDao;
 import org.apache.hertzbeat.manager.dao.CollectorMonitorBindDao;
 import org.apache.hertzbeat.manager.dao.MonitorBindDao;
@@ -56,11 +57,14 @@ import org.apache.hertzbeat.manager.pojo.dto.MonitorParam;
 import org.apache.hertzbeat.manager.pojo.dto.ParamDefineInfo;
 import org.apache.hertzbeat.manager.scheduler.CollectJobScheduling;
 import org.apache.hertzbeat.manager.component.validator.ParamValidatorManager;
+import org.apache.hertzbeat.manager.component.validator.impl.PasswordParamValidator;
+import org.apache.hertzbeat.manager.controller.MonitorController;
 import org.apache.hertzbeat.manager.service.helper.MonitorImExportHelper;
 import org.apache.hertzbeat.manager.service.impl.MonitorServiceImpl;
 import org.apache.hertzbeat.manager.support.exception.MonitorDatabaseException;
 import org.apache.hertzbeat.manager.support.exception.MonitorDetectException;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -77,6 +81,17 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.MediaType;
+import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.setup.MockMvcBuilders;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.ObjectNode;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * newBranch feature-clickhouse#179
@@ -256,44 +271,224 @@ class MonitorServiceTest {
     }
 
     @Test
-    void validateDetectRestoresStoredCredentialForAnExistingMonitor() {
-        long monitorId = 103L;
+    void validateDetectRejectsMaskWithoutAnExistingMonitorId() {
         Monitor monitor = Monitor.builder()
-                .id(monitorId)
-                .name("ollama-detect")
+                .name("ollama-new")
                 .app("ollama")
                 .scrape("static")
                 .instance("127.0.0.1")
                 .intervals(60)
                 .build();
-        Param submitted = Param.builder()
+        MonitorDto dto = new MonitorDto();
+        dto.setMonitor(monitor);
+        dto.setParams(List.of(Param.builder()
+                .field("apiKey")
+                .paramValue(MonitorParam.SECRET_MASK)
+                .type(CommonConstants.PARAM_TYPE_PASSWORD)
+                .build()));
+        when(appService.getAppParamDefines("ollama"))
+                .thenReturn(List.of(newParamDefine("apiKey", "password", false)));
+
+        assertThrows(IllegalArgumentException.class, () -> monitorService.validate(dto, null));
+        assertEquals(MonitorParam.SECRET_MASK, dto.getParams().getFirst().getParamValue());
+        verify(paramDao, org.mockito.Mockito.never()).findParamsByMonitorId(any());
+    }
+
+    @Test
+    void validateModifyRejectsMaskWithoutStoredCredential() {
+        long monitorId = 105L;
+        Monitor monitor = Monitor.builder()
+                .id(monitorId)
+                .name("ollama-no-stored-secret")
+                .app("ollama")
+                .scrape("static")
+                .instance("127.0.0.1")
+                .intervals(60)
+                .build();
+        MonitorDto dto = new MonitorDto();
+        dto.setMonitor(monitor);
+        dto.setParams(List.of(Param.builder()
                 .monitorId(monitorId)
                 .field("apiKey")
                 .paramValue(MonitorParam.SECRET_MASK)
                 .type(CommonConstants.PARAM_TYPE_PASSWORD)
-                .build();
-        String storedCiphertext = AesUtil.aesEncode("stored-detect-key");
-        Param stored = Param.builder()
-                .id(31L)
-                .monitorId(monitorId)
-                .field("apiKey")
-                .paramValue(storedCiphertext)
-                .type(CommonConstants.PARAM_TYPE_PASSWORD)
-                .build();
-        MonitorDto dto = new MonitorDto();
-        dto.setMonitor(monitor);
-        dto.setParams(List.of(submitted));
+                .build()));
         when(appService.getAppParamDefines("ollama"))
                 .thenReturn(List.of(newParamDefine("apiKey", "password", false)));
-        when(paramDao.findParamsByMonitorId(monitorId)).thenReturn(List.of(stored));
-        Job job = new Job();
-        job.setMetrics(Collections.emptyList());
-        when(appService.getAppDefine("ollama")).thenReturn(job);
+        when(appService.getAppDefineOption(monitor.getName())).thenReturn(Optional.empty());
+        when(monitorDao.findMonitorByNameEquals(monitor.getName())).thenReturn(Optional.of(monitor));
+        when(paramDao.findParamsByMonitorId(monitorId)).thenReturn(Collections.emptyList());
 
-        monitorService.validate(dto, null);
+        assertThrows(IllegalArgumentException.class, () -> monitorService.validate(dto, true));
+        assertEquals(MonitorParam.SECRET_MASK, dto.getParams().getFirst().getParamValue());
+    }
 
-        assertEquals(storedCiphertext, dto.getParams().get(0).getParamValue());
-        verify(paramValidatorManager).validate(any(ParamDefineInfo.class), any(MonitorParam.class));
+    @Test
+    void validateModifyRejectsDamagedTaggedCredentialWithoutReplacingMask() {
+        String originalSecret = AesUtil.getDefaultSecretKey();
+        try {
+            AesUtil.setDefaultSecretKey("1234567890123456");
+            long monitorId = 106L;
+            Monitor monitor = Monitor.builder()
+                    .id(monitorId)
+                    .name("ollama-damaged-secret")
+                    .app("ollama")
+                    .scrape("static")
+                    .instance("127.0.0.1")
+                    .intervals(60)
+                    .build();
+            String damagedCiphertext = "SEJBMgECAwQFBgcICQoLDA0ODxC4gbtb5ZNSQjc3qJLGD/8I1dytJN9GAvRh0olaiTTX7A==";
+            Param stored = Param.builder()
+                    .id(42L)
+                    .monitorId(monitorId)
+                    .field("apiKey")
+                    .paramValue(damagedCiphertext)
+                    .type(CommonConstants.PARAM_TYPE_PASSWORD)
+                    .build();
+            MonitorDto dto = new MonitorDto();
+            dto.setMonitor(monitor);
+            dto.setParams(List.of(Param.builder()
+                    .monitorId(monitorId)
+                    .field("apiKey")
+                    .paramValue(MonitorParam.SECRET_MASK)
+                    .type(CommonConstants.PARAM_TYPE_PASSWORD)
+                    .build()));
+            when(appService.getAppParamDefines("ollama"))
+                    .thenReturn(List.of(newParamDefine("apiKey", "password", false)));
+            when(appService.getAppDefineOption(monitor.getName())).thenReturn(Optional.empty());
+            when(monitorDao.findMonitorByNameEquals(monitor.getName())).thenReturn(Optional.of(monitor));
+            when(paramDao.findParamsByMonitorId(monitorId)).thenReturn(List.of(stored));
+
+            assertThrows(IllegalStateException.class, () -> monitorService.validate(dto, true));
+            assertEquals(MonitorParam.SECRET_MASK, dto.getParams().getFirst().getParamValue());
+            assertEquals(damagedCiphertext, stored.getParamValue());
+        } finally {
+            AesUtil.setDefaultSecretKey(originalSecret);
+        }
+    }
+
+    @Test
+    void detectAndModifyKeepMaskedCredentialEncryptedFromResponseThroughCollection() throws Exception {
+        String originalSecret = AesUtil.getDefaultSecretKey();
+        AesUtil.setDefaultSecretKey("1234567890123456");
+        try {
+            long monitorId = 103L;
+            Monitor monitor = Monitor.builder()
+                    .id(monitorId)
+                    .jobId(88L)
+                    .name("ollama-detect")
+                    .app("ollama")
+                    .scrape("static")
+                    .instance("127.0.0.1")
+                    .intervals(60)
+                    .labels(Collections.emptyMap())
+                    .status(CommonConstants.MONITOR_UP_CODE)
+                    .build();
+            String storedCiphertext = "SEJBMgECAwQFBgcICQoLDA0ODxC4gbtb5ZNSQjc3qJLGD/8I1dytJN9GAvRh0olaiTTX7w==";
+            String expectedPlaintext = "This is a secret message";
+            Assertions.assertNotEquals(AesUtil.DEFAULT_ENCODE_RULES, AesUtil.getDefaultSecretKey());
+            assertEquals(expectedPlaintext, AesUtil.aesDecodeRequired(storedCiphertext));
+            Param stored = Param.builder()
+                    .id(31L)
+                    .monitorId(monitorId)
+                    .field("apiKey")
+                    .paramValue(storedCiphertext)
+                    .type(CommonConstants.PARAM_TYPE_PASSWORD)
+                    .build();
+            when(appService.getAppParamDefines("ollama"))
+                    .thenReturn(List.of(newParamDefine("apiKey", "password", false)));
+            when(paramDao.findParamsByMonitorId(monitorId)).thenReturn(List.of(stored));
+            when(monitorDao.findById(monitorId)).thenReturn(Optional.of(monitor));
+            when(monitorDao.findMonitorByNameEquals(monitor.getName())).thenReturn(Optional.of(monitor));
+            when(collectorMonitorBindDao.findCollectorMonitorBindByMonitorId(monitorId)).thenReturn(Optional.empty());
+            when(metricsFavoriteService.getUserFavoritedMetrics(any(), eq(monitorId))).thenReturn(Collections.emptySet());
+            when(appService.getAppDefineOption(monitor.getName())).thenReturn(Optional.empty());
+            Job job = new Job();
+            job.setMetrics(Collections.emptyList());
+            when(appService.getAppDefine("ollama")).thenReturn(job);
+            doAnswer(invocation -> {
+                ParamDefineInfo define = invocation.getArgument(0);
+                MonitorParam param = invocation.getArgument(1);
+                new PasswordParamValidator().validate(define, param);
+                return null;
+            }).when(paramValidatorManager).validate(any(ParamDefineInfo.class), any(MonitorParam.class));
+
+            CollectRep.MetricsData success = CollectRep.MetricsData.newBuilder()
+                    .setCode(CollectRep.Code.SUCCESS)
+                    .build();
+            when(collectJobScheduling.collectSyncJobData(any(Job.class))).thenReturn(List.of(success));
+            MonitorController controller = new MonitorController();
+            ReflectionTestUtils.setField(controller, "monitorService", monitorService);
+            MockMvc mockMvc = MockMvcBuilders.standaloneSetup(controller).build();
+
+            // Replay the actual GET response unchanged through the HTTP detect endpoint.
+            String getResponse = mockMvc.perform(get("/api/monitor/{id}", monitorId))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.params[0].paramValue").value(MonitorParam.SECRET_MASK))
+                    .andReturn().getResponse().getContentAsString();
+            String editRequest = JsonUtil.fromJson(getResponse).get("data").toString();
+            mockMvc.perform(post("/api/monitor/detect")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(editRequest))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE));
+            ArgumentCaptor<Job> jobCaptor = ArgumentCaptor.forClass(Job.class);
+            verify(collectJobScheduling).collectSyncJobData(jobCaptor.capture());
+            String dispatchedCredential = jobCaptor.getValue().getConfigmap().stream()
+                    .filter(config -> "apiKey".equals(config.getKey()))
+                    .map(config -> String.valueOf(config.getValue()))
+                    .findFirst()
+                    .orElseThrow();
+            assertEquals(storedCiphertext, dispatchedCredential);
+            assertEquals(expectedPlaintext, AesUtil.aesDecodeRequired(dispatchedCredential));
+
+            when(tagService.determineNewLabels(any())).thenReturn(Collections.emptyList());
+            when(collectJobScheduling.updateAsyncCollectJob(any(Job.class))).thenReturn(88L);
+            String saveGetResponse = mockMvc.perform(get("/api/monitor/{id}", monitorId))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.data.params[0].paramValue").value(MonitorParam.SECRET_MASK))
+                    .andReturn().getResponse().getContentAsString();
+            String saveRequest = JsonUtil.fromJson(saveGetResponse).get("data").toString();
+            mockMvc.perform(put("/api/monitor")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(saveRequest))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE));
+            ArgumentCaptor<Job> updateJobCaptor = ArgumentCaptor.forClass(Job.class);
+            verify(collectJobScheduling).updateAsyncCollectJob(updateJobCaptor.capture());
+            String savedJobCredential = updateJobCaptor.getValue().getConfigmap().stream()
+                    .filter(config -> "apiKey".equals(config.getKey()))
+                    .map(config -> String.valueOf(config.getValue()))
+                    .findFirst()
+                    .orElseThrow();
+            assertEquals(storedCiphertext, savedJobCredential);
+            assertEquals(expectedPlaintext, AesUtil.aesDecodeRequired(savedJobCredential));
+
+            JsonNode replacementDto = JsonUtil.fromJson(saveGetResponse).get("data");
+            for (JsonNode param : replacementDto.get("params")) {
+                if ("apiKey".equals(param.get("field").asString())) {
+                    ((ObjectNode) param).put("paramValue", "replacement-test-secret");
+                }
+            }
+            mockMvc.perform(put("/api/monitor")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(replacementDto.toString()))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.code").value((int) CommonConstants.SUCCESS_CODE));
+            ArgumentCaptor<Job> replacementJobCaptor = ArgumentCaptor.forClass(Job.class);
+            verify(collectJobScheduling, org.mockito.Mockito.times(2))
+                    .updateAsyncCollectJob(replacementJobCaptor.capture());
+            String replacementCiphertext = replacementJobCaptor.getAllValues().get(1).getConfigmap().stream()
+                    .filter(config -> "apiKey".equals(config.getKey()))
+                    .map(config -> String.valueOf(config.getValue()))
+                    .findFirst()
+                    .orElseThrow();
+            Assertions.assertNotEquals("replacement-test-secret", replacementCiphertext);
+            assertEquals("replacement-test-secret", AesUtil.aesDecodeRequired(replacementCiphertext));
+
+        } finally {
+            AesUtil.setDefaultSecretKey(originalSecret);
+        }
     }
 
     @Test
