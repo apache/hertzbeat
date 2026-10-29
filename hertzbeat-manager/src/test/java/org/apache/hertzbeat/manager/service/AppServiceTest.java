@@ -20,6 +20,7 @@ package org.apache.hertzbeat.manager.service;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.RuntimeParamDefine;
+import org.apache.hertzbeat.common.entity.job.protocol.SshProtocol;
 import org.apache.hertzbeat.common.entity.manager.Define;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.manager.dao.DefineDao;
@@ -33,16 +34,21 @@ import org.apache.hertzbeat.warehouse.service.WarehouseService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.io.TempDir;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -109,6 +115,112 @@ class AppServiceTest {
     void getAppDefine() {
         assertDoesNotThrow(() -> appService.getAppDefine("jvm"));
         assertThrows(IllegalArgumentException.class, () -> appService.getAppDefine("unknown"));
+    }
+
+    @Test
+    void linuxCpuScriptAlwaysEmitsOneLinePerAlias(@TempDir Path tempDir) throws Exception {
+        String script = getCpuScript("linux");
+        for (String app : List.of("ubuntu", "centos", "debian", "almalinux", "euleros",
+                "opensuse", "rockylinux", "coreos", "redhat")) {
+            assertEquals(script, getCpuScript(app), app + " should keep the shared Linux CPU script");
+        }
+
+        String vmstatOutput = "procs memory swap io system cpu\n"
+                + "r b swpd free buff cache si so bi bo in cs us sy id wa st\n"
+                + "0 0 0 0 0 0 0 0 0 0 111 222 1 2 95 0 0\n"
+                + "0 0 0 0 0 0 0 0 0 0 112 223 1 2 94 0 0\n";
+        String cpuInfo = "processor : 0\nprocessor : 1\nprocessor : 2\nprocessor : 3\n";
+        String loadAverage = "0.10 0.20 0.30 1/100 123\n";
+        List<String> missingModel = runCpuScript(script, tempDir,
+                "Architecture: aarch64\nCPU(s): 4\n", cpuInfo, loadAverage, vmstatOutput, false, false);
+        assertEquals(List.of("unknown", "4", "0.10 0.20 0.30", "111", "222", "94"), missingModel);
+
+        List<String> oneModel = runCpuScript(script, tempDir,
+                "Model name: Synthetic ARM CPU\n", cpuInfo, loadAverage, vmstatOutput, false, false);
+        assertEquals(List.of("Synthetic ARM CPU", "4", "0.10 0.20 0.30", "111", "222", "94"), oneModel);
+
+        List<String> multipleModels = runCpuScript(script, tempDir,
+                "Model name: Synthetic CPU A\nModel name: Synthetic CPU A\nModel name: Synthetic CPU B\n",
+                cpuInfo, loadAverage, vmstatOutput, false, false);
+        assertEquals("Synthetic CPU A, Synthetic CPU B", multipleModels.get(0));
+        assertEquals(6, multipleModels.size());
+
+        List<String> localizedModel = runCpuScript(script, tempDir,
+                "Nom du modèle: Synthetic ARM CPU\n", cpuInfo, loadAverage, vmstatOutput, false, false);
+        assertEquals("unknown", localizedModel.get(0));
+        assertEquals(6, localizedModel.size());
+
+        assertCpuScriptFails(script, tempDir, "", cpuInfo, loadAverage, vmstatOutput, true, false,
+                "lscpu failed");
+        assertCpuScriptFails(script, tempDir, "Model name: Synthetic ARM CPU\n", "", loadAverage,
+                vmstatOutput, false, false, "CPU core count unavailable");
+        assertCpuScriptFails(script, tempDir, "Model name: Synthetic ARM CPU\n", cpuInfo, "",
+                vmstatOutput, false, false, "CPU load average unavailable");
+        assertCpuScriptFails(script, tempDir, "Model name: Synthetic ARM CPU\n", cpuInfo, loadAverage,
+                "", false, false, "vmstat interrupt/context-switch values unavailable");
+        String invalidVmstat = vmstatOutput.replace("111 222", "bad 222");
+        assertCpuScriptFails(script, tempDir, "Model name: Synthetic ARM CPU\n", cpuInfo, loadAverage,
+                invalidVmstat, false, false, "vmstat interrupt/context-switch values unavailable");
+        assertCpuScriptFails(script, tempDir, "Model name: Synthetic ARM CPU\n", cpuInfo, loadAverage,
+                vmstatOutput, false, true, "vmstat first sample failed");
+    }
+
+    private String getCpuScript(String app) {
+        return appService.getAppDefine(app).getMetrics().stream()
+                .filter(metric -> "cpu".equals(metric.getName()))
+                .map(Metrics::getSsh)
+                .map(SshProtocol::getScript)
+                .findFirst()
+                .orElseThrow();
+    }
+
+    private List<String> runCpuScript(String script, Path tempDir, String lscpuOutput,
+            String cpuInfo, String loadAverage, String vmstatOutput, boolean failLscpu, boolean failVmstat)
+            throws Exception {
+        ShellResult result = executeCpuScript(script, tempDir, lscpuOutput, cpuInfo, loadAverage,
+                vmstatOutput, failLscpu, failVmstat);
+        assertEquals(0, result.exitCode(), result.stderr());
+        return result.stdout().lines().toList();
+    }
+
+    private void assertCpuScriptFails(String script, Path tempDir, String lscpuOutput,
+            String cpuInfo, String loadAverage, String vmstatOutput, boolean failLscpu, boolean failVmstat,
+            String expectedError) throws Exception {
+        ShellResult result = executeCpuScript(script, tempDir, lscpuOutput, cpuInfo, loadAverage,
+                vmstatOutput, failLscpu, failVmstat);
+        assertTrue(result.exitCode() > 1, result.stderr());
+        assertTrue(result.stdout().isBlank(), "failed CPU script must not emit a successful-looking partial row");
+        assertTrue(result.stderr().contains(expectedError), result.stderr());
+    }
+
+    private ShellResult executeCpuScript(String script, Path tempDir, String lscpuOutput,
+            String cpuInfo, String loadAverage, String vmstatOutput, boolean failLscpu, boolean failVmstat)
+            throws Exception {
+        Path cpuInfoFile = tempDir.resolve("cpuinfo");
+        Path loadAverageFile = tempDir.resolve("loadavg");
+        Files.writeString(cpuInfoFile, cpuInfo, StandardCharsets.UTF_8);
+        Files.writeString(loadAverageFile, loadAverage, StandardCharsets.UTF_8);
+        String isolatedScript = script.replace("/proc/cpuinfo", cpuInfoFile.toString())
+                .replace("/proc/loadavg", loadAverageFile.toString());
+        String shellFunctions = "lscpu() { [ \"$LC_ALL\" = C ] || return 77; "
+                + "if [ \"$LSCPU_FAIL\" = 1 ]; then echo 'synthetic lscpu command failed' >&2; return 2; fi; "
+                + "printf '%s\\n' \"$LSCPU_OUTPUT\"; }; "
+                + "vmstat() { if [ \"$VMSTAT_FAIL\" = 1 ]; then echo 'synthetic vmstat command failed' >&2; return 2; fi; "
+                + "printf '%s\\n' \"$VMSTAT_OUTPUT\"; }; ";
+        ProcessBuilder processBuilder = new ProcessBuilder("/bin/sh", "-c", shellFunctions + isolatedScript);
+        processBuilder.environment().put("LSCPU_OUTPUT", lscpuOutput);
+        processBuilder.environment().put("VMSTAT_OUTPUT", vmstatOutput);
+        processBuilder.environment().put("LSCPU_FAIL", failLscpu ? "1" : "0");
+        processBuilder.environment().put("VMSTAT_FAIL", failVmstat ? "1" : "0");
+        Process process = processBuilder.start();
+        process.getOutputStream().close();
+        assertTrue(process.waitFor(5, TimeUnit.SECONDS), "Linux CPU script should finish promptly");
+        String stdout = new String(process.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+        String stderr = new String(process.getErrorStream().readAllBytes(), StandardCharsets.UTF_8);
+        return new ShellResult(process.exitValue(), stdout, stderr);
+    }
+
+    private record ShellResult(int exitCode, String stdout, String stderr) {
     }
 
     @Test
