@@ -63,6 +63,26 @@ class PasswordParamValidatorTest {
     }
 
     @Test
+    void validate_DoesNotStorePlaintextWhenEncryptionFails() {
+        String originalSecret = AesUtil.getDefaultSecretKey();
+        try {
+            AesUtil.setDefaultSecretKey("invalid-key");
+            ParamDefineInfo paramDefine = new ParamDefineInfo();
+            paramDefine.setType("password");
+            MonitorParam param = new MonitorParam();
+            String plaintext = "not-base64-sensitive-secret";
+            param.setParamValue(plaintext);
+            param.setType(CommonConstants.PARAM_TYPE_STRING);
+
+            assertThrows(IllegalStateException.class, () -> validator.validate(paramDefine, param));
+            assertEquals(plaintext, param.getParamValue());
+            assertEquals(CommonConstants.PARAM_TYPE_STRING, param.getType());
+        } finally {
+            AesUtil.setDefaultSecretKey(originalSecret);
+        }
+    }
+
+    @Test
     void validate_IgnoresCiphertext() {
         ParamDefineInfo paramDefine = new ParamDefineInfo();
         paramDefine.setType("password");

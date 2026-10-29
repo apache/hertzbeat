@@ -25,12 +25,10 @@ import java.util.Base64;
 import javax.crypto.Cipher;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * AES Decode Encode Util
  */
-@Slf4j
 public final class AesUtil {
 
     /**
@@ -49,6 +47,8 @@ public final class AesUtil {
     private static final byte[] PAYLOAD_HEADER = {'H', 'B', 'A', '2'};
 
     private static final int IV_LENGTH = 16;
+
+    private static final int MAX_IV_ATTEMPTS = 16;
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
@@ -88,30 +88,46 @@ public final class AesUtil {
      * @return ciphertext
      */
     public static String aesEncode(String content, String encryptKey) {
+        return aesEncode(content, encryptKey, SECURE_RANDOM);
+    }
+
+    static String aesEncode(String content, String encryptKey, SecureRandom secureRandom) {
         try {
             // todo consider not init cipher every time and test performance
             SecretKeySpec keySpec = new SecretKeySpec(encryptKey.getBytes(StandardCharsets.UTF_8), AES);
             // cipher based on the algorithm AES
             Cipher cipher = Cipher.getInstance(ALGORITHM_STR);
-            byte[] initializationVector = new byte[IV_LENGTH];
-            SECURE_RANDOM.nextBytes(initializationVector);
-            // init cipher Encrypt_mode or Decrypt_mode operation, the second parameter is the KEY used
-            cipher.init(Cipher.ENCRYPT_MODE, keySpec, new IvParameterSpec(initializationVector));
             // get content bytes, must utf-8
             byte[] byteEncode = content.getBytes(StandardCharsets.UTF_8);
-            // encode content to byte array
-            byte[] byteAes = cipher.doFinal(byteEncode);
-            byte[] payload = ByteBuffer.allocate(PAYLOAD_HEADER.length + initializationVector.length + byteAes.length)
-                    .put(PAYLOAD_HEADER)
-                    .put(initializationVector)
-                    .put(byteAes)
-                    .array();
-            // base64 encode content
-            return Base64.getEncoder().encodeToString(payload);
+            for (int attempt = 0; attempt < MAX_IV_ATTEMPTS; attempt++) {
+                byte[] initializationVector = new byte[IV_LENGTH];
+                secureRandom.nextBytes(initializationVector);
+                // init cipher Encrypt_mode or Decrypt_mode operation, the second parameter is the KEY used
+                cipher.init(Cipher.ENCRYPT_MODE, keySpec, new IvParameterSpec(initializationVector));
+                // encode content to byte array
+                byte[] byteAes = cipher.doFinal(byteEncode);
+                byte[] payload = ByteBuffer.allocate(PAYLOAD_HEADER.length + initializationVector.length + byteAes.length)
+                        .put(PAYLOAD_HEADER)
+                        .put(initializationVector)
+                        .put(byteAes)
+                        .array();
+                if (!isAmbiguousWithDefaultKey(payload, encryptKey, byteEncode)) {
+                    // base64 encode content
+                    return Base64.getEncoder().encodeToString(payload);
+                }
+            }
+            throw new IllegalStateException("Could not generate a ciphertext distinguishable from the default-key fallback");
         } catch (Exception e) {
-            log.error("aes encode content error: {}", e.getMessage(), e);
-            return content;
+            throw new IllegalStateException("Unable to encrypt value", e);
         }
+    }
+
+    private static boolean isAmbiguousWithDefaultKey(byte[] payload, String encryptKey, byte[] plaintext) {
+        if (DEFAULT_ENCODE_RULES.equals(encryptKey)) {
+            return false;
+        }
+        byte[] defaultPlaintext = tryDecrypt(payload, DEFAULT_ENCODE_RULES);
+        return defaultPlaintext != null && !Arrays.equals(plaintext, defaultPlaintext);
     }
 
     /**

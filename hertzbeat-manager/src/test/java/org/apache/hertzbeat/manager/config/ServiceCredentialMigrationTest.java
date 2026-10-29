@@ -164,4 +164,29 @@ class ServiceCredentialMigrationTest {
                 "SELECT COUNT(*) FROM hzb_config WHERE type = 'migration.service-credentials.v1'",
                 Integer.class));
     }
+
+    @Test
+    void startupMigrationLeavesPlaintextUnchangedWhenEncryptionFails() {
+        String originalSecret = AesUtil.getDefaultSecretKey();
+        try {
+            AesUtil.setDefaultSecretKey("invalid-key");
+            jdbcTemplate.update("INSERT INTO hzb_monitor(id, app, scrape) VALUES (?, ?, ?)",
+                    1L, "ollama", "static");
+            String plaintext = "not-base64-sensitive-secret";
+            jdbcTemplate.update("INSERT INTO hzb_param VALUES (?, ?, ?, ?, ?)",
+                    11L, 1L, "apiKey", plaintext, CommonConstants.PARAM_TYPE_STRING);
+
+            new ServiceCredentialMigration(jdbcTemplate).run();
+
+            Map<String, Object> stored = jdbcTemplate.queryForMap(
+                    "SELECT param_value, type FROM hzb_param WHERE id = 11");
+            assertEquals(plaintext, stored.get("PARAM_VALUE"));
+            assertEquals(CommonConstants.PARAM_TYPE_STRING, ((Number) stored.get("TYPE")).byteValue());
+            assertEquals(0, jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM hzb_config WHERE type = 'migration.service-credentials.v1'",
+                    Integer.class));
+        } finally {
+            AesUtil.setDefaultSecretKey(originalSecret);
+        }
+    }
 }
