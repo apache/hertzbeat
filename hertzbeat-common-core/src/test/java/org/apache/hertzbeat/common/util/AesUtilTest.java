@@ -24,8 +24,11 @@ import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Base64;
 import org.junit.jupiter.api.Test;
@@ -41,7 +44,12 @@ class AesUtilTest {
 
     private static final String VALID_KEY = "1234567890123456";
 
-    private static final String ENCODE_RULES = "defaultsecretkey";
+    private static final String DEFAULT_KEY_CIPHERTEXT =
+            "SEJBMgABAgMEBQYHCAkKCwwNDg+n43EJKwgtYD7Jvh0pn2qjlhYerYPjVQw8b5+e4fmnCA==";
+    private static final String AMBIGUOUS_DEFAULT_KEY_CIPHERTEXT =
+            "SEJBMgAAAAAAAAAAAAAAAAAAAz+DCz3LWaOCMiHK2E32IJCdysYty+2YhcUdccPp08KRjQ==";
+    private static final String AMBIGUOUS_CURRENT_KEY_CIPHERTEXT =
+            "SEJBMjiUOslv6EforqVI6iA+xocDKgPaycfwdti1Gj1A8jrH+vgt1HmmeCmqTg7QFetaYg==";
 
     @Test
     void testAesEncode() {
@@ -74,20 +82,8 @@ class AesUtilTest {
 
     @Test
     void testAesDecode() {
-        // Test with invalid key
-        String originalText = "This is a secret message";
-        String encryptedText = aesEncode(originalText, VALID_KEY);
-        String decryptedText = aesDecode(encryptedText, "invalidkey123456");
-        assertNotEquals(originalText, decryptedText);
-
-        // Test with default key
-        originalText = "This is a secret message";
-        encryptedText = aesEncode(originalText, VALID_KEY);
-        decryptedText = aesDecode(encryptedText, "invalidkey123456");
-        if (!decryptedText.equals(originalText)) {
-            decryptedText = aesDecode(encryptedText, ENCODE_RULES);
-        }
-        assertNotEquals(originalText, decryptedText);
+        String encryptedText = aesEncode("This is a secret message", VALID_KEY);
+        assertThrows(IllegalStateException.class, () -> aesDecode(encryptedText, "invalidkey123456"));
     }
 
     @Test
@@ -97,6 +93,11 @@ class AesUtilTest {
         String originalText = "This is a secret message";
         String encryptedText = aesEncode(originalText, VALID_KEY);
         assertTrue(isCiphertext(encryptedText, VALID_KEY));
+
+        byte[] corruptedPayload = Base64.getDecoder().decode(encryptedText);
+        byte[] truncatedPayload = Arrays.copyOf(corruptedPayload, corruptedPayload.length - 1);
+        assertThrows(IllegalStateException.class,
+                () -> isCiphertext(Base64.getEncoder().encodeToString(truncatedPayload), VALID_KEY));
 
         // Test with plain text, normal text is not ciphertext
         String plainText = "This is not encrypted";
@@ -112,13 +113,187 @@ class AesUtilTest {
 
     @Test
     void testDefaultKeyCompatibility() {
-        // Test with default key
-        String originalText = "This is a secret message";
-        // encode use default secret key
-        String encryptedText = aesEncode(originalText, AesUtil.DEFAULT_ENCODE_RULES);
-        // decode use new secret key
-        String decryptedText = aesDecode(encryptedText, "newkey1234567890");
-        // old data can decode with default secret key
-        assertEquals(originalText, decryptedText);
+        // This historical payload decrypts under both keys to different plaintexts.
+        assertThrows(IllegalStateException.class,
+                () -> aesDecode(AMBIGUOUS_DEFAULT_KEY_CIPHERTEXT, "newkey1234567890"));
+        assertEquals("This is a secret message",
+                aesDecode(AMBIGUOUS_DEFAULT_KEY_CIPHERTEXT, AesUtil.DEFAULT_ENCODE_RULES));
+    }
+
+    @Test
+    void testAesEncodeRetriesAnIvThatWouldBeAmbiguousWithDefaultFallback() {
+        String currentKey = "0123456789abcdef";
+        String plaintext = "legacy-ollama-key";
+        byte[] ambiguousPayload = Base64.getDecoder().decode(AMBIGUOUS_CURRENT_KEY_CIPHERTEXT);
+        byte[] ambiguousIv = Arrays.copyOfRange(ambiguousPayload, 4, 20);
+        assertEquals(AMBIGUOUS_CURRENT_KEY_CIPHERTEXT,
+                encryptHba2(plaintext, currentKey, ambiguousIv));
+        assertThrows(IllegalStateException.class,
+                () -> isCiphertext(AMBIGUOUS_CURRENT_KEY_CIPHERTEXT, currentKey));
+
+        byte[] safeIv = findSafeIv(plaintext, currentKey);
+        SequenceSecureRandom secureRandom = new SequenceSecureRandom(ambiguousIv, safeIv);
+        String encrypted = AesUtil.aesEncode(plaintext, currentKey, secureRandom);
+
+        assertEquals(2, secureRandom.calls());
+        assertEquals(encryptHba2(plaintext, currentKey, safeIv), encrypted);
+        assertTrue(isCiphertext(encrypted, currentKey));
+        assertEquals(plaintext, aesDecode(encrypted, currentKey));
+    }
+
+    @Test
+    void testAesEncodeDoesNotReturnPlaintextWhenNoSafeIvCanBeGenerated() {
+        String currentKey = "0123456789abcdef";
+        String plaintext = "legacy-ollama-key";
+        byte[] payload = Base64.getDecoder().decode(AMBIGUOUS_CURRENT_KEY_CIPHERTEXT);
+        byte[] ambiguousIv = Arrays.copyOfRange(payload, 4, 20);
+        byte[][] repeatedIvs = new byte[16][];
+        Arrays.fill(repeatedIvs, ambiguousIv);
+        SequenceSecureRandom secureRandom = new SequenceSecureRandom(repeatedIvs);
+
+        assertThrows(IllegalStateException.class,
+                () -> AesUtil.aesEncode(plaintext, currentKey, secureRandom));
+        assertEquals(repeatedIvs.length, secureRandom.calls());
+    }
+
+    @Test
+    void testAesEncodePropagatesEncryptionFailureWithoutReturningPlaintext() {
+        String plaintext = "sensitive-plaintext";
+        IllegalStateException error = assertThrows(IllegalStateException.class,
+                () -> AesUtil.aesEncode(plaintext, "invalid-key"));
+
+        assertEquals("Unable to encrypt value", error.getMessage());
+        assertNotEquals(plaintext, error.getMessage());
+    }
+
+    @Test
+    void testAmbiguityAlsoFailsWhenCurrentKeyIsCorrect() {
+        String currentKey = "newkey1234567890";
+        String plaintext = "123456789012345";
+        String ambiguous = null;
+        for (int seed = 0; seed < 10_000 && ambiguous == null; seed++) {
+            byte[] iv = new byte[16];
+            ByteBuffer.wrap(iv, 12, 4).putInt(seed);
+            String candidate = encryptHba2(plaintext, currentKey, iv);
+            try {
+                // The default key is wrong, but this IV makes its CBC padding valid.
+                String otherPlaintext = aesDecode(candidate, AesUtil.DEFAULT_ENCODE_RULES);
+                if (!plaintext.equals(otherPlaintext)) {
+                    ambiguous = candidate;
+                }
+            } catch (IllegalStateException ignored) {
+                // This is expected for IV values that do not yield valid padding.
+            }
+        }
+        assertTrue(ambiguous != null, "expected to find a valid-padding wrong-key fixture");
+        String finalAmbiguous = ambiguous;
+        assertThrows(IllegalStateException.class, () -> aesDecode(finalAmbiguous, currentKey));
+        assertThrows(IllegalStateException.class, () -> isCiphertext(finalAmbiguous, currentKey));
+    }
+
+    @Test
+    void testDecodeRequiredRejectsCorruptedOrPlainValues() {
+        assertThrows(IllegalStateException.class, () -> AesUtil.aesDecodeRequired("not encrypted"));
+        byte[] payload = Base64.getDecoder().decode(DEFAULT_KEY_CIPHERTEXT);
+        byte[] truncatedPayload = Arrays.copyOf(payload, payload.length - 1);
+        assertThrows(IllegalStateException.class,
+                () -> AesUtil.aesDecodeRequired(Base64.getEncoder().encodeToString(truncatedPayload)));
+        assertThrows(IllegalStateException.class,
+                () -> AesUtil.aesDecodeRequired(Base64.getEncoder().encodeToString(
+                        Arrays.copyOf(payload, payload.length - 5))));
+    }
+
+    @Test
+    void testUnicodeEmptyAndLongRoundTrips() {
+        for (String text : new String[] {"", "安全性🙂", "长文本".repeat(10_000)}) {
+            String encrypted = aesEncode(text, VALID_KEY);
+            assertEquals(text, aesDecode(encrypted, VALID_KEY));
+        }
+    }
+
+    @Test
+    void testCurrentAndDefaultKeyAreTriedOnlyOnceWhenEqual() {
+        String originalSecret = AesUtil.getDefaultSecretKey();
+        try {
+            AesUtil.setDefaultSecretKey(AesUtil.DEFAULT_ENCODE_RULES);
+            String encrypted = aesEncode("same-key", AesUtil.DEFAULT_ENCODE_RULES);
+            assertEquals("same-key", AesUtil.aesDecodeRequired(encrypted));
+            assertTrue(AesUtil.isCiphertext(encrypted));
+        } finally {
+            AesUtil.setDefaultSecretKey(originalSecret);
+        }
+    }
+
+    @Test
+    void testLegacyDefaultKeyFallback() {
+        String legacy = encryptLegacy("legacy secret", AesUtil.DEFAULT_ENCODE_RULES);
+        assertEquals("legacy secret", aesDecode(legacy, "newkey1234567890"));
+    }
+
+    private static String encryptLegacy(String plaintext, String key) {
+        try {
+            javax.crypto.Cipher cipher = javax.crypto.Cipher.getInstance(ALGORITHM_STR);
+            javax.crypto.spec.SecretKeySpec keySpec =
+                    new javax.crypto.spec.SecretKeySpec(key.getBytes(StandardCharsets.UTF_8), AES);
+            cipher.init(javax.crypto.Cipher.ENCRYPT_MODE, keySpec,
+                    new javax.crypto.spec.IvParameterSpec(key.getBytes(StandardCharsets.UTF_8)));
+            return Base64.getEncoder().encodeToString(cipher.doFinal(plaintext.getBytes(StandardCharsets.UTF_8)));
+        } catch (Exception e) {
+            throw new AssertionError(e);
+        }
+    }
+
+    private static String encryptHba2(String plaintext, String key, byte[] iv) {
+        try {
+            javax.crypto.Cipher cipher = javax.crypto.Cipher.getInstance(ALGORITHM_STR);
+            javax.crypto.spec.SecretKeySpec keySpec =
+                    new javax.crypto.spec.SecretKeySpec(key.getBytes(StandardCharsets.UTF_8), AES);
+            cipher.init(javax.crypto.Cipher.ENCRYPT_MODE, keySpec, new javax.crypto.spec.IvParameterSpec(iv));
+            byte[] encrypted = cipher.doFinal(plaintext.getBytes(StandardCharsets.UTF_8));
+            byte[] payload = new byte[4 + iv.length + encrypted.length];
+            System.arraycopy(new byte[] {'H', 'B', 'A', '2'}, 0, payload, 0, 4);
+            System.arraycopy(iv, 0, payload, 4, iv.length);
+            System.arraycopy(encrypted, 0, payload, 20, encrypted.length);
+            return Base64.getEncoder().encodeToString(payload);
+        } catch (Exception e) {
+            throw new AssertionError(e);
+        }
+    }
+
+    private static byte[] findSafeIv(String plaintext, String key) {
+        for (int seed = 0; seed < 10_000; seed++) {
+            byte[] iv = new byte[16];
+            ByteBuffer.wrap(iv, 12, 4).putInt(seed);
+            try {
+                if (isCiphertext(encryptHba2(plaintext, key, iv), key)) {
+                    return iv;
+                }
+            } catch (IllegalStateException ignored) {
+                // Wrong-key padding is valid for this IV.
+            }
+        }
+        throw new AssertionError("Could not find an IV that is unambiguous with the default key");
+    }
+
+    private static final class SequenceSecureRandom extends SecureRandom {
+
+        private static final long serialVersionUID = 1L;
+
+        private final byte[][] values;
+
+        private int calls;
+
+        private SequenceSecureRandom(byte[]... values) {
+            this.values = values;
+        }
+
+        @Override
+        public void nextBytes(byte[] bytes) {
+            System.arraycopy(values[calls++], 0, bytes, 0, bytes.length);
+        }
+
+        int calls() {
+            return calls;
+        }
     }
 }

@@ -18,6 +18,14 @@ Apache HertzBeat's metadata information is stored in H2 or Mysql, PostgreSQL rel
 
 From 1.9.1, only admin can sign in to management. Existing user and guest configuration no longer grants access. Before upgrading, inventory accounts and automation tokens; administrators must manually edit sureness.yml to assign admin only to trusted accounts, restart and sign in again. Accounts are not automatically promoted or deleted. Test the upgrade first and read the [migration guide](../help/admin_only_migration).
 
+## Encrypted monitor credential compatibility
+
+Monitor password values continue to use the existing AES-CBC format for compatibility with existing collectors and exported monitor configurations. CBC does not authenticate ciphertext.
+If both the configured `common.secret` key and the historical default key produce different valid plaintexts for a stored value, HertzBeat now fails that collection instead of silently using a possible garbage password.
+No database rows are automatically rewritten. Keep the original `common.secret` value backed up and consistent across manager restarts and collectors.
+If a monitor reports this credential error, restore the key that originally encrypted the value or edit and save that monitor's credential again after verifying the correct secret; back up the relational database before any manual recovery.
+Do not edit encrypted values directly in SQL. This check reduces the known wrong-key ambiguity but cannot authenticate legacy CBC ciphertext or detect every possible corruption.
+
 ## Breaking Changes In 1.9.0
 
 ### SFTP monitors require an explicit host-key policy

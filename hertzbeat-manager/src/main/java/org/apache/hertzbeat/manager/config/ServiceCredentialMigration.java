@@ -63,11 +63,16 @@ public class ServiceCredentialMigration implements CommandLineRunner {
         if (isMigrationComplete()) {
             return;
         }
-        int migrated = migrateStoredCredentials();
-        jdbcTemplate.update("INSERT INTO hzb_config(type, content) VALUES (?, ?)",
-                MIGRATION_MARKER, "complete");
-        if (migrated > 0) {
-            log.info("Migrated {} stored service credential parameters", migrated);
+        MigrationResult result = migrateStoredCredentials();
+        if (result.unresolved() == 0) {
+            jdbcTemplate.update("INSERT INTO hzb_config(type, content) VALUES (?, ?)",
+                    MIGRATION_MARKER, "complete");
+        } else {
+            log.error("Credential migration left {} unresolved parameter(s) unchanged; "
+                    + "the migration will retry on the next start", result.unresolved());
+        }
+        if (result.migrated() > 0) {
+            log.info("Migrated {} stored service credential parameters", result.migrated());
         }
     }
 
@@ -79,25 +84,39 @@ public class ServiceCredentialMigration implements CommandLineRunner {
         return markerCount != null && markerCount > 0;
     }
 
-    int migrateStoredCredentials() {
+    MigrationResult migrateStoredCredentials() {
         List<StoredCredential> credentials = jdbcTemplate.query(FIND_CREDENTIALS_SQL,
                 (resultSet, rowNumber) -> new StoredCredential(
                         resultSet.getLong("id"),
                         resultSet.getString("param_value"),
                         resultSet.getByte("type")));
         int migrated = 0;
+        int unresolved = 0;
         for (StoredCredential credential : credentials) {
             String value = credential.value();
             boolean passwordType = credential.type() == CommonConstants.PARAM_TYPE_PASSWORD;
-            boolean encrypted = !StringUtils.hasText(value) || isSupportedCiphertext(value);
+            boolean encrypted;
+            try {
+                encrypted = !StringUtils.hasText(value) || isSupportedCiphertext(value);
+            } catch (IllegalStateException e) {
+                logUnresolvedCredential(credential.id());
+                unresolved++;
+                continue;
+            }
             if (passwordType && encrypted) {
                 continue;
             }
             String valueToStore = value;
             if (StringUtils.hasText(value) && !encrypted) {
-                valueToStore = AesUtil.aesEncode(value);
-                if (!AesUtil.isCiphertext(valueToStore)) {
-                    throw new IllegalStateException("Could not encrypt a stored service credential");
+                try {
+                    valueToStore = AesUtil.aesEncode(value);
+                    if (!AesUtil.isCiphertext(valueToStore)) {
+                        throw new IllegalStateException("Could not encrypt a stored service credential");
+                    }
+                } catch (IllegalStateException e) {
+                    logUnresolvedCredential(credential.id());
+                    unresolved++;
+                    continue;
                 }
             }
             jdbcTemplate.update(UPDATE_CREDENTIAL_SQL,
@@ -106,7 +125,15 @@ public class ServiceCredentialMigration implements CommandLineRunner {
                     credential.id());
             migrated++;
         }
-        return migrated;
+        return new MigrationResult(migrated, unresolved);
+    }
+
+    record MigrationResult(int migrated, int unresolved) {}
+
+    private void logUnresolvedCredential(long id) {
+        log.error("Skipping service credential migration for hzb_param id {} because it could not be handled safely. "
+                + "Verify the original common.secret or re-enter the credential; "
+                + "the row was left unchanged", id);
     }
 
     private boolean isSupportedCiphertext(String value) {

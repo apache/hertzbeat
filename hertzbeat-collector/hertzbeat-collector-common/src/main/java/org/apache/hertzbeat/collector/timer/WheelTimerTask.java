@@ -68,10 +68,7 @@ public class WheelTimerTask implements TimerTask {
                 .peek(item -> {
                     // decode password
                     if (item.getType() == CommonConstants.PARAM_TYPE_PASSWORD && item.getValue() != null) {
-                        String decodeValue = AesUtil.aesDecode(String.valueOf(item.getValue()));
-                        if (decodeValue == null) {
-                            log.error("Aes Decode value {} error.", item.getValue());
-                        }
+                        String decodeValue = AesUtil.aesDecodeRequired(String.valueOf(item.getValue()));
                         item.setValue(decodeValue);
                     } else if (item.getValue() != null && item.getValue() instanceof String value) {
                         item.setValue(value.trim());

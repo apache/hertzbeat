@@ -91,7 +91,7 @@ class ServiceCredentialMigrationTest {
                 14L, 4L, "apiKey", alreadyEncrypted, CommonConstants.PARAM_TYPE_PASSWORD);
 
         ServiceCredentialMigration migration = new ServiceCredentialMigration(jdbcTemplate);
-        assertEquals(2, migration.migrateStoredCredentials());
+        assertEquals(2, migration.migrateStoredCredentials().migrated());
 
         Map<String, Object> ollama = jdbcTemplate.queryForMap(
                 "SELECT param_value, type FROM hzb_param WHERE id = 11");
@@ -116,7 +116,7 @@ class ServiceCredentialMigrationTest {
         assertEquals(CommonConstants.PARAM_TYPE_STRING, ((Number) ordinary.get("TYPE")).byteValue());
         assertEquals(alreadyEncrypted, encrypted.get("PARAM_VALUE"));
 
-        assertEquals(0, migration.migrateStoredCredentials());
+        assertEquals(0, migration.migrateStoredCredentials().migrated());
         assertEquals(ollamaCiphertext, jdbcTemplate.queryForObject(
                 "SELECT param_value FROM hzb_param WHERE id = 11", String.class));
     }
@@ -141,5 +141,52 @@ class ServiceCredentialMigrationTest {
         assertEquals(1, jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM hzb_config WHERE type = 'migration.service-credentials.v1'",
                 Integer.class));
+    }
+
+    @Test
+    void startupMigrationSkipsAmbiguousCredentialsWithoutBlockingStartupOrMarkingComplete() {
+        AesUtil.setDefaultSecretKey("newkey1234567890");
+        jdbcTemplate.update("INSERT INTO hzb_monitor(id, app, scrape) VALUES (?, ?, ?)",
+                1L, "ollama", "static");
+        String ambiguousCiphertext =
+                "SEJBMgAAAAAAAAAAAAAAAAAAAz+DCz3LWaOCMiHK2E32IJCdysYty+2YhcUdccPp08KRjQ==";
+        jdbcTemplate.update("INSERT INTO hzb_param VALUES (?, ?, ?, ?, ?)",
+                11L, 1L, "apiKey", ambiguousCiphertext, CommonConstants.PARAM_TYPE_PASSWORD);
+        ServiceCredentialMigration migration = new ServiceCredentialMigration(jdbcTemplate);
+
+        migration.run();
+
+        Map<String, Object> stored = jdbcTemplate.queryForMap(
+                "SELECT param_value, type FROM hzb_param WHERE id = 11");
+        assertEquals(ambiguousCiphertext, stored.get("PARAM_VALUE"));
+        assertEquals(CommonConstants.PARAM_TYPE_PASSWORD, ((Number) stored.get("TYPE")).byteValue());
+        assertEquals(0, jdbcTemplate.queryForObject(
+                "SELECT COUNT(*) FROM hzb_config WHERE type = 'migration.service-credentials.v1'",
+                Integer.class));
+    }
+
+    @Test
+    void startupMigrationLeavesPlaintextUnchangedWhenEncryptionFails() {
+        String originalSecret = AesUtil.getDefaultSecretKey();
+        try {
+            AesUtil.setDefaultSecretKey("invalid-key");
+            jdbcTemplate.update("INSERT INTO hzb_monitor(id, app, scrape) VALUES (?, ?, ?)",
+                    1L, "ollama", "static");
+            String plaintext = "not-base64-sensitive-secret";
+            jdbcTemplate.update("INSERT INTO hzb_param VALUES (?, ?, ?, ?, ?)",
+                    11L, 1L, "apiKey", plaintext, CommonConstants.PARAM_TYPE_STRING);
+
+            new ServiceCredentialMigration(jdbcTemplate).run();
+
+            Map<String, Object> stored = jdbcTemplate.queryForMap(
+                    "SELECT param_value, type FROM hzb_param WHERE id = 11");
+            assertEquals(plaintext, stored.get("PARAM_VALUE"));
+            assertEquals(CommonConstants.PARAM_TYPE_STRING, ((Number) stored.get("TYPE")).byteValue());
+            assertEquals(0, jdbcTemplate.queryForObject(
+                    "SELECT COUNT(*) FROM hzb_config WHERE type = 'migration.service-credentials.v1'",
+                    Integer.class));
+        } finally {
+            AesUtil.setDefaultSecretKey(originalSecret);
+        }
     }
 }

@@ -31,6 +31,7 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import org.apache.hertzbeat.common.util.AesUtil;
 import org.apache.hertzbeat.manager.config.ManagerSseManager;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
 import org.apache.hertzbeat.manager.service.impl.AbstractImExportServiceImpl;
@@ -189,10 +190,15 @@ class ExcelImExportServiceTest {
         paramDTO.setField("host");
         paramDTO.setValue("192.168.1.1");
         paramDTO.setType((byte) 1);
+        AbstractImExportServiceImpl.ParamDTO passwordDTO = new AbstractImExportServiceImpl.ParamDTO();
+        passwordDTO.setField("password");
+        String encryptedPassword = AesUtil.aesEncode("excel-integration-secret");
+        passwordDTO.setValue(encryptedPassword);
+        passwordDTO.setType((byte) 2);
 
         AbstractImExportServiceImpl.ExportMonitorDTO exportMonitorDTO = new AbstractImExportServiceImpl.ExportMonitorDTO();
         exportMonitorDTO.setMonitor(monitorDTO);
-        exportMonitorDTO.setParams(List.of(paramDTO));
+        exportMonitorDTO.setParams(List.of(paramDTO, passwordDTO));
 
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         excelImExportService.writeOs(List.of(exportMonitorDTO), bos);
@@ -208,9 +214,11 @@ class ExcelImExportServiceTest {
         assertEquals("cron", parsed.getScheduleType());
         assertEquals("0 0/5 * * * ?", parsed.getCronExpression());
         // verify the shifted param columns still round-trip correctly
-        assertEquals(1, result.get(0).getParams().size());
+        assertEquals(2, result.get(0).getParams().size());
         assertEquals("host", result.get(0).getParams().get(0).getField());
         assertEquals("192.168.1.1", result.get(0).getParams().get(0).getValue());
+        assertEquals(encryptedPassword, result.get(0).getParams().get(1).getValue());
+        assertEquals("excel-integration-secret", AesUtil.aesDecode(encryptedPassword));
     }
 
 }

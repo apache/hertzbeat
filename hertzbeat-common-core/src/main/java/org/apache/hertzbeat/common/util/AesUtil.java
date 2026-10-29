@@ -19,21 +19,16 @@ package org.apache.hertzbeat.common.util;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
-import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Base64;
-import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
-import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * AES Decode Encode Util
  */
-@Slf4j
 public final class AesUtil {
 
     /**
@@ -52,6 +47,8 @@ public final class AesUtil {
     private static final byte[] PAYLOAD_HEADER = {'H', 'B', 'A', '2'};
 
     private static final int IV_LENGTH = 16;
+
+    private static final int MAX_IV_ATTEMPTS = 16;
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
@@ -91,30 +88,46 @@ public final class AesUtil {
      * @return ciphertext
      */
     public static String aesEncode(String content, String encryptKey) {
+        return aesEncode(content, encryptKey, SECURE_RANDOM);
+    }
+
+    static String aesEncode(String content, String encryptKey, SecureRandom secureRandom) {
         try {
             // todo consider not init cipher every time and test performance
             SecretKeySpec keySpec = new SecretKeySpec(encryptKey.getBytes(StandardCharsets.UTF_8), AES);
             // cipher based on the algorithm AES
             Cipher cipher = Cipher.getInstance(ALGORITHM_STR);
-            byte[] initializationVector = new byte[IV_LENGTH];
-            SECURE_RANDOM.nextBytes(initializationVector);
-            // init cipher Encrypt_mode or Decrypt_mode operation, the second parameter is the KEY used
-            cipher.init(Cipher.ENCRYPT_MODE, keySpec, new IvParameterSpec(initializationVector));
             // get content bytes, must utf-8
             byte[] byteEncode = content.getBytes(StandardCharsets.UTF_8);
-            // encode content to byte array
-            byte[] byteAes = cipher.doFinal(byteEncode);
-            byte[] payload = ByteBuffer.allocate(PAYLOAD_HEADER.length + initializationVector.length + byteAes.length)
-                    .put(PAYLOAD_HEADER)
-                    .put(initializationVector)
-                    .put(byteAes)
-                    .array();
-            // base64 encode content
-            return Base64.getEncoder().encodeToString(payload);
+            for (int attempt = 0; attempt < MAX_IV_ATTEMPTS; attempt++) {
+                byte[] initializationVector = new byte[IV_LENGTH];
+                secureRandom.nextBytes(initializationVector);
+                // init cipher Encrypt_mode or Decrypt_mode operation, the second parameter is the KEY used
+                cipher.init(Cipher.ENCRYPT_MODE, keySpec, new IvParameterSpec(initializationVector));
+                // encode content to byte array
+                byte[] byteAes = cipher.doFinal(byteEncode);
+                byte[] payload = ByteBuffer.allocate(PAYLOAD_HEADER.length + initializationVector.length + byteAes.length)
+                        .put(PAYLOAD_HEADER)
+                        .put(initializationVector)
+                        .put(byteAes)
+                        .array();
+                if (!isAmbiguousWithDefaultKey(payload, encryptKey, byteEncode)) {
+                    // base64 encode content
+                    return Base64.getEncoder().encodeToString(payload);
+                }
+            }
+            throw new IllegalStateException("Could not generate a ciphertext distinguishable from the default-key fallback");
         } catch (Exception e) {
-            log.error("aes encode content error: {}", e.getMessage(), e);
-            return content;
+            throw new IllegalStateException("Unable to encrypt value", e);
         }
+    }
+
+    private static boolean isAmbiguousWithDefaultKey(byte[] payload, String encryptKey, byte[] plaintext) {
+        if (DEFAULT_ENCODE_RULES.equals(encryptKey)) {
+            return false;
+        }
+        byte[] defaultPlaintext = tryDecrypt(payload, DEFAULT_ENCODE_RULES);
+        return defaultPlaintext != null && !Arrays.equals(plaintext, defaultPlaintext);
     }
 
     /**
@@ -125,33 +138,61 @@ public final class AesUtil {
      * @return content
      */
     public static String aesDecode(String content, String decryptKey) {
-        try {
-            byte[] byteDecode = getBytes(content, decryptKey);
-            return new String(byteDecode, StandardCharsets.UTF_8);
-        } catch (BadPaddingException e) {
-            if (!DEFAULT_ENCODE_RULES.equals(decryptKey)) {
-                log.warn("There has default encode secret encode content, try to decode with default secret key");
-                return aesDecode(content, DEFAULT_ENCODE_RULES);
-            }
-            log.error("aes decode content error: {}, please config right common secret key", e.getMessage());
-            return content;
-        } catch (NoSuchAlgorithmException e) {
-            log.error("no such algorithm: {}", e.getMessage(), e);
-        } catch (IllegalBlockSizeException e) {
-            log.error("illegal block size: {}", e.getMessage(), e);
-        } catch (NullPointerException e) {
-            log.error("null point exception: {}", e.getMessage(), e);
-        } catch (Exception e) {
-            log.error("aes decode error: {}", e.getMessage(), e);
+        return decode(content, decryptKey, false);
+    }
+
+    /**
+     * Decode a password value that must be encrypted. Unlike {@link #aesDecode(String, String)},
+     * this method rejects values that cannot be decrypted instead of passing them through.
+     */
+    public static String aesDecodeRequired(String content) {
+        return decode(content, secretKey, true);
+    }
+
+    private static String decode(String content, String decryptKey, boolean required) {
+        byte[] payload = decodeBase64(content);
+        boolean tagged = hasPayloadHeader(payload);
+        if (required && (payload.length == 0
+                || (!tagged && payload.length % IV_LENGTH != 0))) {
+            throw new IllegalStateException("Value is not a valid encrypted payload");
+        }
+        byte[] activePlain = tryDecrypt(payload, decryptKey);
+        byte[] defaultPlain = decryptKey.equals(DEFAULT_ENCODE_RULES)
+                ? activePlain : tryDecrypt(payload, DEFAULT_ENCODE_RULES);
+        if (activePlain != null && defaultPlain != null && !Arrays.equals(activePlain, defaultPlain)) {
+            throw new IllegalStateException("Encrypted value is ambiguous: current and default keys decrypt it differently");
+        }
+        byte[] plaintext = activePlain != null ? activePlain : defaultPlain;
+        if (plaintext != null) {
+            return new String(plaintext, StandardCharsets.UTF_8);
+        }
+        if (tagged || required) {
+            throw new IllegalStateException("Unable to decrypt encrypted value; verify the configured common secret key");
         }
         return content;
     }
+
+    private static byte[] decodeBase64(String content) {
+        try {
+            return Base64.getDecoder().decode(content);
+        } catch (RuntimeException e) {
+            return new byte[0];
+        }
+    }
+
+    private static byte[] tryDecrypt(byte[] payload, String decryptKey) {
+        try {
+            return decrypt(payload, decryptKey);
+        } catch (Exception e) {
+            return null;
+        }
+    }
     
-    private static byte[] getBytes(final String content, final String decryptKey) throws Exception {
+    private static byte[] decrypt(final byte[] input, final String decryptKey) throws Exception {
         SecretKeySpec keySpec = new SecretKeySpec(decryptKey.getBytes(StandardCharsets.UTF_8), AES);
         // cipher based on the algorithm AES
         Cipher cipher = Cipher.getInstance(ALGORITHM_STR);
-        byte[] bytesContent = Base64.getDecoder().decode(content);
+        byte[] bytesContent = input.clone();
         byte[] initializationVector;
         if (hasPayloadHeader(bytesContent)) {
             if (bytesContent.length <= PAYLOAD_HEADER.length + IV_LENGTH) {
@@ -185,20 +226,32 @@ public final class AesUtil {
     /**
      * Determine whether it is encrypted
      * @param text text
-     * @return true false
+     * @return true when a supported current or legacy ciphertext is recognized
+     * @throws IllegalStateException when a tagged value is invalid or known keys decrypt it differently
      */
     public static boolean isCiphertext(String text, String decryptKey) {
-        // First use whether it is base64 to determine whether it has been encrypted
-        if (Base64Util.isBase64(text)) {
-            // if it is base64, decrypt directly to determine
-            try {
-                byte[] byteDecode = getBytes(text, decryptKey);
-                return byteDecode != null;
-            } catch (Exception e) {
-                log.warn("isCiphertext method error: {}", e.getMessage());
-                return false;
-            }
+        if (text == null || !Base64Util.isBase64(text)) {
+            return false;
         }
-        return false;
+        byte[] payload = decodeBase64(text);
+        boolean tagged = hasPayloadHeader(payload);
+        if (tagged) {
+            // A tagged payload is unambiguously intended to be encrypted. Reject corrupt or
+            // ambiguous values instead of letting management code re-encrypt them as plaintext.
+            decode(text, decryptKey, true);
+            return true;
+        }
+        // Legacy CBC has no marker, so preserve the historical heuristic for arbitrary
+        // Base64 strings while refusing cases where both known keys yield different plaintexts.
+        if (payload.length == 0 || payload.length % IV_LENGTH != 0) {
+            return false;
+        }
+        byte[] activePlain = tryDecrypt(payload, decryptKey);
+        byte[] defaultPlain = decryptKey.equals(DEFAULT_ENCODE_RULES)
+                ? activePlain : tryDecrypt(payload, DEFAULT_ENCODE_RULES);
+        if (activePlain != null && defaultPlain != null && !Arrays.equals(activePlain, defaultPlain)) {
+            throw new IllegalStateException("Encrypted value is ambiguous: current and default keys decrypt it differently");
+        }
+        return activePlain != null || defaultPlain != null;
     }
 }
