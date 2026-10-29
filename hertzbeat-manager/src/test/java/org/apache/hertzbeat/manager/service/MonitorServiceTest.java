@@ -211,6 +211,51 @@ class MonitorServiceTest {
     }
 
     @Test
+    void validateModifyRejectsAmbiguousStoredCredentialWithoutReplacingIt() {
+        String originalSecret = AesUtil.getDefaultSecretKey();
+        try {
+            AesUtil.setDefaultSecretKey("newkey1234567890");
+            long monitorId = 104L;
+            Monitor monitor = Monitor.builder()
+                    .id(monitorId)
+                    .name("ollama-ambiguous")
+                    .app("ollama")
+                    .scrape("static")
+                    .instance("127.0.0.1")
+                    .intervals(60)
+                    .build();
+            Param submitted = Param.builder()
+                    .monitorId(monitorId)
+                    .field("apiKey")
+                    .paramValue(MonitorParam.SECRET_MASK)
+                    .type(CommonConstants.PARAM_TYPE_PASSWORD)
+                    .build();
+            String storedCiphertext =
+                    "SEJBMgAAAAAAAAAAAAAAAAAAAz+DCz3LWaOCMiHK2E32IJCdysYty+2YhcUdccPp08KRjQ==";
+            Param stored = Param.builder()
+                    .id(41L)
+                    .monitorId(monitorId)
+                    .field("apiKey")
+                    .paramValue(storedCiphertext)
+                    .type(CommonConstants.PARAM_TYPE_PASSWORD)
+                    .build();
+            MonitorDto dto = new MonitorDto();
+            dto.setMonitor(monitor);
+            dto.setParams(List.of(submitted));
+            when(appService.getAppParamDefines("ollama"))
+                    .thenReturn(List.of(newParamDefine("apiKey", "password", false)));
+            when(appService.getAppDefineOption("ollama-ambiguous")).thenReturn(Optional.empty());
+            when(monitorDao.findMonitorByNameEquals("ollama-ambiguous")).thenReturn(Optional.of(monitor));
+            when(paramDao.findParamsByMonitorId(monitorId)).thenReturn(List.of(stored));
+            assertThrows(IllegalStateException.class, () -> monitorService.validate(dto, true));
+            assertEquals(MonitorParam.SECRET_MASK, dto.getParams().get(0).getParamValue());
+            assertEquals(storedCiphertext, stored.getParamValue());
+        } finally {
+            AesUtil.setDefaultSecretKey(originalSecret);
+        }
+    }
+
+    @Test
     void validateDetectRestoresStoredCredentialForAnExistingMonitor() {
         long monitorId = 103L;
         Monitor monitor = Monitor.builder()

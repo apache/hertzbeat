@@ -34,7 +34,6 @@ import javax.net.ssl.SSLContext;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.util.EntityUtils;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -119,8 +118,4 @@ class CommonHttpClientTlsCompatibilityTest {
         }
     }
 
-    @AfterAll
-    static void closeOwnedClient() {
-        CommonHttpClient.close();
-    }
 }
