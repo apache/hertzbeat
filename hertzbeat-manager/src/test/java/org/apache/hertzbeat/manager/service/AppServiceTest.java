@@ -53,6 +53,7 @@ import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -120,6 +121,8 @@ class AppServiceTest {
     @Test
     void linuxCpuScriptAlwaysEmitsOneLinePerAlias(@TempDir Path tempDir) throws Exception {
         String script = getCpuScript("linux");
+        assertFalse(script.contains("[[:space:]]"),
+                "Linux CPU parsing must support the mawk version in the Ubuntu 18.04 SSH fixture");
         for (String app : List.of("ubuntu", "centos", "debian", "almalinux", "euleros",
                 "opensuse", "rockylinux", "coreos", "redhat")) {
             assertEquals(script, getCpuScript(app), app + " should keep the shared Linux CPU script");
@@ -129,7 +132,7 @@ class AppServiceTest {
                 + "r b swpd free buff cache si so bi bo in cs us sy id wa st\n"
                 + "0 0 0 0 0 0 0 0 0 0 111 222 1 2 95 0 0\n"
                 + "0 0 0 0 0 0 0 0 0 0 112 223 1 2 94 0 0\n";
-        String cpuInfo = "processor : 0\nprocessor : 1\nprocessor : 2\nprocessor : 3\n";
+        String cpuInfo = "processor\t: 0\nprocessor\t: 1\nprocessor\t: 2\nprocessor\t: 3\n";
         String loadAverage = "0.10 0.20 0.30 1/100 123\n";
         List<String> missingModel = runCpuScript(script, tempDir,
                 "Architecture: aarch64\nCPU(s): 4\n", cpuInfo, loadAverage, vmstatOutput, false, false);
@@ -202,7 +205,11 @@ class AppServiceTest {
         Files.writeString(loadAverageFile, loadAverage, StandardCharsets.UTF_8);
         String isolatedScript = script.replace("/proc/cpuinfo", cpuInfoFile.toString())
                 .replace("/proc/loadavg", loadAverageFile.toString());
-        String shellFunctions = "lscpu() { [ \"$LC_ALL\" = C ] || return 77; "
+        String shellFunctions = "awk() { if [ \"$MAWK_REJECT_NAMED_CLASSES\" = 1 ]; then "
+                + "for argument do case \"$argument\" in *'[[:space:]]'*) "
+                + "echo 'synthetic mawk does not support [:space:]' >&2; return 2;; esac; done; fi; "
+                + "command awk \"$@\"; }; "
+                + "lscpu() { [ \"$LC_ALL\" = C ] || return 77; "
                 + "if [ \"$LSCPU_FAIL\" = 1 ]; then echo 'synthetic lscpu command failed' >&2; return 2; fi; "
                 + "printf '%s\\n' \"$LSCPU_OUTPUT\"; }; "
                 + "vmstat() { if [ \"$VMSTAT_FAIL\" = 1 ]; then echo 'synthetic vmstat command failed' >&2; return 2; fi; "
@@ -212,6 +219,7 @@ class AppServiceTest {
         processBuilder.environment().put("VMSTAT_OUTPUT", vmstatOutput);
         processBuilder.environment().put("LSCPU_FAIL", failLscpu ? "1" : "0");
         processBuilder.environment().put("VMSTAT_FAIL", failVmstat ? "1" : "0");
+        processBuilder.environment().put("MAWK_REJECT_NAMED_CLASSES", "1");
         Process process = processBuilder.start();
         process.getOutputStream().close();
         assertTrue(process.waitFor(5, TimeUnit.SECONDS), "Linux CPU script should finish promptly");
