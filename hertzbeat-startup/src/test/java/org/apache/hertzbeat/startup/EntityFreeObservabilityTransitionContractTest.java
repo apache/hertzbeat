@@ -20,6 +20,7 @@ package org.apache.hertzbeat.startup;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -205,11 +206,48 @@ class EntityFreeObservabilityTransitionContractTest {
             assertFalse(content.contains("/traces/stats"), relativePath);
         }
 
+        // Runtime integration docs must lead with the canonical route; the 1.8.x ingestion paths may
+        // only appear inside the upgrade notice that marks them as deprecated aliases.
+        for (String relativePath : new String[] {
+                "web-app/src/assets/doc/log-integration/otlp.en-US.md",
+                "web-app/src/assets/doc/log-integration/otlp.zh-CN.md"
+        }) {
+            String content = Files.readString(REPOSITORY_ROOT.resolve(relativePath));
+            assertTrue(content.contains("POST /api/otlp/v1/logs"), relativePath);
+            assertTrue(content.contains("/api/otlp/v1/logs"), relativePath);
+            assertTrue(content.contains("Deprecation: true"), relativePath);
+            assertFalse(content.contains("logs_endpoint: http://{hertzbeat_host}:1157/api/logs/"), relativePath);
+            assertFalse(content.contains("/logs/list"), relativePath);
+            assertFalse(content.contains("/logs/stats"), relativePath);
+            assertFalse(content.contains("/ingestion/otlp/metrics"), relativePath);
+            assertFalse(content.contains("/traces/list"), relativePath);
+            assertFalse(content.contains("/traces/stats"), relativePath);
+        }
+
+        String logService = Files.readString(REPOSITORY_ROOT.resolve("web-app/src/app/service/log.service.ts"));
+        assertTrue(logService.contains("/observability/logs"));
+        String observabilityService = Files.readString(
+                REPOSITORY_ROOT.resolve("web-app/src/app/service/observability.service.ts"));
+        assertTrue(observabilityService.contains("/observability/metrics/query"));
+        assertTrue(observabilityService.contains("/observability/traces"));
+        String streamComponent = Files.readString(REPOSITORY_ROOT.resolve(
+                "web-app/src/app/routes/log/log-stream/log-stream.component.ts"));
+        assertTrue(streamComponent.contains("/api/observability/logs/stream"));
+        String vectorConfig = Files.readString(REPOSITORY_ROOT.resolve(
+                "hertzbeat-e2e/hertzbeat-observability-e2e/src/test/resources/vector.yml"));
+        assertTrue(vectorConfig.contains("/api/otlp/v1/logs"));
+    }
+
+    @Test
+    void websiteDocsShouldDescribeCanonicalObservabilityRoutes() throws IOException {
+        Path websiteRoot = REPOSITORY_ROOT.resolve("home");
+        // The ASF source archive intentionally excludes the website. Skip only these website-only
+        // assertions there; when home exists, every documented path below remains required.
+        assumeTrue(Files.isDirectory(websiteRoot), "home/ is intentionally excluded from source archives");
+
         // Integration docs must lead with the canonical route; the 1.8.x ingestion paths may only
         // appear inside the upgrade notice that marks them as deprecated aliases.
         for (String relativePath : new String[] {
-                "web-app/src/assets/doc/log-integration/otlp.en-US.md",
-                "web-app/src/assets/doc/log-integration/otlp.zh-CN.md",
                 "home/docs/help/log_integration.md",
                 "home/i18n/zh-cn/docusaurus-plugin-content-docs/current/help/log_integration.md"
         }) {
@@ -235,19 +273,6 @@ class EntityFreeObservabilityTransitionContractTest {
             assertTrue(content.contains("`GET /api/logs/list` | `GET /api/observability/logs`"), relativePath);
             assertFalse(content.contains("`GET /api/traces/**`"), relativePath);
         }
-
-        String logService = Files.readString(REPOSITORY_ROOT.resolve("web-app/src/app/service/log.service.ts"));
-        assertTrue(logService.contains("/observability/logs"));
-        String observabilityService = Files.readString(
-                REPOSITORY_ROOT.resolve("web-app/src/app/service/observability.service.ts"));
-        assertTrue(observabilityService.contains("/observability/metrics/query"));
-        assertTrue(observabilityService.contains("/observability/traces"));
-        String streamComponent = Files.readString(REPOSITORY_ROOT.resolve(
-                "web-app/src/app/routes/log/log-stream/log-stream.component.ts"));
-        assertTrue(streamComponent.contains("/api/observability/logs/stream"));
-        String vectorConfig = Files.readString(REPOSITORY_ROOT.resolve(
-                "hertzbeat-e2e/hertzbeat-observability-e2e/src/test/resources/vector.yml"));
-        assertTrue(vectorConfig.contains("/api/otlp/v1/logs"));
     }
 
     private static String readSource(Path path) {
