@@ -68,7 +68,7 @@ public class ServiceCredentialMigration implements CommandLineRunner {
             jdbcTemplate.update("INSERT INTO hzb_config(type, content) VALUES (?, ?)",
                     MIGRATION_MARKER, "complete");
         } else {
-            log.error("Credential migration left {} ambiguous or invalid parameter(s) unchanged; "
+            log.error("Credential migration left {} unresolved parameter(s) unchanged; "
                     + "the migration will retry on the next start", result.unresolved());
         }
         if (result.migrated() > 0) {
@@ -108,8 +108,8 @@ public class ServiceCredentialMigration implements CommandLineRunner {
             }
             String valueToStore = value;
             if (StringUtils.hasText(value) && !encrypted) {
-                valueToStore = AesUtil.aesEncode(value);
                 try {
+                    valueToStore = AesUtil.aesEncode(value);
                     if (!AesUtil.isCiphertext(valueToStore)) {
                         throw new IllegalStateException("Could not encrypt a stored service credential");
                     }
@@ -131,8 +131,8 @@ public class ServiceCredentialMigration implements CommandLineRunner {
     record MigrationResult(int migrated, int unresolved) {}
 
     private void logUnresolvedCredential(long id) {
-        log.error("Skipping service credential migration for hzb_param id {} because its value "
-                + "could not be safely classified as encrypted. Restore the original common.secret or re-enter the credential; "
+        log.error("Skipping service credential migration for hzb_param id {} because it could not be handled safely. "
+                + "Verify the original common.secret or re-enter the credential; "
                 + "the row was left unchanged", id);
     }
 

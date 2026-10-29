@@ -28,6 +28,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
+import java.security.SecureRandom;
 import java.util.Arrays;
 import java.util.Base64;
 import org.junit.jupiter.api.Test;
@@ -47,6 +48,8 @@ class AesUtilTest {
             "SEJBMgABAgMEBQYHCAkKCwwNDg+n43EJKwgtYD7Jvh0pn2qjlhYerYPjVQw8b5+e4fmnCA==";
     private static final String AMBIGUOUS_DEFAULT_KEY_CIPHERTEXT =
             "SEJBMgAAAAAAAAAAAAAAAAAAAz+DCz3LWaOCMiHK2E32IJCdysYty+2YhcUdccPp08KRjQ==";
+    private static final String AMBIGUOUS_CURRENT_KEY_CIPHERTEXT =
+            "SEJBMjiUOslv6EforqVI6iA+xocDKgPaycfwdti1Gj1A8jrH+vgt1HmmeCmqTg7QFetaYg==";
 
     @Test
     void testAesEncode() {
@@ -91,10 +94,10 @@ class AesUtilTest {
         String encryptedText = aesEncode(originalText, VALID_KEY);
         assertTrue(isCiphertext(encryptedText, VALID_KEY));
 
-        byte[] corruptPayload = Base64.getDecoder().decode(encryptedText);
-        corruptPayload[corruptPayload.length - 1] ^= 1;
+        byte[] corruptedPayload = Base64.getDecoder().decode(encryptedText);
+        byte[] truncatedPayload = Arrays.copyOf(corruptedPayload, corruptedPayload.length - 1);
         assertThrows(IllegalStateException.class,
-                () -> isCiphertext(Base64.getEncoder().encodeToString(corruptPayload), VALID_KEY));
+                () -> isCiphertext(Base64.getEncoder().encodeToString(truncatedPayload), VALID_KEY));
 
         // Test with plain text, normal text is not ciphertext
         String plainText = "This is not encrypted";
@@ -115,6 +118,52 @@ class AesUtilTest {
                 () -> aesDecode(AMBIGUOUS_DEFAULT_KEY_CIPHERTEXT, "newkey1234567890"));
         assertEquals("This is a secret message",
                 aesDecode(AMBIGUOUS_DEFAULT_KEY_CIPHERTEXT, AesUtil.DEFAULT_ENCODE_RULES));
+    }
+
+    @Test
+    void testAesEncodeRetriesAnIvThatWouldBeAmbiguousWithDefaultFallback() {
+        String currentKey = "0123456789abcdef";
+        String plaintext = "legacy-ollama-key";
+        byte[] ambiguousPayload = Base64.getDecoder().decode(AMBIGUOUS_CURRENT_KEY_CIPHERTEXT);
+        byte[] ambiguousIv = Arrays.copyOfRange(ambiguousPayload, 4, 20);
+        assertEquals(AMBIGUOUS_CURRENT_KEY_CIPHERTEXT,
+                encryptHba2(plaintext, currentKey, ambiguousIv));
+        assertThrows(IllegalStateException.class,
+                () -> isCiphertext(AMBIGUOUS_CURRENT_KEY_CIPHERTEXT, currentKey));
+
+        byte[] safeIv = findSafeIv(plaintext, currentKey);
+        SequenceSecureRandom secureRandom = new SequenceSecureRandom(ambiguousIv, safeIv);
+        String encrypted = AesUtil.aesEncode(plaintext, currentKey, secureRandom);
+
+        assertEquals(2, secureRandom.calls());
+        assertEquals(encryptHba2(plaintext, currentKey, safeIv), encrypted);
+        assertTrue(isCiphertext(encrypted, currentKey));
+        assertEquals(plaintext, aesDecode(encrypted, currentKey));
+    }
+
+    @Test
+    void testAesEncodeDoesNotReturnPlaintextWhenNoSafeIvCanBeGenerated() {
+        String currentKey = "0123456789abcdef";
+        String plaintext = "legacy-ollama-key";
+        byte[] payload = Base64.getDecoder().decode(AMBIGUOUS_CURRENT_KEY_CIPHERTEXT);
+        byte[] ambiguousIv = Arrays.copyOfRange(payload, 4, 20);
+        byte[][] repeatedIvs = new byte[16][];
+        Arrays.fill(repeatedIvs, ambiguousIv);
+        SequenceSecureRandom secureRandom = new SequenceSecureRandom(repeatedIvs);
+
+        assertThrows(IllegalStateException.class,
+                () -> AesUtil.aesEncode(plaintext, currentKey, secureRandom));
+        assertEquals(repeatedIvs.length, secureRandom.calls());
+    }
+
+    @Test
+    void testAesEncodePropagatesEncryptionFailureWithoutReturningPlaintext() {
+        String plaintext = "sensitive-plaintext";
+        IllegalStateException error = assertThrows(IllegalStateException.class,
+                () -> AesUtil.aesEncode(plaintext, "invalid-key"));
+
+        assertEquals("Unable to encrypt value", error.getMessage());
+        assertNotEquals(plaintext, error.getMessage());
     }
 
     @Test
@@ -146,9 +195,9 @@ class AesUtilTest {
     void testDecodeRequiredRejectsCorruptedOrPlainValues() {
         assertThrows(IllegalStateException.class, () -> AesUtil.aesDecodeRequired("not encrypted"));
         byte[] payload = Base64.getDecoder().decode(DEFAULT_KEY_CIPHERTEXT);
-        payload[payload.length - 1] ^= 1;
+        byte[] truncatedPayload = Arrays.copyOf(payload, payload.length - 1);
         assertThrows(IllegalStateException.class,
-                () -> AesUtil.aesDecodeRequired(Base64.getEncoder().encodeToString(payload)));
+                () -> AesUtil.aesDecodeRequired(Base64.getEncoder().encodeToString(truncatedPayload)));
         assertThrows(IllegalStateException.class,
                 () -> AesUtil.aesDecodeRequired(Base64.getEncoder().encodeToString(
                         Arrays.copyOf(payload, payload.length - 5))));
@@ -208,6 +257,43 @@ class AesUtilTest {
             return Base64.getEncoder().encodeToString(payload);
         } catch (Exception e) {
             throw new AssertionError(e);
+        }
+    }
+
+    private static byte[] findSafeIv(String plaintext, String key) {
+        for (int seed = 0; seed < 10_000; seed++) {
+            byte[] iv = new byte[16];
+            ByteBuffer.wrap(iv, 12, 4).putInt(seed);
+            try {
+                if (isCiphertext(encryptHba2(plaintext, key, iv), key)) {
+                    return iv;
+                }
+            } catch (IllegalStateException ignored) {
+                // Wrong-key padding is valid for this IV.
+            }
+        }
+        throw new AssertionError("Could not find an IV that is unambiguous with the default key");
+    }
+
+    private static final class SequenceSecureRandom extends SecureRandom {
+
+        private static final long serialVersionUID = 1L;
+
+        private final byte[][] values;
+
+        private int calls;
+
+        private SequenceSecureRandom(byte[]... values) {
+            this.values = values;
+        }
+
+        @Override
+        public void nextBytes(byte[] bytes) {
+            System.arraycopy(values[calls++], 0, bytes, 0, bytes.length);
+        }
+
+        int calls() {
+            return calls;
         }
     }
 }
