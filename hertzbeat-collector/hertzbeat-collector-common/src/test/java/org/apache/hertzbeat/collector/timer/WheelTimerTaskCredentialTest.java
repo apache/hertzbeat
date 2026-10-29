@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.collector.timer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
 import org.apache.hertzbeat.common.constants.CommonConstants;
@@ -65,5 +66,22 @@ class WheelTimerTaskCredentialTest {
 
         assertEquals("runtime-ollama-key",
                 job.getMetrics().get(0).getHttp().getAuthorization().getBearerTokenToken());
+    }
+
+    @Test
+    void rejectsAmbiguousCredentialBeforeCollection() {
+        AesUtil.setDefaultSecretKey("newkey1234567890");
+        Job job = Job.builder()
+                .app("ollama")
+                .defaultInterval(60)
+                .configmap(List.of(new Configmap(
+                        "apiKey",
+                        "SEJBMgAAAAAAAAAAAAAAAAAAAz+DCz3LWaOCMiHK2E32IJCdysYty+2YhcUdccPp08KRjQ==",
+                        CommonConstants.PARAM_TYPE_PASSWORD)))
+                .metrics(List.of())
+                .build();
+
+        assertThrows(IllegalStateException.class, () -> new WheelTimerTask(job, timeout -> {
+        }));
     }
 }
