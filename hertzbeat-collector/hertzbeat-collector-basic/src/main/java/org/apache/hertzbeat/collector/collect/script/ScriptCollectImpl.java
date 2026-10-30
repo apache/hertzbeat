@@ -22,9 +22,13 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.collect.common.OneRowResponseSupport;
@@ -48,8 +52,10 @@ public class ScriptCollectImpl extends AbstractCollect {
     private static final String POWERSHELL = "powershell";
     private static final String CMD_C = "/c";
     private static final String BASH_C = "-c";
-    private static final String POWERSHELL_C = "-Command";
+    private static final String POWERSHELL_ENCODED_COMMAND = "-EncodedCommand";
     private static final String POWERSHELL_FILE = "-File";
+    private static final String CLIXML_HEADER = "#< CLIXML";
+    private static final Pattern CLIXML_ERROR = Pattern.compile("<S S=\"Error\">(.*?)</S>", Pattern.DOTALL);
     private static final String PARSE_TYPE_MULTI_ROW = "multiRow";
     private static final String PARSE_TYPE_NETCAT = "netcat";
     private static final String PARSE_TYPE_LOG = "log";
@@ -78,7 +84,16 @@ public class ScriptCollectImpl extends AbstractCollect {
             switch (scriptProtocol.getScriptTool()) {
                 case BASH -> processBuilder = new ProcessBuilder(BASH, BASH_C, scriptProtocol.getScriptCommand().trim());
                 case CMD -> processBuilder = new ProcessBuilder(CMD, CMD_C, scriptProtocol.getScriptCommand().trim());
-                case POWERSHELL -> processBuilder = new ProcessBuilder("powershell.exe", POWERSHELL_C, scriptProtocol.getScriptCommand().trim());
+                // -Command lets the Windows command-line parser strip the quotes inside the
+                // script, so quoting-heavy commands arrive mangled and produce empty output
+                // (#3907); -EncodedCommand passes the script Base64-encoded as UTF-16LE,
+                // which PowerShell decodes verbatim
+                case POWERSHELL -> processBuilder = new ProcessBuilder(
+                        "powershell.exe",
+                        POWERSHELL_ENCODED_COMMAND,
+                        Base64.getEncoder()
+                                .encodeToString(
+                                        scriptProtocol.getScriptCommand().trim().getBytes(StandardCharsets.UTF_16LE)));
                 default -> {
                     builder.setCode(CollectRep.Code.FAIL);
                     builder.setMsg("Not support script tool:" + scriptProtocol.getScriptTool());
@@ -141,6 +156,12 @@ public class ScriptCollectImpl extends AbstractCollect {
             errorDrainer.join(1000);
             Long responseTime = System.currentTimeMillis() - startTime;
             String errorResult = errorBuffer.toString();
+            if (POWERSHELL.equals(scriptProtocol.getScriptTool())) {
+                // -EncodedCommand serializes progress/information/error records as CLIXML
+                // on a redirected stderr; keep only the error entries so logs and failure
+                // messages stay readable
+                errorResult = normalizePowerShellStderr(errorResult);
+            }
             if (!StringUtils.hasText(result)) {
                 if (OneRowResponseSupport.tryAppendEmptyOneRow(scriptProtocol.getParseType(), errorResult,
                         exitCode, metrics.getAliasFields(), builder, responseTime)) {
@@ -246,5 +267,32 @@ public class ScriptCollectImpl extends AbstractCollect {
             }
         }
         return response.toString();
+    }
+
+    /**
+     * Reduce PowerShell's CLIXML stderr document to its error entries. Progress and
+     * information records are dropped so they are not logged as script errors, while
+     * plain stderr (other tools) is returned unchanged.
+     */
+    static String normalizePowerShellStderr(String stdErr) {
+        if (stdErr == null || !stdErr.contains(CLIXML_HEADER)) {
+            return stdErr;
+        }
+        StringBuilder errors = new StringBuilder();
+        Matcher matcher = CLIXML_ERROR.matcher(stdErr);
+        while (matcher.find()) {
+            errors.append(unescapeClixml(matcher.group(1)));
+        }
+        return errors.toString().trim();
+    }
+
+    private static String unescapeClixml(String text) {
+        return text.replace("_x000D__x000A_", "\n")
+                .replace("_x000D_", "\r")
+                .replace("_x000A_", "\n")
+                .replace("_x0009_", "\t")
+                .replace("&lt;", "<")
+                .replace("&gt;", ">")
+                .replace("&amp;", "&");
     }
 }
