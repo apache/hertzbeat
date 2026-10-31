@@ -285,7 +285,7 @@ class AgentPlatformWorkflowIntegrationTest {
         provider.setModel("synthetic-local-model");
         provider.setBaseUrl(model.baseUrl());
         provider.setApiKey("synthetic-non-secret-test-placeholder");
-        HertzBeatModel client = new OpenAiCompatibleAgentModelProvider().createModel(provider);
+        HertzBeatModel client = new OpenAiCompatibleAgentModelProvider(new AgentRuntimeProperties()).createModel(provider);
         AgentRuntimeContext context = AgentRuntimeContext.builder()
                 .entryType(AgentRuntimeEntryType.USER_INPUT).approvalHandling(AgentApprovalHandling.DENY)
                 .channelId("web-ui").receivedAt(1L)

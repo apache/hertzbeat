@@ -18,6 +18,7 @@
 import { terminalMessages } from './agent-terminal-messages';
 import type { AgentGatewayEvent, AgentRunSnapshot } from './agent-workspace-contract';
 import { initialAgentWorkspaceRun, type AgentWorkspaceRunState } from './agent-run-state';
+import { clearModelRetry, reduceModelRetry } from './agent-workspace-retry';
 import {
   recoverApprovals,
   reduceMessageEvent,
@@ -78,7 +79,7 @@ function reduceLifecycleEvent(
   switch (event.type) {
     case 'RUN_STARTED':
       return {
-        ...withoutEvidence(state),
+        ...clearModelRetry(withoutEvidence(state)),
         status: 'running',
         cancelled: false,
         recoveryAvailable: true,
@@ -87,7 +88,7 @@ function reduceLifecycleEvent(
       };
     case 'RUN_COMPLETED':
       return {
-        ...state,
+        ...clearModelRetry(state),
         status: 'complete',
         cancelled: false,
         recoveryAvailable: false,
@@ -96,27 +97,32 @@ function reduceLifecycleEvent(
       };
     case 'RUN_STATUS':
       return reduceRunStatus(state, event);
-    case 'ERROR': {
-      const status = stringField(event.payload, 'status').toUpperCase();
-      const recoveryRequired = status === 'RECOVERY_REQUIRED';
-      const targetFailure =
-        status === 'TARGET_MISMATCH' ? 'mismatch' : status === 'TARGET_UNAVAILABLE' ? 'unavailable' : undefined;
-      return {
-        ...state,
-        ...(status === 'CANCELLED' ? { tools: stopUnresolvedTools(state.tools), approvals: [] } : {}),
-        ...(event.runUid ? { runUid: event.runUid } : {}),
-        status: 'error',
-        cancelled: status === 'CANCELLED',
-        recoveryAvailable: false,
-        retryAvailable: !recoveryRequired && targetFailure === undefined,
-        recoveryRequired,
-        ...(targetFailure ? { targetFailure } : {}),
-        errorMessage: stringField(event.payload, 'errorMessage')
-      };
-    }
+    case 'MODEL_RETRY':
+      return reduceModelRetry(state, event);
+    case 'ERROR':
+      return reduceErrorEvent(state, event);
     default:
       return undefined;
   }
+}
+
+function reduceErrorEvent(state: AgentWorkspaceRunState, event: AgentGatewayEvent): AgentWorkspaceRunState {
+  const status = stringField(event.payload, 'status').toUpperCase();
+  const recoveryRequired = status === 'RECOVERY_REQUIRED';
+  const targetFailure =
+    status === 'TARGET_MISMATCH' ? 'mismatch' : status === 'TARGET_UNAVAILABLE' ? 'unavailable' : undefined;
+  return {
+    ...clearModelRetry(state),
+    ...(status === 'CANCELLED' ? { tools: stopUnresolvedTools(state.tools), approvals: [] } : {}),
+    ...(event.runUid ? { runUid: event.runUid } : {}),
+    status: 'error',
+    cancelled: status === 'CANCELLED',
+    recoveryAvailable: false,
+    retryAvailable: !recoveryRequired && targetFailure === undefined,
+    recoveryRequired,
+    ...(targetFailure ? { targetFailure } : {}),
+    errorMessage: stringField(event.payload, 'errorMessage')
+  };
 }
 
 function reduceRunStatus(state: AgentWorkspaceRunState, event: AgentGatewayEvent): AgentWorkspaceRunState {
@@ -125,7 +131,7 @@ function reduceRunStatus(state: AgentWorkspaceRunState, event: AgentGatewayEvent
   const runUid = event.runUid ? { runUid: event.runUid } : {};
   if (status === 'CREATED' || status === 'RUNNING') {
     return {
-      ...state,
+      ...clearModelRetry(state),
       ...runUid,
       status: 'running',
       cancelled: false,
@@ -143,10 +149,15 @@ function reduceRunStatus(state: AgentWorkspaceRunState, event: AgentGatewayEvent
   if (status === 'SUCCEEDED') {
     const result = stringField(event.payload, 'result');
     if (!result || event.payload.replayAvailable === false) {
-      return { ...state, ...runUid, status: 'error', errorMessage: stringField(event.payload, 'errorMessage') };
+      return {
+        ...clearModelRetry(state),
+        ...runUid,
+        status: 'error',
+        errorMessage: stringField(event.payload, 'errorMessage')
+      };
     }
     return {
-      ...state,
+      ...clearModelRetry(state),
       ...runUid,
       status: 'complete',
       cancelled: false,
@@ -156,7 +167,7 @@ function reduceRunStatus(state: AgentWorkspaceRunState, event: AgentGatewayEvent
     };
   }
   return {
-    ...state,
+    ...clearModelRetry(state),
     ...runUid,
     status: 'error',
     cancelled: status === 'CANCELLED',

@@ -19,6 +19,7 @@ import { describe, expect, it } from 'vitest';
 
 import { agentGatewayEventSchema, agentProviderConfigurationViewSchema } from './agent-gateway-schema';
 import { agentWorkspaceReducer, initialAgentWorkspaceRun } from '../model/agent-workspace-reducer';
+import type { AgentGatewayEvent } from '../model/agent-workspace-contract';
 
 describe('Protocol selection and ordered message projection', () => {
   const provider = {
@@ -60,9 +61,17 @@ describe('Protocol selection and ordered message projection', () => {
       itemId: 'm-1',
       timestamp: 1
     };
-    const started = agentGatewayEventSchema.parse({ ...base, type: 'MESSAGE_STARTED', payload: {} });
+    const started = agentGatewayEventSchema.parse({
+      ...base,
+      type: 'MESSAGE_STARTED',
+      payload: {}
+    }) as AgentGatewayEvent;
     const state = agentWorkspaceReducer(initialAgentWorkspaceRun, started);
-    const complete = agentGatewayEventSchema.parse({ ...base, type: 'MESSAGE_COMPLETED', payload: { parts } });
+    const complete = agentGatewayEventSchema.parse({
+      ...base,
+      type: 'MESSAGE_COMPLETED',
+      payload: { parts }
+    }) as AgentGatewayEvent;
     const view = agentWorkspaceReducer(state, complete).messages[0];
     expect(view?.parts).toEqual([
       { type: 'text', text: 'before' },

@@ -46,6 +46,13 @@ export type AgentInputRequest = {
   status: string;
 };
 
+export type AgentModelRetry = {
+  attempt: number;
+  maxAttempts: number;
+  delayMs?: number;
+  errorMessage?: string;
+};
+
 export type AgentWorkspaceRunState = {
   runUid?: string;
   cancelled?: boolean;
@@ -63,6 +70,7 @@ export type AgentWorkspaceRunState = {
   retryAvailable?: boolean;
   recoveryRequired?: boolean;
   targetFailure?: 'mismatch' | 'unavailable';
+  modelRetry?: AgentModelRetry;
 };
 
 export const initialAgentWorkspaceRun: AgentWorkspaceRunState = {

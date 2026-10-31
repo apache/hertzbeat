@@ -4455,6 +4455,9 @@
     "targetUnavailable": "HertzBeat cannot verify this task target right now. No task was started.",
     "invalidTarget": "This task link has an invalid or unsupported target. Return to the source page and start again.",
     "activeObservationPaused": "Live observation paused. The durable run is still in progress; no completion was assumed.",
+    "modelRetrying": "Model request failed: {{reason}}. Retrying in {{delay}}s ({{attempt}}/{{maxAttempts}})…",
+    "modelRetryingNoDelay": "Model request failed: {{reason}}. Retrying ({{attempt}}/{{maxAttempts}})…",
+    "modelRetryUnknownReason": "unknown provider error",
     "context": {
       "label": "Run context",
       "open": "Open run details",

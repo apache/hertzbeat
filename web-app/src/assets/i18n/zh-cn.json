@@ -4455,6 +4455,9 @@
     "targetUnavailable": "HertzBeat 暂时无法核验当前任务目标，本次任务未启动。",
     "invalidTarget": "此任务链接包含无效或暂不支持的目标，请返回来源页面重新发起。",
     "activeObservationPaused": "实时观察已暂停，服务器仍将该运行标记为进行中，系统未假定它已经完成。",
+    "modelRetrying": "模型请求失败：{{reason}}，{{delay}} 秒后自动重试（{{attempt}}/{{maxAttempts}}）…",
+    "modelRetryingNoDelay": "模型请求失败：{{reason}}，正在自动重试（{{attempt}}/{{maxAttempts}}）…",
+    "modelRetryUnknownReason": "未知服务端错误",
     "context": {
       "label": "运行上下文",
       "open": "打开运行详情",
