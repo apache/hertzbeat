@@ -63,6 +63,11 @@ public class ReloadableAgentRuntimeModelClient implements AgentRuntimeModelClien
     }
 
     @Override
+    public boolean supportsReplyReview() {
+        return true;
+    }
+
+    @Override
     public AgentRuntimeModelResponse stream(AgentRuntimeModelRequest request, AgentRuntimeControl control,
                                             Consumer<String> textDeltaConsumer) {
         HertzBeatModel current = model.get();

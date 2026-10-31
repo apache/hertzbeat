@@ -20,6 +20,7 @@ import { AgentWorkspaceContextPane } from './agent-workspace-context-pane';
 import { AgentWorkspaceConversation } from './agent-workspace-conversation';
 import { AgentWorkspaceSessionPane } from './agent-workspace-session-pane';
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import styles from './agent-workspace-view.module.css';
 
 export function AgentWorkspaceView({
@@ -33,19 +34,37 @@ export function AgentWorkspaceView({
   onOpenProviders: () => void;
   onOpenSchedules: () => void;
 }) {
-  const [contextOpen, setContextOpen] = useState(false);
+  const { t } = useTranslation();
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const targetKey = controller.target ? JSON.stringify(controller.target) : '';
+  const [contextPreference, setContextPreference] = useState<{ key: string; open: boolean }>();
+  const contextOpen =
+    contextPreference?.key === targetKey
+      ? contextPreference.open
+      : Boolean(targetKey && controller.run.status === 'idle');
+  const setContextOpen = (open: boolean) => setContextPreference({ key: targetKey, open });
   return (
-    <div className={styles.workspace} data-context-open={contextOpen}>
+    <div className={styles.workspace} data-ai-workspace="true" data-context-open={contextOpen}>
+      {historyOpen ? (
+        <button
+          className={styles.historyBackdrop}
+          aria-label={t('aiWorkspace.sessions.close')}
+          onClick={() => setHistoryOpen(false)}
+        />
+      ) : null}
       <AgentWorkspaceSessionPane
         controller={controller}
         isAdmin={isAdmin}
+        mobileOpen={historyOpen}
+        onClose={() => setHistoryOpen(false)}
         onOpenProviders={onOpenProviders}
         onOpenSchedules={onOpenSchedules}
       />
       <AgentWorkspaceConversation
+        onOpenHistory={() => setHistoryOpen(true)}
         contextOpen={contextOpen}
         controller={controller}
-        onToggleContext={() => setContextOpen(current => !current)}
+        onToggleContext={() => setContextOpen(!contextOpen)}
       />
       {contextOpen ? (
         <AgentWorkspaceContextPane controller={controller} isAdmin={isAdmin} onClose={() => setContextOpen(false)} />

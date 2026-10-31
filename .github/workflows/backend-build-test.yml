@@ -82,6 +82,15 @@ jobs:
       - name: Build with Maven
         run: mvnd clean -B package -pl '!hertzbeat-e2e' -Prelease -Dmaven.test.skip=false --file pom.xml
 
+      - name: Verify fresh and upgraded AI workflow schemas on MySQL and PostgreSQL
+        run: |
+          mvnd -B test -pl hertzbeat-startup -am \
+            -Dtest=TargetSchemaProvisionerDatabaseTest \
+            -Dmaven.test.skip=false \
+            -Dsurefire.failIfNoSpecifiedTests=false \
+            -Dhertzbeat.test.database-containers=true \
+            --file pom.xml
+
       - name: Verify server release package
         run: |
           release_version=$(sed -n 's:.*<hzb.version>\([^<][^<]*\)</hzb.version>.*:\1:p' pom.xml | head -1)
