@@ -54,6 +54,13 @@ public class AgentRuntimeProperties {
 
     private Duration modelRequestTimeout = Duration.ofSeconds(360);
 
+    /**
+     * Maximum time a model stream may stay silent (no bytes received) before the attempt is treated as failed.
+     * Guards against providers that accept the request but never deliver a first token; raise it for reasoning
+     * models with long silent thinking phases.
+     */
+    private Duration modelStreamIdleTimeout = Duration.ofSeconds(120);
+
     private Duration toolTimeout = Duration.ofSeconds(180);
 
     private Duration transcriptRetention = Duration.ofDays(30);
@@ -106,6 +113,10 @@ public class AgentRuntimeProperties {
 
     public void setModelRequestTimeout(Duration modelRequestTimeout) {
         this.modelRequestTimeout = requirePositive("modelRequestTimeout", modelRequestTimeout);
+    }
+
+    public void setModelStreamIdleTimeout(Duration modelStreamIdleTimeout) {
+        this.modelStreamIdleTimeout = requirePositive("modelStreamIdleTimeout", modelStreamIdleTimeout);
     }
 
     public void setToolTimeout(Duration toolTimeout) {
@@ -207,9 +218,15 @@ public class AgentRuntimeProperties {
     @ToString
     public static class RetryProperties {
 
-        private int maxModelRetries = 2;
+        private int maxModelRetries = 5;
 
-        private Duration initialBackoff = Duration.ofMillis(500);
+        // Defaults pace five retries at 2s/4s/8s/16s/16s (~46s total) so transient provider
+        // outages recover without hammering a rate-limited endpoint.
+        private Duration initialBackoff = Duration.ofSeconds(2);
+
+        private double backoffMultiplier = 2.0D;
+
+        private Duration maxBackoff = Duration.ofSeconds(16);
 
         public void setMaxModelRetries(int maxModelRetries) {
             this.maxModelRetries = requireNonNegative("retry.maxModelRetries", maxModelRetries);
@@ -217,6 +234,17 @@ public class AgentRuntimeProperties {
 
         public void setInitialBackoff(Duration initialBackoff) {
             this.initialBackoff = requirePositive("retry.initialBackoff", initialBackoff);
+        }
+
+        public void setBackoffMultiplier(double backoffMultiplier) {
+            if (backoffMultiplier < 1) {
+                throw new IllegalArgumentException("retry.backoffMultiplier must be >= 1");
+            }
+            this.backoffMultiplier = backoffMultiplier;
+        }
+
+        public void setMaxBackoff(Duration maxBackoff) {
+            this.maxBackoff = requirePositive("retry.maxBackoff", maxBackoff);
         }
     }
 

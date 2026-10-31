@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.ai.gateway.runtime.provider;
 
+import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeProperties;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -68,7 +70,7 @@ class AgentOutputTokenWireTest {
                 config.setApiKey("local-test-only");
                 config.setProtocol(protocol);
                 config.setBaseUrl("http://127.0.0.1:" + server.getAddress().getPort() + "/v1");
-                var model = new OpenAiCompatibleAgentModelProvider().createModel(config);
+                var model = new OpenAiCompatibleAgentModelProvider(new AgentRuntimeProperties()).createModel(config);
                 var request =
                         AgentRuntimeModelRequest.builder()
                                 .prompt(
