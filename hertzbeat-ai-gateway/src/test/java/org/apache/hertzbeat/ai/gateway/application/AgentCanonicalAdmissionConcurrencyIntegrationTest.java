@@ -175,6 +175,10 @@ class AgentCanonicalAdmissionConcurrencyIntegrationTest {
                 canonical(invocation.getArgument(1), "b".repeat(64)));
 
         AgentRunAdmission replay = admissionService.admit(command("message-1", "basic.qps"));
+        // A distinct new message may run only after the previously replayed run is terminal.
+        var completed = runDao.findById(first.run().getId()).orElseThrow();
+        completed.setStatus(org.apache.hertzbeat.ai.gateway.conversation.AgentRunStatus.SUCCEEDED.name());
+        runDao.saveAndFlush(completed);
         AgentRunAdmission next = admissionService.admit(command("message-2", "basic.qps"));
 
         assertEquals(AgentRunAdmission.Decision.REPLAY_ACTIVE, replay.decision());
@@ -266,6 +270,10 @@ class AgentCanonicalAdmissionConcurrencyIntegrationTest {
         when(alertService.findSingleAlert("workspace-a", 42L))
                 .thenReturn(Optional.of(singleAlert("resolved")));
         AgentRunAdmission replay = admissionService.admit(alertCommand("message-alert", 42L));
+        // A distinct new message may run only after the previously replayed run is terminal.
+        var completed = runDao.findById(first.run().getId()).orElseThrow();
+        completed.setStatus(org.apache.hertzbeat.ai.gateway.conversation.AgentRunStatus.SUCCEEDED.name());
+        runDao.saveAndFlush(completed);
         AgentRunAdmission next = admissionService.admit(alertCommand("message-alert-next", 42L));
 
         assertEquals(AgentRunAdmission.Decision.REPLAY_ACTIVE, replay.decision());
@@ -356,6 +364,10 @@ class AgentCanonicalAdmissionConcurrencyIntegrationTest {
         when(entityWorkspaceQueryService.findEntityById("workspace-a", 42L))
                 .thenReturn(Optional.of(entity("degraded")));
         AgentRunAdmission replay = admissionService.admit(entityCommand("message-entity", 42L));
+        // A distinct new message may run only after the previously replayed run is terminal.
+        var completed = runDao.findById(first.run().getId()).orElseThrow();
+        completed.setStatus(org.apache.hertzbeat.ai.gateway.conversation.AgentRunStatus.SUCCEEDED.name());
+        runDao.saveAndFlush(completed);
         AgentRunAdmission next = admissionService.admit(entityCommand("message-entity-next", 42L));
 
         assertEquals(AgentRunAdmission.Decision.REPLAY_ACTIVE, replay.decision());

@@ -17,12 +17,8 @@
 
 package org.apache.hertzbeat.ai.gateway.application;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 import lombok.extern.slf4j.Slf4j;
+
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.InvokeCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.ReplyMode;
 import org.apache.hertzbeat.ai.gateway.application.GatewayEvent.ErrorPayload;
@@ -32,9 +28,9 @@ import org.apache.hertzbeat.ai.gateway.application.GatewayResponse.GatewaySingle
 import org.apache.hertzbeat.ai.gateway.application.GatewayResponse.GatewayStreamResponse;
 import org.apache.hertzbeat.ai.gateway.application.GatewayResponse.Meta;
 import org.apache.hertzbeat.ai.gateway.contract.UserInput;
+import org.apache.hertzbeat.ai.gateway.conversation.AgentRunService;
 import org.apache.hertzbeat.ai.gateway.conversation.AgentRunSnapshot;
 import org.apache.hertzbeat.ai.gateway.conversation.AgentRunSnapshotService;
-import org.apache.hertzbeat.ai.gateway.conversation.AgentRunService;
 import org.apache.hertzbeat.ai.gateway.conversation.AgentRunStatus;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEvent;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEvent.EventStatus;
@@ -45,8 +41,15 @@ import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeService;
 import org.apache.hertzbeat.common.entity.agent.AgentRun;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
+
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.SignalType;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Agent command execution service. Only agent-message commands enter runtime.
@@ -104,7 +107,11 @@ public class AgentCommandService {
     }
 
     GatewayStreamResponse invokeStream(GatewayCommand command, UserInput userInput) {
-        AgentRunAdmission admission = admit(command);
+        return invokeAdmittedStream((InvokeCommand) command, admit(command));
+    }
+
+    GatewayStreamResponse invokeAdmittedStream(InvokeCommand command, AgentRunAdmission admission) {
+        UserInput userInput = command.userInput();
         if (admission.decision() != AgentRunAdmission.Decision.EXECUTE_NEW) {
             return replayStream(command, userInput, admission);
         }
@@ -146,7 +153,8 @@ public class AgentCommandService {
     private AgentRunAdmission admit(GatewayCommand command) {
         AgentRunAdmission admission = admissionService.admit((InvokeCommand) command);
         if (admission.decision() == AgentRunAdmission.Decision.REJECT_MISMATCH) {
-            throw new IllegalArgumentException("Agent message identity conflicts with the durable run");
+            throw new IllegalArgumentException(
+                    "Agent message identity conflicts with the durable run");
         }
         return admission;
     }
@@ -197,7 +205,7 @@ public class AgentCommandService {
                         return Flux.just(recoveryRequiredErrorEvent(
                                 command, request, conversationId, recoveryFailure.operatorMessage()));
                     }
-                    log.debug("Agent Gateway runtime failed for run {}", request.getRun().getRunUid(), exception);
+                    log.warn("Agent Gateway runtime failed for run {}", request.getRun().getRunUid(), exception);
                     failInvocationIfIncomplete(request.getRun(), completed, "Agent Gateway runtime failed.");
                     return Flux.just(errorEvent(command, request, conversationId,
                             "Agent Gateway runtime failed."));
@@ -234,14 +242,17 @@ public class AgentCommandService {
         try {
             if (event.getType() == AgentRuntimeEventType.RUN_COMPLETED) {
                 if (!assistantCompletion.latestAssistantCompleted()) {
-                    throw new IllegalStateException("Agent runtime completed without an assistant message completion");
+                    throw new IllegalStateException(
+                            "Agent runtime completed without an assistant message completion");
                 }
                 if (!StringUtils.hasText(event.getResult())) {
-                    throw new IllegalStateException("Agent runtime completed without a durable result");
+                    throw new IllegalStateException(
+                            "Agent runtime completed without a durable result");
                 }
                 AgentRun succeededRun = runService.markSucceeded(run, event.getResult());
                 if (succeededRun == null || !StringUtils.hasText(succeededRun.getResultSummary())) {
-                    throw new IllegalStateException("Succeeded agent run must expose its persisted result");
+                    throw new IllegalStateException(
+                            "Succeeded agent run must expose its persisted result");
                 }
                 reliableFinalResult.compareAndSet(null, succeededRun.getResultSummary());
                 return;
@@ -299,7 +310,8 @@ public class AgentCommandService {
             runService.markFailed(run, "Agent Gateway runtime failed.");
             return;
         }
-        runService.markFailed(run, "Agent Gateway runtime stream completed without a terminal event.");
+        runService.markFailed(
+                run, "Agent Gateway runtime stream completed without a terminal event.");
     }
 
     private GatewayEvent terminalEvent(List<GatewayEvent> events) {
@@ -321,7 +333,8 @@ public class AgentCommandService {
             return "Agent Gateway runtime failed.";
         }
         if (!StringUtils.hasText(reliableFinalResult)) {
-            throw new IllegalStateException("Completed agent run must expose its reliable final result");
+            throw new IllegalStateException(
+                    "Completed agent run must expose its reliable final result");
         }
         return reliableFinalResult;
     }
@@ -385,16 +398,20 @@ public class AgentCommandService {
     private GatewayEvent runStatusEvent(GatewayCommand command, UserInput userInput, AgentRunSnapshot snapshot) {
         return GatewayEvent.builder()
                 .type(GatewayEventType.RUN_STATUS)
-                .eventId(snapshot.runUid() + ":status:" + snapshot.status().toLowerCase(java.util.Locale.ROOT))
+                .eventId(
+                        snapshot.runUid()
+                                + ":status:"
+                                + snapshot.status().toLowerCase(java.util.Locale.ROOT))
                 .conversationId(userInput.getConversationId())
                 .sessionUid(snapshot.sessionUid())
                 .runUid(snapshot.runUid())
-                .payload(RunStatusPayload.builder()
-                        .status(snapshot.status())
-                        .result(snapshot.result())
-                        .errorMessage(snapshot.errorMessage())
-                        .replayAvailable(snapshot.replayAvailable())
-                        .build())
+                .payload(
+                        RunStatusPayload.builder()
+                                .status(snapshot.status())
+                                .result(snapshot.result())
+                                .errorMessage(snapshot.errorMessage())
+                                .replayAvailable(snapshot.replayAvailable())
+                                .build())
                 .timestamp(System.currentTimeMillis())
                 .build();
     }

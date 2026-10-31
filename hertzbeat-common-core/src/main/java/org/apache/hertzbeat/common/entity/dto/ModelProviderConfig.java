@@ -53,4 +53,11 @@ public class ModelProviderConfig {
 
     @Schema(title = "Participation Model", description = "model for participation", example = "PROTECTED")
     private String participationModel;
+    @Schema(title = "Wire protocol: chat-completions (legacy default) or responses")
+    private String protocol;
+
+    public ModelProviderConfig(String uid, String type, String code, String baseUrl, String model,
+                               String apiKey, String participationModel) {
+        this(uid, type, code, baseUrl, model, apiKey, participationModel, null);
+    }
 }

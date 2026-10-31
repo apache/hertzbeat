@@ -26,30 +26,45 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
-import java.time.LocalDateTime;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
-/**
- * Agent Gateway run ledger entity.
- */
+import java.time.LocalDateTime;
+
+/** Agent Gateway run ledger entity. */
 @Data
 @Builder
 @Entity
 @EntityListeners(AuditingEntityListener.class)
-@Table(name = "hzb_agent_run", indexes = {
-        @Index(name = "idx_agent_run_uid", columnList = "run_uid"),
-        @Index(name = "idx_agent_run_session", columnList = "session_id"),
-        @Index(name = "idx_agent_run_target", columnList = "target_monitor_id, target_alert_id")
-}, uniqueConstraints = {
-        @UniqueConstraint(name = "uk_agent_run_uid", columnNames = "run_uid"),
-        @UniqueConstraint(name = "uk_agent_run_session_message", columnNames = {"session_id", "message_id"})
-})
+@Table(
+        name = "hzb_agent_run",
+        indexes = {
+            @Index(name = "idx_agent_run_uid", columnList = "run_uid"),
+            @Index(name = "idx_agent_run_session", columnList = "session_id"),
+            @Index(
+                    name = "idx_agent_run_target",
+                    columnList = "target_monitor_id, target_alert_id"),
+            @Index(name = "idx_agent_run_batch_root", columnList = "batch_root_run_uid")
+        },
+        uniqueConstraints = {
+            @UniqueConstraint(name = "uk_agent_run_uid", columnNames = "run_uid"),
+            @UniqueConstraint(
+                    name = "uk_agent_run_session_message",
+                    columnNames = {"session_id", "message_id"}),
+            @UniqueConstraint(
+                    name = "uk_agent_run_batch_parent",
+                    columnNames = "batch_parent_run_uid"),
+            @UniqueConstraint(
+                    name = "uk_agent_run_batch_segment",
+                    columnNames = {"batch_root_run_uid", "batch_segment"})
+        })
 @AllArgsConstructor
 @NoArgsConstructor
 public class AgentRun {
@@ -69,6 +84,18 @@ public class AgentRun {
 
     @Column(name = "entry_type", nullable = false, length = 32)
     private String entryType;
+
+    @Column(name = "batch_root_run_uid", length = 64)
+    private String batchRootRunUid;
+
+    @Column(name = "batch_parent_run_uid", length = 64)
+    private String batchParentRunUid;
+
+    @Column(name = "batch_segment")
+    private Integer batchSegment;
+
+    @Column(name = "batch_read_only")
+    private Boolean batchReadOnly;
 
     @Column(name = "target_monitor_id")
     private Long targetMonitorId;
