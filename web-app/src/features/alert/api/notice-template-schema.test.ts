@@ -53,14 +53,14 @@ describe('Notice Template wire schema', () => {
 
   it('parses exact custom detail evidence and rejects unsupported primitive values', () => {
     expect(parseNoticeTemplateDetailWire(custom)).toEqual(custom);
-    for (const type of [15, 16]) {
+    for (const type of [15, 16, 17]) {
       expect(parseNoticeTemplateDetailWire({ ...custom, type })).toEqual({ ...custom, type });
     }
 
     for (const evidence of [
       { ...custom, id: 0 },
       { ...custom, id: Number.MAX_SAFE_INTEGER + 1 },
-      { ...custom, type: 17 },
+      { ...custom, type: 18 },
       { ...custom, content: '' },
       { ...custom, gmtUpdate: Number.POSITIVE_INFINITY }
     ]) {

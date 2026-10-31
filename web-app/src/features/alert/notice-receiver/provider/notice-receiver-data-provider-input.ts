@@ -82,6 +82,7 @@ const draftShape = {
   wpushToken: z.string(),
   wpushChannel: z.string(),
   wpushTopicCode: z.string(),
+  teamsWebHookUrl: z.string(),
   configuredSecrets: secretKeyArraySchema,
   clearSecrets: secretKeyArraySchema
 };
