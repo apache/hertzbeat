@@ -273,6 +273,10 @@ public class RedfishCollectImpl extends AbstractCollect {
                 || (!values.isEmpty() && values.get(0) != null)) {
             return values;
         }
+        List<Object> readingUnits = JsonPathParser.parseContentWithOptionalJsonPath(resp, "$.ReadingUnits");
+        if (readingUnits.isEmpty() || !"RPM".equalsIgnoreCase(String.valueOf(readingUnits.get(0)))) {
+            return Collections.emptyList();
+        }
         return JsonPathParser.parseContentWithOptionalJsonPath(resp, LEGACY_FAN_SPEED_PATH);
     }
 }
