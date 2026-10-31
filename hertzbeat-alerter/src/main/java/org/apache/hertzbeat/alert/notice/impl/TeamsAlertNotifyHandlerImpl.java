@@ -47,6 +47,7 @@ final class TeamsAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
 
     private static final String TEAMS_HOST_SUFFIX = ".logic.azure.com";
     private static final String TEAMS_HOST = "logic.azure.com";
+    private static final String POWER_PLATFORM_HOST_SUFFIX = ".environment.api.powerplatform.com";
 
     @Override
     public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, GroupAlert alert)
@@ -159,7 +160,8 @@ final class TeamsAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
                 return false;
             }
             String host = uri.getHost().toLowerCase();
-            return TEAMS_HOST.equals(host) || host.endsWith(TEAMS_HOST_SUFFIX);
+            return TEAMS_HOST.equals(host) || host.endsWith(TEAMS_HOST_SUFFIX)
+                    || (host.length() > POWER_PLATFORM_HOST_SUFFIX.length() && host.endsWith(POWER_PLATFORM_HOST_SUFFIX));
         } catch (Exception e) {
             log.warn("Error validating Microsoft Teams webhook URL");
             return false;
