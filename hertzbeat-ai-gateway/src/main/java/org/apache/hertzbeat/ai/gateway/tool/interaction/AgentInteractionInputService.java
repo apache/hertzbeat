@@ -52,6 +52,13 @@ public class AgentInteractionInputService {
         if (!StringUtils.hasText(targetTool) || !StringUtils.hasText(title) || fields == null || fields.isEmpty()) {
             throw new IllegalArgumentException("targetTool, title, and fields are required");
         }
+        // Only these registered schemas expose inputRef. Do not offer forms whose opaque
+        // result cannot be passed to the target's exact argument/approval contract.
+        if (!java.util.Set.of("monitor.create", "monitor.update").contains(targetTool)) {
+            throw new IllegalArgumentException(
+                    "INPUT_REFERENCE_TARGET_UNSUPPORTED: use the discovered target schema directly"
+                            + " with already supplied non-secret values; do not collect secrets in chat");
+        }
         List<InputField> requestedFields = List.copyOf(fields);
         validateFields(requestedFields);
         String interactionId = id("aui");

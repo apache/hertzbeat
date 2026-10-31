@@ -29,6 +29,7 @@ import {
   nonEmptyStringSchema,
   nonNegativeIntegerSchema,
   nullableStringMapSchema,
+  nullableStringSchema,
   positiveIntegerSchema,
   timestampSchema
 } from './monitor-read-schema-primitives';
@@ -39,6 +40,7 @@ const monitorListItemSchema = z.object({
   app: nonEmptyStringSchema,
   instance: nonEmptyStringSchema,
   status: monitorStatusSchema,
+  description: nullableStringSchema.optional(),
   labels: nullableStringMapSchema.optional(),
   gmtCreate: timestampSchema.nullish(),
   gmtUpdate: timestampSchema.nullish()
@@ -106,6 +108,7 @@ function mapMonitorListItem(wire: MonitorListItemWire): Monitor {
     app: wire.app,
     instance: wire.instance,
     status: wire.status,
+    ...(wire.description === undefined ? {} : { description: wire.description }),
     ...(wire.labels === undefined ? {} : { labels: wire.labels }),
     ...(wire.gmtCreate == null ? {} : { gmtCreate: wire.gmtCreate }),
     ...(wire.gmtUpdate == null ? {} : { gmtUpdate: wire.gmtUpdate })

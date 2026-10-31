@@ -17,15 +17,26 @@
 
 package org.apache.hertzbeat.manager.dao;
 
+import jakarta.persistence.LockModeType;
 import java.util.List;
 import org.apache.hertzbeat.common.entity.manager.StatusPageHistory;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 /**
  * StatusPageOrg DAO interface.
  */
 public interface StatusPageHistoryDao extends JpaRepository<StatusPageHistory, Long>, JpaSpecificationExecutor<StatusPageHistory> {
+
+    /**
+     * Lock samples in the half-open local-day range for atomic compaction.
+     */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select h from StatusPageHistory h where h.timestamp >= :start and h.timestamp < :end order by h.id")
+    List<StatusPageHistory> findForAggregation(@Param("start") long start, @Param("end") long end);
 
     /**
      * find status page history by timestamp between start and end.

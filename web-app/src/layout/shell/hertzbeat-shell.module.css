@@ -443,6 +443,10 @@
   overflow-x: auto;
 }
 
+.content:has([data-ai-workspace='true']) {
+  padding-bottom: 0;
+}
+
 :where(.content > *) {
   grid-template-columns: minmax(0, 1fr);
   width: 100%;

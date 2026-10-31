@@ -20,6 +20,7 @@ import { useTranslation } from 'react-i18next';
 import { OperationalStatePanel } from '@/shared/operational-page';
 
 import type { MonitorMetricWorkbenchController, monitorRealtimeRows } from '../model/monitor-detail-model';
+import type { MonitorMetricLabels } from '../model/monitor-metric-labels';
 import { MonitorRealtimeTable } from './monitor-realtime-table';
 
 export function RealtimeEvidence({
@@ -28,6 +29,7 @@ export function RealtimeEvidence({
 }: {
   evidence: MonitorMetricWorkbenchController['state']['realtime'];
   group?: string | undefined;
+  labels?: MonitorMetricLabels | undefined;
   metricOptions?: MonitorMetricWorkbenchController['state']['catalog']['options'] | undefined;
   selectedMetricKey?: string | undefined;
   onSelectMetric?: ((metricKey: string) => void) | undefined;

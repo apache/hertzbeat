@@ -80,11 +80,23 @@ public class AgentRuntimeContextBuilder {
                 .runUid(run.getRunUid())
                 .runSessionId(run.getSessionId())
                 .effectiveTarget(effectiveTarget)
+                .requestedQueryWindow(!hasFixedWindow(effectiveTarget) ? AgentRequestedQueryWindow.from(
+                        userInput.getMessage().getText(), run.getGmtCreate() == null ? null
+                                : run.getGmtCreate().atZone(systemZone).toInstant().toEpochMilli()) : null)
                 .currentTimeIso(currentTimeIso)
                 .timezone(timezone)
                 .traceId(traceId)
                 .chatHistory(chatHistory)
                 .build();
+    }
+
+    private static boolean hasFixedWindow(AgentTargetRef target) {
+        return target != null && (target.getIncident() != null
+                || target.getSignal() != null && target.getSignal().getStart() != null && target.getSignal().getEnd() != null
+                || target.getTrace() != null && target.getTrace().getStart() != null && target.getTrace().getEnd() != null
+                || target.getLog() != null && target.getLog().getStart() != null && target.getLog().getEnd() != null
+                || target.getTopology() != null && target.getTopology().getStart() != null
+                    && target.getTopology().getEnd() != null);
     }
 
     private static AgentTargetRef effectiveTarget(AgentRun run) {

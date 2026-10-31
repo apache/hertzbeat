@@ -12,7 +12,7 @@
     "dev": "vite --host 0.0.0.0 --port 4200",
     "build": "tsc -b && vite build",
     "typecheck": "tsc -b --pretty false",
-    "toolchain:check": "node scripts/check-toolchain.mjs && node --test scripts/toolchain-contract.test.mjs scripts/bundle-limits-contract.test.mjs",
+    "toolchain:check": "node scripts/check-toolchain.mjs && node --test scripts/toolchain-contract.test.mjs scripts/bundle-limits-contract.test.mjs scripts/locale-catalog-plugin.test.mjs",
     "lint": "eslint . --max-warnings 0",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
@@ -29,7 +29,8 @@
     "budget": "node scripts/check-bundle.mjs",
     "dead-code": "knip",
     "verify": "pnpm toolchain:check && pnpm architecture && pnpm i18n:check && pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build && pnpm budget && pnpm dead-code && pnpm diff:check",
-    "prepare": "if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then pnpm hooks:install; fi"
+    "prepare": "if git rev-parse --is-inside-work-tree >/dev/null 2>&1; then pnpm hooks:install; fi",
+    "test:browser:ai": "playwright test --config playwright.ai.config.ts"
   },
   "knip": {
     "ignoreDependencies": [

@@ -1,0 +1,902 @@
+[
+  {
+    "tool": "monitor.investigation",
+    "args": {
+      "monitorId": 7,
+      "start": 60000,
+      "end": 120000
+    },
+    "output": {
+      "data": {
+        "monitorId": 7,
+        "window": {
+          "start": 60000,
+          "end": 120000
+        },
+        "collection": {
+          "state": "ready",
+          "source": "greptime_collection_events",
+          "event": {
+            "observedAt": 90000,
+            "durationMillis": 5,
+            "outcome": "success",
+            "collectorId": "local",
+            "target": "localhost",
+            "metricSet": "cpu",
+            "failureClass": null,
+            "phase": "collect",
+            "fieldCount": 1,
+            "rowCount": 1
+          }
+        },
+        "alerts": {
+          "state": "empty",
+          "source": "current_alerts",
+          "scope": "current",
+          "activeCount": 0,
+          "previews": []
+        },
+        "binding": {
+          "state": "empty",
+          "identity": null
+        }
+      },
+      "partial": false,
+      "redactionApplied": true,
+      "outputLimits": {}
+    },
+    "emptyOutput": {
+      "data": {
+        "monitorId": 7,
+        "window": {
+          "start": 60000,
+          "end": 120000
+        },
+        "collection": {
+          "state": "empty",
+          "source": "greptime_collection_events",
+          "event": null
+        },
+        "alerts": {
+          "state": "empty",
+          "source": "current_alerts",
+          "scope": "current",
+          "activeCount": 0,
+          "previews": []
+        },
+        "binding": {
+          "state": "empty",
+          "identity": null
+        }
+      },
+      "partial": false,
+      "redactionApplied": true,
+      "outputLimits": {}
+    },
+    "count": 1,
+    "emptyCount": 0,
+    "kind": "management"
+  },
+  {
+    "tool": "alert.investigation",
+    "args": {
+      "alertId": 8,
+      "start": 60000,
+      "end": 120000
+    },
+    "output": {
+      "data": {
+        "alertId": 8,
+        "window": {
+          "start": 60000,
+          "end": 120000,
+          "anchor": 90000
+        },
+        "alert": {
+          "name": "Test alert",
+          "status": "firing",
+          "severity": "critical",
+          "summary": null,
+          "content": null,
+          "labels": {},
+          "annotations": {}
+        },
+        "identity": {
+          "state": "unavailable",
+          "reason": "query_strategy_unavailable",
+          "source": "persisted_alert",
+          "identity": null
+        },
+        "metrics": {
+          "state": "unavailable",
+          "reason": "query_strategy_unavailable",
+          "source": "otlp_metrics",
+          "series": [],
+          "truncated": false
+        },
+        "logs": {
+          "state": "empty",
+          "reason": "no_data",
+          "source": "greptime_logs",
+          "records": [],
+          "truncated": false
+        },
+        "traces": {
+          "state": "empty",
+          "reason": "no_data",
+          "source": "greptime_traces",
+          "traces": [],
+          "truncated": false
+        },
+        "topology": {
+          "state": "empty",
+          "reason": "no_data",
+          "source": "greptime_semantic_graph",
+          "edges": [],
+          "truncated": false
+        },
+        "collection": {
+          "state": "empty",
+          "reason": "no_data",
+          "source": "greptime_collection_events",
+          "event": null
+        }
+      },
+      "partial": false,
+      "redactionApplied": true,
+      "outputLimits": {}
+    },
+    "emptyOutput": {
+      "data": {
+        "alertId": 8,
+        "window": {
+          "start": 60000,
+          "end": 120000,
+          "anchor": 90000
+        },
+        "alert": {
+          "name": "Test alert",
+          "status": "firing",
+          "severity": "critical",
+          "summary": null,
+          "content": null,
+          "labels": {},
+          "annotations": {}
+        },
+        "identity": {
+          "state": "unavailable",
+          "reason": "query_strategy_unavailable",
+          "source": "persisted_alert",
+          "identity": null
+        },
+        "metrics": {
+          "state": "unavailable",
+          "reason": "query_strategy_unavailable",
+          "source": "otlp_metrics",
+          "series": [],
+          "truncated": false
+        },
+        "logs": {
+          "state": "empty",
+          "reason": "no_data",
+          "source": "greptime_logs",
+          "records": [],
+          "truncated": false
+        },
+        "traces": {
+          "state": "empty",
+          "reason": "no_data",
+          "source": "greptime_traces",
+          "traces": [],
+          "truncated": false
+        },
+        "topology": {
+          "state": "empty",
+          "reason": "no_data",
+          "source": "greptime_semantic_graph",
+          "edges": [],
+          "truncated": false
+        },
+        "collection": {
+          "state": "empty",
+          "reason": "no_data",
+          "source": "greptime_collection_events",
+          "event": null
+        }
+      },
+      "partial": false,
+      "redactionApplied": true,
+      "outputLimits": {}
+    },
+    "count": 1,
+    "emptyCount": 1,
+    "kind": "management"
+  },
+  {
+    "tool": "alert.group.evidence",
+    "args": {
+      "ids": [
+        8,
+        9
+      ]
+    },
+    "output": {
+      "data": {
+        "groups": [
+          {
+            "id": 8,
+            "status": "firing"
+          }
+        ],
+        "missingIds": [
+          9
+        ],
+        "observedAt": 90000
+      },
+      "partial": false,
+      "redactionApplied": true,
+      "outputLimits": {}
+    },
+    "emptyOutput": {
+      "data": {
+        "groups": [],
+        "missingIds": [
+          8,
+          9
+        ],
+        "observedAt": 90000
+      },
+      "partial": false,
+      "redactionApplied": true,
+      "outputLimits": {}
+    },
+    "count": 1,
+    "emptyCount": 0,
+    "kind": "management"
+  },
+  {
+    "tool": "alert.group.query",
+    "args": {
+      "pageIndex": 0,
+      "pageSize": 20,
+      "status": "firing"
+    },
+    "output": {
+      "data": {
+        "content": [
+          {
+            "id": 8,
+            "status": "firing",
+            "labels": {},
+            "annotations": {}
+          }
+        ],
+        "pageIndex": 0,
+        "pageSize": 20,
+        "totalElements": 1,
+        "totalPages": 1
+      },
+      "partial": false,
+      "redactionApplied": true,
+      "outputLimits": {}
+    },
+    "emptyOutput": {
+      "data": {
+        "content": [],
+        "pageIndex": 0,
+        "pageSize": 20,
+        "totalElements": 0,
+        "totalPages": 0
+      },
+      "partial": false,
+      "redactionApplied": true,
+      "outputLimits": {}
+    },
+    "count": 1,
+    "emptyCount": 0,
+    "kind": "management"
+  },
+  {
+    "tool": "traces.list",
+    "args": {
+      "selection": {
+        "start": 60000,
+        "end": 120000
+      }
+    },
+    "output": {
+      "content": [
+        {
+          "traceId": "11111111111111111111111111111111",
+          "rootSpanId": "2222222222222222",
+          "rootState": "unique",
+          "rootSpanCount": 1,
+          "spanCount": 1,
+          "errorSpanCount": 0,
+          "durationNanos": 1000,
+          "startTime": 90000,
+          "observedStartTime": 90000,
+          "observedEndTime": 90000,
+          "representativeSpan": {
+            "spanId": "2222222222222222",
+            "spanName": "request",
+            "serviceName": "svc",
+            "serviceNamespace": null,
+            "startTime": 90000,
+            "durationNanos": 1000
+          }
+        }
+      ],
+      "pageIndex": 0,
+      "pageSize": 20,
+      "totalElements": 1,
+      "totalPages": 1,
+      "start": 60000,
+      "end": 120000,
+      "query": {
+        "sort": "newest",
+        "coverage": "window",
+        "rowLimit": 1500,
+        "truncated": false
+      },
+      "hasNext": false,
+      "hasPrevious": false,
+      "partial": false,
+      "outputTruncated": false
+    },
+    "emptyOutput": {
+      "content": [],
+      "pageIndex": 0,
+      "pageSize": 20,
+      "totalElements": 0,
+      "totalPages": 0,
+      "start": 60000,
+      "end": 120000,
+      "query": {
+        "sort": "newest",
+        "coverage": "window",
+        "rowLimit": 1500,
+        "truncated": false
+      },
+      "hasNext": false,
+      "hasPrevious": false,
+      "partial": false,
+      "outputTruncated": false
+    },
+    "count": 1,
+    "emptyCount": 0,
+    "kind": "trace"
+  },
+  {
+    "tool": "traces.spans",
+    "args": {
+      "selection": {
+        "start": 60000,
+        "end": 120000
+      }
+    },
+    "output": {
+      "state": "ready",
+      "window": {
+        "start": 60000,
+        "end": 120000,
+        "endExclusive": false
+      },
+      "population": "matched_spans",
+      "coverage": {
+        "mode": "window",
+        "rowLimit": null,
+        "scannedRows": null,
+        "truncated": false
+      },
+      "data": {
+        "content": [
+          {
+            "traceId": "11111111111111111111111111111111",
+            "spanId": "2222222222222222",
+            "parentSpanId": null,
+            "serviceName": "svc",
+            "serviceNamespace": null,
+            "environment": null,
+            "operationName": "request",
+            "spanKind": "SERVER",
+            "status": "OK",
+            "startTimeUnixNano": "90000000000",
+            "durationNanos": "1000"
+          }
+        ],
+        "totalElements": 1,
+        "pageIndex": 0,
+        "pageSize": 20,
+        "sort": "newest"
+      },
+      "partial": false,
+      "outputTruncated": false
+    },
+    "emptyOutput": {
+      "state": "ready",
+      "window": {
+        "start": 60000,
+        "end": 120000,
+        "endExclusive": false
+      },
+      "population": "matched_spans",
+      "coverage": {
+        "mode": "window",
+        "rowLimit": null,
+        "scannedRows": null,
+        "truncated": false
+      },
+      "data": {
+        "content": [],
+        "totalElements": 0,
+        "pageIndex": 0,
+        "pageSize": 20,
+        "sort": "newest"
+      },
+      "partial": false,
+      "outputTruncated": false
+    },
+    "count": 1,
+    "emptyCount": 0,
+    "kind": "trace"
+  },
+  {
+    "tool": "traces.histogram",
+    "args": {
+      "selection": {
+        "start": 60000,
+        "end": 120000
+      },
+      "bucketCount": 2
+    },
+    "output": {
+      "state": "ready",
+      "window": {
+        "start": 60000,
+        "end": 120000,
+        "endExclusive": false
+      },
+      "population": "matched_traces",
+      "coverage": {
+        "mode": "window",
+        "rowLimit": null,
+        "scannedRows": null,
+        "truncated": false
+      },
+      "data": {
+        "totalCount": 1,
+        "errorCount": 0,
+        "intervalMs": 30000,
+        "buckets": [
+          {
+            "start": 60000,
+            "end": 90000,
+            "endExclusive": true,
+            "count": 0,
+            "errorCount": 0
+          },
+          {
+            "start": 90000,
+            "end": 120000,
+            "endExclusive": false,
+            "count": 1,
+            "errorCount": 0
+          }
+        ]
+      },
+      "partial": false,
+      "outputTruncated": false
+    },
+    "emptyOutput": {
+      "state": "ready",
+      "window": {
+        "start": 60000,
+        "end": 120000,
+        "endExclusive": false
+      },
+      "population": "matched_traces",
+      "coverage": {
+        "mode": "window",
+        "rowLimit": null,
+        "scannedRows": null,
+        "truncated": false
+      },
+      "data": {
+        "totalCount": 0,
+        "errorCount": 0,
+        "intervalMs": 30000,
+        "buckets": [
+          {
+            "start": 60000,
+            "end": 90000,
+            "endExclusive": true,
+            "count": 0,
+            "errorCount": 0
+          },
+          {
+            "start": 90000,
+            "end": 120000,
+            "endExclusive": false,
+            "count": 0,
+            "errorCount": 0
+          }
+        ]
+      },
+      "partial": false,
+      "outputTruncated": false
+    },
+    "count": 1,
+    "emptyCount": 0,
+    "kind": "trace"
+  },
+  {
+    "tool": "traces.groups",
+    "args": {
+      "selection": {
+        "start": 60000,
+        "end": 120000
+      },
+      "groupBy": "serviceName"
+    },
+    "output": {
+      "state": "ready",
+      "window": {
+        "start": 60000,
+        "end": 120000,
+        "endExclusive": false
+      },
+      "population": "matched_traces",
+      "coverage": {
+        "mode": "window",
+        "rowLimit": null,
+        "scannedRows": null,
+        "truncated": false
+      },
+      "data": {
+        "groupBy": "serviceName",
+        "totalCount": 1,
+        "membership": "multiple",
+        "orderBy": "count-desc",
+        "groups": [
+          {
+            "value": "svc",
+            "count": 1,
+            "errorCount": 0
+          }
+        ],
+        "truncated": false
+      },
+      "partial": false,
+      "outputTruncated": false
+    },
+    "emptyOutput": {
+      "state": "ready",
+      "window": {
+        "start": 60000,
+        "end": 120000,
+        "endExclusive": false
+      },
+      "population": "matched_traces",
+      "coverage": {
+        "mode": "window",
+        "rowLimit": null,
+        "scannedRows": null,
+        "truncated": false
+      },
+      "data": {
+        "groupBy": "serviceName",
+        "totalCount": 0,
+        "membership": "multiple",
+        "orderBy": "count-desc",
+        "groups": [],
+        "truncated": false
+      },
+      "partial": false,
+      "outputTruncated": false
+    },
+    "count": 1,
+    "emptyCount": 0,
+    "kind": "trace"
+  },
+  {
+    "tool": "traces.detail",
+    "args": {
+      "traceId": "11111111111111111111111111111111",
+      "start": 60000,
+      "end": 120000
+    },
+    "output": {
+      "traceId": "11111111111111111111111111111111",
+      "selectedSpanId": "2222222222222222",
+      "window": {
+        "start": 60000,
+        "end": 120000
+      },
+      "gantt": {
+        "state": "ready",
+        "reason": "observed",
+        "source": "greptime_traces",
+        "detail": {
+          "rootSpanId": "2222222222222222",
+          "serviceName": "svc",
+          "serviceNamespace": null,
+          "deploymentEnvironment": null,
+          "entityId": null,
+          "entityType": null,
+          "rootSpanName": "request",
+          "durationNanos": "1000",
+          "status": "OK",
+          "startTime": 90000,
+          "errorSpanCount": 0,
+          "resourceAttributes": {},
+          "spans": [
+            {
+              "spanId": "2222222222222222",
+              "parentSpanId": null,
+              "spanName": "request",
+              "serviceName": "svc",
+              "serviceNamespace": null,
+              "deploymentEnvironment": null,
+              "entityId": null,
+              "entityType": null,
+              "status": "OK",
+              "statusMessage": null,
+              "spanKind": "SERVER",
+              "traceState": null,
+              "scopeName": null,
+              "scopeVersion": null,
+              "durationNanos": "1000",
+              "startTime": 90000,
+              "startTimeUnixNano": "90000000000",
+              "highlighted": false,
+              "resourceAttributes": {},
+              "spanAttributes": {},
+              "events": [],
+              "links": [],
+              "codeNavigationHint": null
+            }
+          ],
+          "rootState": "unique",
+          "rootSpanCount": 1,
+          "representativeSpan": {
+            "spanId": "2222222222222222",
+            "spanName": "request",
+            "serviceName": "svc",
+            "serviceNamespace": null,
+            "startTime": 90000,
+            "durationNanos": 1000
+          },
+          "observedStartTime": 90000,
+          "observedEndTime": 90000,
+          "missingParentCount": 0,
+          "partial": false
+        }
+      },
+      "sameTraceLogs": {
+        "state": "empty",
+        "reason": "no_data",
+        "source": "greptime_logs",
+        "truncated": false,
+        "logs": []
+      },
+      "red": {
+        "state": "unavailable",
+        "reason": "query_strategy_unavailable",
+        "source": "greptime_flow",
+        "resolutionSeconds": 60,
+        "identity": null,
+        "summary": null,
+        "series": []
+      },
+      "metrics": {
+        "state": "unavailable",
+        "reason": "query_strategy_unavailable",
+        "source": "otlp_metrics",
+        "truncated": false,
+        "series": []
+      },
+      "dependencies": {
+        "state": "empty",
+        "reason": "no_data",
+        "source": "greptime_traces",
+        "truncated": false,
+        "edges": []
+      },
+      "partial": true,
+      "outputTruncated": false
+    },
+    "emptyOutput": {
+      "traceId": "11111111111111111111111111111111",
+      "selectedSpanId": null,
+      "window": {
+        "start": 60000,
+        "end": 120000
+      },
+      "gantt": {
+        "state": "empty",
+        "reason": "no_data",
+        "source": "greptime_traces",
+        "detail": null
+      },
+      "sameTraceLogs": {
+        "state": "empty",
+        "reason": "no_data",
+        "source": "greptime_logs",
+        "truncated": false,
+        "logs": []
+      },
+      "red": {
+        "state": "unavailable",
+        "reason": "query_strategy_unavailable",
+        "source": "greptime_flow",
+        "resolutionSeconds": 60,
+        "identity": null,
+        "summary": null,
+        "series": []
+      },
+      "metrics": {
+        "state": "unavailable",
+        "reason": "query_strategy_unavailable",
+        "source": "otlp_metrics",
+        "truncated": false,
+        "series": []
+      },
+      "dependencies": {
+        "state": "empty",
+        "reason": "no_data",
+        "source": "greptime_traces",
+        "truncated": false,
+        "edges": []
+      },
+      "partial": true,
+      "outputTruncated": false
+    },
+    "count": 1,
+    "emptyCount": 0,
+    "kind": "trace"
+  },
+  {
+    "tool": "logs.repeated_errors.records",
+    "args": {
+      "start": 60000,
+      "end": 120000,
+      "groupKey": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+      "representativeUid": "log-1"
+    },
+    "output": {
+      "format": "json_text",
+      "partial": false,
+      "projectionTruncated": false,
+      "data": "{\"code\": 0, \"data\": {\"state\": \"ready\", \"scope\": {\"workspaceId\": \"default\", \"start\": 60000, \"end\": 120000, \"serviceName\": \"\", \"environment\": \"\"}, \"selection\": {\"groupKey\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"representativeUid\": \"log-1\"}, \"records\": [{\"uid\": \"log-1\", \"eventTime\": 90000}]}}"
+    },
+    "emptyOutput": {
+      "format": "json_text",
+      "partial": false,
+      "projectionTruncated": false,
+      "data": "{\"code\": 0, \"data\": {\"state\": \"ready\", \"scope\": {\"workspaceId\": \"default\", \"start\": 60000, \"end\": 120000, \"serviceName\": \"\", \"environment\": \"\"}, \"selection\": {\"groupKey\": \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\", \"representativeUid\": \"log-1\"}, \"records\": []}}"
+    },
+    "count": 1,
+    "emptyCount": 0,
+    "kind": "log"
+  },
+  {
+    "tool": "logs.list",
+    "args": {
+      "q": {
+        "start": 60000,
+        "end": 120000
+      }
+    },
+    "output": {
+      "format": "json_text",
+      "partial": false,
+      "projectionTruncated": false,
+      "data": "{\"code\": 0, \"data\": {\"content\": [{\"logRecordUid\": \"log-1\", \"timeUnixNano\": \"90000000000\", \"observedTimeUnixNano\": null, \"severityNumber\": 17, \"severityText\": \"ERROR\", \"body\": \"Test log\", \"attributes\": {}, \"droppedAttributesCount\": null, \"traceId\": \"11111111111111111111111111111111\", \"spanId\": \"2222222222222222\", \"traceFlags\": null, \"resource\": {}, \"resourceSchemaUrl\": null, \"instrumentationScope\": null, \"scopeSchemaUrl\": null}], \"totalElements\": 1, \"pageIndex\": 0, \"pageSize\": 20}}"
+    },
+    "emptyOutput": {
+      "format": "json_text",
+      "partial": false,
+      "projectionTruncated": false,
+      "data": "{\"code\": 0, \"data\": {\"content\": [], \"totalElements\": 0, \"pageIndex\": 0, \"pageSize\": 20}}"
+    },
+    "count": 1,
+    "emptyCount": 0,
+    "kind": "log"
+  },
+  {
+    "tool": "logs.live.snapshot",
+    "args": {
+      "q": {
+        "start": 60000,
+        "end": 120000
+      }
+    },
+    "output": {
+      "format": "json_text",
+      "partial": false,
+      "projectionTruncated": false,
+      "data": "{\"code\": 0, \"data\": {\"content\": [{\"logRecordUid\": \"log-1\", \"timeUnixNano\": \"90000000000\", \"observedTimeUnixNano\": null, \"severityNumber\": 17, \"severityText\": \"ERROR\", \"body\": \"Test log\", \"attributes\": {}, \"droppedAttributesCount\": null, \"traceId\": \"11111111111111111111111111111111\", \"spanId\": \"2222222222222222\", \"traceFlags\": null, \"resource\": {}, \"resourceSchemaUrl\": null, \"instrumentationScope\": null, \"scopeSchemaUrl\": null}], \"totalElements\": 1, \"pageIndex\": 0, \"pageSize\": 20}}",
+      "subscriptionOpened": false
+    },
+    "emptyOutput": {
+      "format": "json_text",
+      "partial": false,
+      "projectionTruncated": false,
+      "data": "{\"code\": 0, \"data\": {\"content\": [], \"totalElements\": 0, \"pageIndex\": 0, \"pageSize\": 20}}",
+      "subscriptionOpened": false
+    },
+    "count": 1,
+    "emptyCount": 0,
+    "kind": "log"
+  },
+  {
+    "tool": "logs.trace_coverage_stats",
+    "args": {
+      "q": {
+        "start": 60000,
+        "end": 120000
+      }
+    },
+    "output": {
+      "format": "json_text",
+      "partial": false,
+      "projectionTruncated": false,
+      "data": "{\"code\": 0, \"data\": {\"traceCoverage\": {\"withTrace\": 1, \"withoutTrace\": 0, \"withSpan\": 1, \"withBothTraceAndSpan\": 1}}}"
+    },
+    "emptyOutput": {
+      "format": "json_text",
+      "partial": false,
+      "projectionTruncated": false,
+      "data": "{\"code\": 0, \"data\": {\"traceCoverage\": {\"withTrace\": 0, \"withoutTrace\": 0, \"withSpan\": 0, \"withBothTraceAndSpan\": 0}}}"
+    },
+    "count": 1,
+    "emptyCount": 0,
+    "kind": "log"
+  },
+  {
+    "tool": "logs.trend_stats",
+    "args": {
+      "q": {
+        "start": 60000,
+        "end": 120000
+      }
+    },
+    "output": {
+      "format": "json_text",
+      "partial": false,
+      "projectionTruncated": false,
+      "data": "{\"code\": 0, \"data\": {\"start\": 60000, \"end\": 120000, \"intervalMs\": 60000, \"buckets\": [{\"start\": 60000, \"count\": 1}]}}"
+    },
+    "emptyOutput": {
+      "format": "json_text",
+      "partial": false,
+      "projectionTruncated": false,
+      "data": "{\"code\": 0, \"data\": {\"start\": 60000, \"end\": 120000, \"intervalMs\": 60000, \"buckets\": []}}"
+    },
+    "count": 1,
+    "emptyCount": 0,
+    "kind": "log"
+  },
+  {
+    "tool": "logs.compare",
+    "args": {
+      "source": "{\"version\": 1, \"parameters\": {\"start\": \"60000\", \"end\": \"120000\"}, \"queries\": [{\"id\": \"a\"}, {\"id\": \"b\"}]}"
+    },
+    "output": {
+      "format": "json_text",
+      "partial": false,
+      "projectionTruncated": false,
+      "data": "{\"code\": 0, \"data\": {\"window\": {\"start\": 60000, \"end\": 120000}, \"analysis\": {\"field\": null, \"view\": \"groups\", \"limit\": 20, \"order\": \"count-desc\", \"minCount\": 1, \"measure\": null, \"grouping\": null, \"intervalMs\": null, \"additionalMeasures\": null, \"transform\": null}, \"matchingA\": 1, \"matchingB\": 1, \"truncated\": false, \"intervalMs\": null, \"groups\": [{\"keys\": [], \"a\": {\"count\": 1}, \"b\": {\"count\": 1}, \"buckets\": []}]}}"
+    },
+    "emptyOutput": {
+      "format": "json_text",
+      "partial": false,
+      "projectionTruncated": false,
+      "data": "{\"code\": 0, \"data\": {\"window\": {\"start\": 60000, \"end\": 120000}, \"analysis\": {\"field\": null, \"view\": \"groups\", \"limit\": 20, \"order\": \"count-desc\", \"minCount\": 1, \"measure\": null, \"grouping\": null, \"intervalMs\": null, \"additionalMeasures\": null, \"transform\": null}, \"matchingA\": 0, \"matchingB\": 0, \"truncated\": false, \"intervalMs\": null, \"groups\": []}}"
+    },
+    "count": 1,
+    "emptyCount": 0,
+    "kind": "log"
+  }
+]
