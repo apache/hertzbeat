@@ -239,7 +239,6 @@ public class SshHelper {
                                     String privateKeyPassphrase) throws IOException, GeneralSecurityException {
         if (StringUtils.hasText(password)) {
             clientSession.addPasswordIdentity(password);
-            return;
         }
         if (!StringUtils.hasText(privateKey)) {
             return;
