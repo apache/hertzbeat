@@ -277,6 +277,41 @@ public class RedfishCollectImplTest {
     }
 
     @Test
+    void probeLegacyFanUnits() throws Exception {
+        Metrics metrics = metrics("Fan", "$.Name", "$.SpeedPercent.SpeedRPM");
+        String thermal = """
+                {"Fans":[
+                  {"@odata.id":"/redfish/v1/Chassis/1/Thermal#/Fans/0","Name":"percent","Reading":40,"ReadingUnits":"Percent"},
+                  {"@odata.id":"/redfish/v1/Chassis/1/Thermal#/Fans/1","Name":"rpm","Reading":3480,"ReadingUnits":"RPM"},
+                  {"@odata.id":"/redfish/v1/Chassis/1/Thermal#/Fans/2","Name":"unknown","Reading":50},
+                  {"@odata.id":"/redfish/v1/Chassis/1/Thermal#/Fans/3","Name":"lowercase","Reading":1000,"ReadingUnits":"rpm"}
+                ]}
+                """;
+        givenResource("/redfish/v1/Chassis/", collection("/redfish/v1/Chassis/1"));
+        givenUnavailable("/redfish/v1/Chassis/1/ThermalSubsystem/Fans");
+        givenResource("/redfish/v1/Chassis/1/Thermal", thermal);
+        CollectRep.MetricsData.Builder builder = collectMetrics(metrics);
+        assertEquals(4, builder.getValuesCount());
+        assertEquals(CommonConstants.NULL_VALUE, builder.getValues(0).getColumns(1));
+        assertEquals("3480", builder.getValues(1).getColumns(1));
+        assertEquals(CommonConstants.NULL_VALUE, builder.getValues(2).getColumns(1));
+        assertEquals("1000", builder.getValues(3).getColumns(1));
+    }
+
+    @Test
+    void modernFanSpeedStillUsesRpm() throws Exception {
+        Metrics metrics = metrics("Fan", "$.SpeedPercent.SpeedRPM");
+        String fan = "/redfish/v1/Chassis/1/ThermalSubsystem/Fans/1";
+        givenResource("/redfish/v1/Chassis/", collection("/redfish/v1/Chassis/1"));
+        givenResource("/redfish/v1/Chassis/1/ThermalSubsystem/Fans", collection(fan));
+        givenUnavailable("/redfish/v1/Chassis/1/Thermal");
+        givenResource(fan, "{\"SpeedPercent\":{\"SpeedRPM\":4000},\"Reading\":40,\"ReadingUnits\":\"Percent\"}");
+        CollectRep.MetricsData.Builder builder = collectMetrics(metrics);
+        assertEquals(1, builder.getValuesCount());
+        assertEquals("4000", builder.getValues(0).getColumns(0));
+    }
+
+    @Test
     void collectFallsBackPerChassis() throws Exception {
         Metrics metrics = metrics("Fan", "$.['@odata.id']", "$.Name");
         String modernFanUri = "/redfish/v1/Chassis/Modern/ThermalSubsystem/Fans/1";
