@@ -51,6 +51,13 @@
   min-height: 40px;
   padding-block: 8px;
 }
+.pageSelection {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  min-height: 32px;
+}
 .name > span {
   color: var(--ant-color-text-secondary);
   font-size: 12px;
