@@ -40,6 +40,26 @@ describe('MonitorMetricWorkbench', () => {
     vi.unstubAllGlobals();
   });
 
+  it('opens grouped history on demand and delegates group folds without touching favorites', () => {
+    const value = controller({
+      historyGroupSelection: { sourceKey: 'monitor-7', names: ['summary'], selected: ['summary'], collapsed: [] },
+      historyCharts: [historyChart('summary.value', { kind: 'loading', rows: [] })]
+    });
+    value.actions.setHistoryGroups = vi.fn();
+    value.actions.setHistoryCollapsedGroups = vi.fn();
+    renderWorkbench(value);
+    const details = screen.getByText(i18n.t('monitorMetrics.historyGroupsTitle')).closest('details')!;
+    expect(within(details).queryByRole('article')).not.toBeInTheDocument();
+    details.open = true;
+    fireEvent(details, new Event('toggle'));
+    expect(within(details).getByRole('article', { name: 'summary.value' })).toBeInTheDocument();
+    fireEvent.click(within(details).getByRole('button', { name: i18n.t('monitorMetrics.collapseAllGroups') }));
+    expect(value.actions.setHistoryCollapsedGroups).toHaveBeenCalledWith(['summary']);
+    fireEvent.click(within(details).getByRole('button', { name: i18n.t('monitorMetrics.expandAllGroups') }));
+    expect(value.actions.setHistoryCollapsedGroups).toHaveBeenLastCalledWith([]);
+    expect(value.actions.toggleFavorite).not.toHaveBeenCalled();
+  });
+
   it('shows translated groups, fields and history captions while keeping metric and favorite identities raw', () => {
     const value = controller({
       metricLabels: { summary: 'Summary label', 'summary.metric.value': 'Value label' },
@@ -61,6 +81,28 @@ describe('MonitorMetricWorkbench', () => {
     expect(screen.getByRole('button', { name: 'summary.value' })).toBeInTheDocument();
     fireEvent.change(screen.getByRole('searchbox'), { target: { value: 'summary.value' } });
     expect(screen.getByRole('button', { name: 'summary.value' })).toBeInTheDocument();
+  });
+
+  it('translates grouped history without changing group selection and fold identities', () => {
+    const value = controller({
+      metricLabels: { summary: 'Summary label', 'summary.metric.value': 'Value label' },
+      historyGroupSelection: { sourceKey: 'monitor-7', names: ['summary'], selected: ['summary'], collapsed: [] },
+      historyCharts: [historyChart('summary.value', { kind: 'loading', rows: [] })]
+    });
+    value.actions.setHistoryGroups = vi.fn();
+    value.actions.setHistoryCollapsedGroups = vi.fn();
+    renderWorkbench(value);
+    const details = screen.getByText(i18n.t('monitorMetrics.historyGroupsTitle')).closest('details')!;
+    details.open = true;
+    fireEvent(details, new Event('toggle'));
+    expect(within(details).getByText('Value label')).toHaveAttribute('title', 'value');
+    expect(within(details).getByRole('article', { name: 'summary.value' })).toBeInTheDocument();
+    fireEvent.click(
+      within(details).getByRole('button', { name: i18n.t('monitorMetrics.collapseGroup', { group: 'Summary label' }) })
+    );
+    expect(value.actions.setHistoryCollapsedGroups).toHaveBeenCalledWith(['summary']);
+    fireEvent.click(within(details).getByRole('button', { name: i18n.t('monitorMetrics.allGroups') }));
+    expect(value.actions.setHistoryGroups).toHaveBeenCalledWith(['summary']);
   });
 
   it('updates aliases without remapping the table identity when display resources change', () => {

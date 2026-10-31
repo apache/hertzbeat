@@ -34,6 +34,8 @@ type HistorySelectionState = {
   activeKeys: Set<string>;
   ranges: Record<string, MonitorMetricHistory>;
   intervals: Record<string, boolean>;
+  selectedGroups: string[] | null;
+  collapsedGroups: string[];
 };
 
 export function useMonitorHistorySelection(input: {
@@ -41,6 +43,7 @@ export function useMonitorHistorySelection(input: {
   definitions: MonitorDetailMetric[];
   defaultHistory: MonitorMetricHistory;
   runtimeStatus: RuntimeStatusViewModel;
+  focusedMetricKey?: string | undefined;
 }) {
   const { monitorId, definitions, defaultHistory, runtimeStatus } = input;
   const metrics = useMemo(() => monitorHistoryMetrics(definitions), [definitions]);
@@ -56,7 +59,12 @@ export function useMonitorHistorySelection(input: {
   const availability = historyAvailability(runtimeStatus);
   const enabled = availability.kind === 'available' || availability.kind === 'degraded';
   const defaultInterval = monitorMetricHistoryUsesInterval(defaultHistory);
-  const evidence = historyEvidence(metrics, current, defaultHistory, defaultInterval, enabled);
+  const evidence = historyEvidence(metrics, current, defaultHistory, defaultInterval, enabled, input.focusedMetricKey);
+  const names = [...new Set(metrics.map(metric => metric.group))];
+  const selected = current.selectedGroups ?? names;
+  const visibleMetrics = metrics.filter(
+    metric => selected.includes(metric.group) && !current.collapsedGroups.includes(metric.group)
+  );
   const update = useCallback(
     (change: (state: HistorySelectionState) => HistorySelectionState) => {
       setSelection(state => change(state.sourceKey === sourceKey ? state : createSelection(sourceKey)));
@@ -66,9 +74,23 @@ export function useMonitorHistorySelection(input: {
   return {
     availability,
     ...evidence,
+    visible: enabled ? evidence.visible : [],
+    groupSelection: { sourceKey, names, selected, collapsed: current.collapsedGroups },
     historyFor: (metricKey: string) => current.ranges[metricKey] ?? defaultHistory,
     intervalFor: (metricKey: string) => current.intervals[metricKey] ?? defaultInterval,
-    hasMore: enabled && current.visibleCount < metrics.length,
+    hasMore: enabled && current.visibleCount < visibleMetrics.length,
+    selectGroups: (groups: string[]) =>
+      update(state => ({
+        ...state,
+        selectedGroups: names.filter(name => groups.includes(name)),
+        visibleCount: historyChartPageSize
+      })),
+    collapseGroups: (groups: string[]) =>
+      update(state => ({
+        ...state,
+        collapsedGroups: names.filter(name => groups.includes(name)),
+        visibleCount: historyChartPageSize
+      })),
     ...historyActions(metrics, enabled, update)
   };
 }
@@ -78,16 +100,29 @@ function historyEvidence(
   state: HistorySelectionState,
   defaultHistory: MonitorMetricHistory,
   defaultInterval: boolean,
-  enabled: boolean
+  enabled: boolean,
+  focusedMetricKey?: string
 ) {
   const project = (metric: MonitorMetricOption) => ({
     metric,
     history: state.ranges[metric.key] ?? defaultHistory,
     interval: state.intervals[metric.key] ?? defaultInterval
   });
+  const selected = state.selectedGroups;
+  const available = metrics.filter(
+    metric => (!selected || selected.includes(metric.group)) && !state.collapsedGroups.includes(metric.group)
+  );
   return {
-    visible: enabled ? metrics.slice(0, state.visibleCount).map(project) : [],
-    requests: enabled ? metrics.filter(metric => state.activeKeys.has(metric.key)).map(project) : []
+    visible: enabled ? available.slice(0, state.visibleCount).map(project) : [],
+    requests: enabled
+      ? metrics
+          .filter(
+            metric =>
+              state.activeKeys.has(metric.key) &&
+              (metric.key === focusedMetricKey || available.some(item => item.key === metric.key))
+          )
+          .map(project)
+      : []
   };
 }
 
@@ -99,7 +134,10 @@ function historyActions(
   const accepts = (metricKey: string) => enabled && metrics.some(metric => metric.key === metricKey);
   return {
     activate: (metricKey: string) => {
-      if (accepts(metricKey)) update(state => ({ ...state, activeKeys: new Set(state.activeKeys).add(metricKey) }));
+      if (accepts(metricKey))
+        update(state =>
+          state.activeKeys.has(metricKey) ? state : { ...state, activeKeys: new Set(state.activeKeys).add(metricKey) }
+        );
     },
     setRange: (metricKey: string, history: MonitorMetricHistory) => {
       if (!accepts(metricKey)) return;
@@ -132,5 +170,13 @@ function historyAvailability(runtimeStatus: RuntimeStatusViewModel): MonitorHist
 }
 
 function createSelection(sourceKey: string): HistorySelectionState {
-  return { sourceKey, visibleCount: historyChartPageSize, activeKeys: new Set(), ranges: {}, intervals: {} };
+  return {
+    sourceKey,
+    visibleCount: historyChartPageSize,
+    activeKeys: new Set(),
+    ranges: {},
+    intervals: {},
+    selectedGroups: null,
+    collapsedGroups: []
+  };
 }
