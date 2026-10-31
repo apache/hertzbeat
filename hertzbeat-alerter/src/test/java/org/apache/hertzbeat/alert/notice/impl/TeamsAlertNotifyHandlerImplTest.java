@@ -177,6 +177,31 @@ class TeamsAlertNotifyHandlerImplTest {
         assertEquals("Good", capturedStatusColor());
     }
 
+    @Test
+    void sendsPowerPlatformWebhookWithEncodedQuery() {
+        String url = "https://example.environment.api.powerplatform.com/powerautomate/automations/x?sig=abc%2Bdef%2Fxyz%3D";
+        receiver.setTeamsWebHookUrl(url);
+        when(restTemplate.postForEntity(any(URI.class), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(new ResponseEntity<>("", HttpStatus.ACCEPTED));
+        teamsHandler.send(receiver, template, buildGroupAlert("firing", "info"));
+        ArgumentCaptor<URI> uriCaptor = ArgumentCaptor.forClass(URI.class);
+        verify(restTemplate).postForEntity(uriCaptor.capture(), any(HttpEntity.class), eq(String.class));
+        assertEquals(url, uriCaptor.getValue().toString());
+    }
+
+    @Test
+    void rejectsSpoofedAndBarePowerPlatformHosts() {
+        for (String url : List.of("https://example.environment.api.powerplatform.com.evil.example/x",
+                "https://fakeenvironment.api.powerplatform.com/x",
+                "https://environment.api.powerplatform.com/x",
+                "http://example.environment.api.powerplatform.com/x",
+                "https://prod.logic.azure.com.evil.example/x")) {
+            receiver.setTeamsWebHookUrl(url);
+            assertThrows(AlertNoticeException.class, () -> teamsHandler.send(receiver, template, buildGroupAlert("firing", "info")));
+        }
+        org.mockito.Mockito.verifyNoInteractions(restTemplate);
+    }
+
     private String capturedStatusColor() {
         ArgumentCaptor<HttpEntity> entityCaptor = ArgumentCaptor.forClass(HttpEntity.class);
         verify(restTemplate, org.mockito.Mockito.atLeastOnce())
