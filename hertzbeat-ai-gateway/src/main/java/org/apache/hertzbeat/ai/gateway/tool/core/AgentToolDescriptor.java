@@ -40,9 +40,11 @@ public class AgentToolDescriptor {
 
     private final AgentToolExposure exposure;
 
+    private final AgentToolAccess access;
+
     @Builder
     private AgentToolDescriptor(String name, String description, String inputSchema, AgentToolRisk risk,
-                                String namespace, AgentToolExposure exposure) {
+                                String namespace, AgentToolExposure exposure, AgentToolAccess access) {
         // Tool descriptors are catalog entries consumed by model prompts, policy, and ledger persistence.
         if (!StringUtils.hasText(name)) {
             throw new IllegalArgumentException("Agent tool descriptor name is required");
@@ -56,6 +58,7 @@ public class AgentToolDescriptor {
         if (!StringUtils.hasText(namespace)) {
             throw new IllegalArgumentException("Agent tool descriptor namespace is required");
         }
+        this.access = access == null ? AgentToolAccess.STANDARD : access;
         this.name = name;
         this.description = description;
         this.inputSchema = inputSchema;

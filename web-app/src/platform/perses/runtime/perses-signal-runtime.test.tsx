@@ -15,6 +15,8 @@
  * limitations under the License.
  */
 
+import { ThemeProvider } from '@mui/material/styles';
+import { createHertzBeatPersesTheme } from './hertzbeat-perses-theme';
 import { cleanup, render } from '@testing-library/react';
 import type { PanelDefinition, QueryDefinition } from '@perses-dev/spec';
 import { getTimeSeries } from '@perses-dev/timeseries-chart-plugin/lib/utils/data-transform.js';
@@ -340,6 +342,22 @@ describe('PersesSignalRuntime', () => {
       />
     );
     expect(runtimeContract.panels.at(-1)?.spec.plugin.spec).not.toHaveProperty('yAxis.min', 0);
+  });
+
+  it.each(['default', 'dark'] as const)('uses a theme-aware %s metric series palette', mode => {
+    render(
+      <ThemeProvider theme={createHertzBeatPersesTheme(mode)}>
+        <PersesSignalRuntime
+          kind="metric-time-series"
+          title="Metric"
+          timeWindow={timeWindow}
+          data={{ timeRange: { start: new Date(timeWindow.from), end: new Date(timeWindow.to) }, series: [] }}
+        />
+      </ThemeProvider>
+    );
+    const visual = runtimeContract.panels.at(-1)?.spec.plugin.spec as { visual?: { palette?: { mode: string } } };
+    if (mode === 'dark') expect(visual.visual?.palette).toEqual({ mode: 'categorical' });
+    else expect(visual.visual).not.toHaveProperty('palette');
   });
 
   it('uses the official small legend within the flat host content surface for metrics', () => {

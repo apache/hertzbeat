@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.ai.gateway.contract;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
@@ -66,6 +67,10 @@ public class AgentTargetRef {
 
     @Valid
     private AgentServiceRef service;
+
+    @Valid
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private AgentIncidentScope incident;
 
     @Valid
     private AgentTargetAuthority authority;
