@@ -19,6 +19,16 @@
   min-width: 0;
 }
 
+.matrixTable :global(.ant-pagination) {
+  position: sticky;
+  z-index: 1;
+  bottom: 0;
+  margin: 0;
+  padding: var(--hb-space-2);
+  border-block-start: 1px solid var(--hb-border-subtle);
+  background: var(--hb-bg-raised);
+}
+
 .compactMetricTable {
   width: 100%;
   border-collapse: collapse;

@@ -26,6 +26,8 @@ import org.apache.hertzbeat.collector.collect.ipmi2.cache.IpmiConnect;
 import org.apache.hertzbeat.collector.collect.ipmi2.client.IpmiClient;
 import org.apache.hertzbeat.collector.collect.ipmi2.client.IpmiConnection;
 import org.apache.hertzbeat.collector.collect.ipmi2.client.IpmiHandlerManager;
+import org.apache.hertzbeat.collector.collect.ipmi2.client.UdpConnection;
+import org.apache.hertzbeat.collector.util.CollectUtil;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.IpmiProtocol;
@@ -64,9 +66,9 @@ public class IpmiCollectImpl extends AbstractCollect {
 
     @Override
     public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
-        IpmiConnection connection = null;
+        IpmiConnect cachedConnection;
         try {
-            connection = getIpmiConnection(metrics.getIpmi());
+            cachedConnection = getIpmiConnection(metrics.getIpmi());
         } catch (Exception e) {
             log.error("Ipmi session create error: {}", e.getMessage());
             builder.setCode(CollectRep.Code.FAIL);
@@ -74,10 +76,36 @@ public class IpmiCollectImpl extends AbstractCollect {
             return;
         }
         try {
-            connection.getResource(builder, metrics);
+            cachedConnection.getConnection().getResource(builder, metrics);
         } catch (IOException e) {
             log.error("Get Ipmi {} detail resource error: {}", metrics.getName(), e.getMessage());
+            // A failed exchange leaves the UDP session unusable (the request may still be in flight),
+            // so report the failure and drop the cached connection to force a fresh one next cycle.
+            invalidateConnection(metrics.getIpmi(), cachedConnection);
+            builder.setCode(CollectRep.Code.UN_CONNECTABLE);
+            builder.setMsg(e.getMessage());
         }
+    }
+
+    private void invalidateConnection(IpmiProtocol ipmiProtocol, IpmiConnect connection) {
+        try {
+            if (!connectionCommonCache.removeCache(buildCacheIdentifier(ipmiProtocol), connection)) {
+                connection.close();
+            }
+        } catch (Exception e) {
+            log.warn("Failed to invalidate Ipmi connection for {}: {}", ipmiProtocol.getHost(), e.getMessage());
+        }
+    }
+
+    private CacheIdentifier buildCacheIdentifier(IpmiProtocol ipmiProtocol) {
+        return CacheIdentifier.builder()
+                .ip(ipmiProtocol.getHost())
+                .port(ipmiProtocol.getPort())
+                .username(ipmiProtocol.getUsername())
+                .password(ipmiProtocol.getPassword())
+                .customArg("ipmi-timeout:" + CollectUtil.getTimeout(ipmiProtocol.getTimeout(),
+                        UdpConnection.DEFAULT_RECEIVE_TIMEOUT_MILLIS))
+                .build();
     }
 
     @Override
@@ -86,29 +114,22 @@ public class IpmiCollectImpl extends AbstractCollect {
     }
 
 
-    private IpmiConnection getIpmiConnection(IpmiProtocol ipmiProtocol) throws Exception {
-        CacheIdentifier identifier = CacheIdentifier.builder()
-                .ip(ipmiProtocol.getHost())
-                .port(ipmiProtocol.getPort())
-                .username(ipmiProtocol.getUsername())
-                .password(ipmiProtocol.getPassword())
-                .build();
-        IpmiConnection connection = null;
+    private IpmiConnect getIpmiConnection(IpmiProtocol ipmiProtocol) throws Exception {
+        CacheIdentifier identifier = buildCacheIdentifier(ipmiProtocol);
         Optional<AbstractConnection<?>> cacheOption = connectionCommonCache.getCache(identifier, true);
         if (cacheOption.isPresent()) {
-            IpmiConnect ipmiConnect = (IpmiConnect) cacheOption.get();
-            connection = ipmiConnect.getConnection();
-            if (connection == null || !connection.isActive()) {
-                connection = null;
-                connectionCommonCache.removeCache(identifier);
+            IpmiConnect cached = (IpmiConnect) cacheOption.get();
+            IpmiConnection connection = cached.getConnection();
+            if (connection != null && connection.isActive()) {
+                return cached;
+            }
+            if (!connectionCommonCache.removeCache(identifier, cached)) {
+                cached.close();
             }
         }
-        if (connection != null) {
-            return connection;
-        }
         IpmiClient ipmiClient = IpmiClient.create(ipmiProtocol);
-        connection = ipmiClient.connect();
-        connectionCommonCache.addCache(identifier, new IpmiConnect(connection));
-        return connection;
+        IpmiConnect cached = new IpmiConnect(ipmiClient.connect());
+        connectionCommonCache.addCache(identifier, cached);
+        return cached;
     }
 }
