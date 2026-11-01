@@ -80,7 +80,7 @@ class WebUiApprovalTest {
         GatewaySingleResponse expected = singleResponse("approved");
         when(commandRouter.handle(commandCaptor.capture())).thenReturn(expected);
 
-        ResponseEntity<Message<GatewaySingleResponse>> response = controller().approve("agp-1");
+        ResponseEntity<Message<GatewaySingleResponse>> response = controller().approve("agp-1", null);
 
         assertEquals(SUCCESS_CODE, response.getBody().getCode());
         assertSame(expected, response.getBody().getData());
@@ -113,7 +113,7 @@ class WebUiApprovalTest {
     @Test
     void approvalShouldRequireAuthenticatedSubject() {
         IllegalStateException exception = assertThrows(IllegalStateException.class,
-                () -> controller().approve("agp-1"));
+                () -> controller().approve("agp-1", null));
 
         assertEquals("Authenticated subject is required", exception.getMessage());
         verifyNoInteractions(commandRouter);

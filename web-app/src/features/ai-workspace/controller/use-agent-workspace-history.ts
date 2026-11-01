@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { Dispatch, SetStateAction } from 'react';
 
 import { listAgentSessions } from '../api/agent-gateway-api';
@@ -35,6 +35,7 @@ export type AgentWorkspaceHistory = {
   refreshSessions: (signal?: AbortSignal) => Promise<AgentWorkspaceViewModel['sessions']['items']>;
   loadSession: (sessionUid: string) => Promise<AgentSessionLoad | undefined>;
   cancelSessionLoad: () => void;
+  loadOlder: () => Promise<void>;
 };
 
 export function useAgentWorkspaceHistory(isMounted: () => boolean): AgentWorkspaceHistory {
@@ -42,6 +43,10 @@ export function useAgentWorkspaceHistory(isMounted: () => boolean): AgentWorkspa
   const [selectedSessionUid, setSelectedSessionUid] = useState<string | undefined>(undefined);
   const [transcript, setTranscript] = useState<AgentWorkspaceViewModel['transcript']>({ status: 'ready', items: [] });
   const [draftMessages, setDraftMessages] = useState<AgentDraftMessage[]>([]);
+  const transcriptRef = useRef(transcript);
+  useEffect(() => {
+    transcriptRef.current = transcript;
+  }, [transcript]);
   const selectedRef = useRef<string | undefined>(undefined);
   const refreshSessions = useCallback(
     async (signal?: AbortSignal) => {
@@ -56,9 +61,10 @@ export function useAgentWorkspaceHistory(isMounted: () => boolean): AgentWorkspa
     },
     [isMounted]
   );
-  const { cancelSessionLoad, loadSession } = useAgentSessionLoader({
+  const { cancelSessionLoad, loadSession, loadOlder } = useAgentSessionLoader({
     isMounted,
     selectedRef,
+    transcriptRef,
     setTranscript,
     setDraftMessages
   });
@@ -82,7 +88,8 @@ export function useAgentWorkspaceHistory(isMounted: () => boolean): AgentWorkspa
     mergeSessionSnapshot,
     refreshSessions,
     loadSession,
-    cancelSessionLoad
+    cancelSessionLoad,
+    loadOlder
   };
 }
 

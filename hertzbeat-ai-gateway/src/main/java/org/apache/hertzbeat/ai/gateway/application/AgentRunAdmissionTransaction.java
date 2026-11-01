@@ -17,12 +17,10 @@
 
 package org.apache.hertzbeat.ai.gateway.application;
 
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
 import org.apache.hertzbeat.ai.gateway.application.AgentRunAdmission.Decision;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.InvokeCommand;
 import org.apache.hertzbeat.ai.gateway.application.GatewayCommand.ReplyMode;
+import org.apache.hertzbeat.ai.gateway.contract.AgentRunRequestSnapshot;
 import org.apache.hertzbeat.ai.gateway.conversation.AgentRunService;
 import org.apache.hertzbeat.ai.gateway.conversation.AgentRunStatus;
 import org.apache.hertzbeat.ai.gateway.conversation.AgentTranscriptRecorder;
@@ -32,12 +30,15 @@ import org.apache.hertzbeat.ai.gateway.identity.AgentActor;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentApprovalHandling;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEntryType;
 import org.apache.hertzbeat.ai.gateway.runtime.TranscriptMessage;
-import org.apache.hertzbeat.ai.gateway.contract.AgentRunRequestSnapshot;
 import org.apache.hertzbeat.common.entity.agent.AgentRun;
 import org.apache.hertzbeat.common.entity.agent.AgentSession;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
 
 /** Serializes run admission after the canonical session has been resolved. */
 @Service
@@ -66,8 +67,13 @@ public class AgentRunAdmissionTransaction {
 
     @Transactional
     public AgentRunAdmission admit(Long sessionId, InvokeCommand sourceCommand, InvokeCommand executionCommand) {
-        AgentSession session = sessionDao.findFirstById(sessionId)
-                .orElseThrow(() -> new IllegalStateException("Agent run session disappeared during admission"));
+        AgentSession session =
+                sessionDao
+                        .findFirstById(sessionId)
+                        .orElseThrow(
+                                () ->
+                                        new IllegalStateException(
+                                                "Agent run session disappeared during admission"));
         validateSessionIdentity(session, sourceCommand);
         AgentApprovalHandling approvalHandling = approvalHandling(sourceCommand.replyMode());
         Optional<AgentRun> existing = runDao.findBySessionIdAndMessageId(
@@ -103,6 +109,9 @@ public class AgentRunAdmissionTransaction {
     private AgentRunAdmission createAndAdmit(AgentSession session, InvokeCommand command,
                                              AgentApprovalHandling approvalHandling, String fingerprint,
                                              AgentRunRequestSnapshot requestSnapshot) {
+        if (runDao.existsBySessionIdAndStatusIn(session.getId(), List.of("CREATED", "RUNNING"))) {
+            throw new IllegalStateException("Another Agent run is active in this session");
+        }
         List<TranscriptMessage> history = transcriptRecorder.chatHistory(session.getId());
         AgentRun run = runService.createOrResumeRun(session, command.userInput(), command.entryType());
         transcriptRecorder.recordUserTranscriptEntry(session, run, command.userInput(),
@@ -194,7 +203,8 @@ public class AgentRunAdmissionTransaction {
                 && Objects.equals(session.getOriginEntryType(), command.entryType().name())
                 && Objects.equals(session.getConversationId(), command.userInput().getConversationId());
         if (!matches) {
-            throw new IllegalArgumentException("Agent run session identity does not match the command");
+            throw new IllegalArgumentException(
+                    "Agent run session identity does not match the command");
         }
     }
 }

@@ -18,7 +18,8 @@
 import { useCallback, useRef } from 'react';
 import type { Dispatch, MutableRefObject, SetStateAction } from 'react';
 
-import { getLatestAgentRun, listAgentTranscript } from '../api/agent-gateway-api';
+import { getLatestAgentRun, listAgentTranscriptPage } from '../api/agent-gateway-api';
+import type { AgentTranscriptPage } from '../model/agent-transcript-pagination';
 import type { AgentRunSnapshot, AgentTranscriptMessage } from '../model/agent-workspace-contract';
 import type { AgentDraftMessage, AgentWorkspaceViewModel } from '../model/agent-workspace-view-model';
 
@@ -30,6 +31,7 @@ export type AgentSessionLoad = {
 export function useAgentSessionLoader(options: {
   isMounted: () => boolean;
   selectedRef: MutableRefObject<string | undefined>;
+  transcriptRef: MutableRefObject<AgentWorkspaceViewModel['transcript']>;
   setTranscript: Dispatch<SetStateAction<AgentWorkspaceViewModel['transcript']>>;
   setDraftMessages: Dispatch<SetStateAction<AgentDraftMessage[]>>;
 }) {
@@ -47,10 +49,10 @@ export function useAgentSessionLoader(options: {
       const abort = new AbortController();
       loadAbortRef.current = abort;
       const generation = loadGenerationRef.current;
-      setTranscript(current => ({ status: 'loading', items: current.items }));
+      setTranscript({ status: 'loading', items: [] });
       try {
         const [transcriptResult, snapshotResult] = await Promise.allSettled([
-          listAgentTranscript(sessionUid, abort.signal),
+          listAgentTranscriptPage(sessionUid, abort.signal),
           getLatestAgentRun(sessionUid, abort.signal)
         ]);
         if (isCurrentLoad(abort, generation, sessionUid, loadGenerationRef.current, selectedRef, isMounted)) {
@@ -70,7 +72,47 @@ export function useAgentSessionLoader(options: {
     },
     [isMounted, selectedRef, setDraftMessages, setTranscript]
   );
-  return { cancelSessionLoad, loadSession };
+  const loadOlder = useOlderTranscriptLoader(options, loadAbortRef, loadGenerationRef);
+  return { cancelSessionLoad, loadSession, loadOlder };
+}
+
+function useOlderTranscriptLoader(
+  { isMounted, selectedRef, transcriptRef, setTranscript }: Parameters<typeof useAgentSessionLoader>[0],
+  loadAbortRef: MutableRefObject<AbortController | undefined>,
+  loadGenerationRef: MutableRefObject<number>
+) {
+  return useCallback(async () => {
+    const sessionUid = selectedRef.current;
+    if (!sessionUid || loadAbortRef.current) return;
+    const abort = new AbortController();
+    const generation = loadGenerationRef.current;
+    const pageIndex = transcriptRef.current.olderPageIndex;
+    if (pageIndex === undefined) return;
+    loadAbortRef.current = abort;
+    setTranscript(current => ({ ...current, olderStatus: 'loading' }));
+    try {
+      const page = await listAgentTranscriptPage(sessionUid, abort.signal, pageIndex);
+      if (isCurrentLoad(abort, generation, sessionUid, loadGenerationRef.current, selectedRef, isMounted)) {
+        setTranscript(current => {
+          const items = [...new Map([...page.items, ...current.items].map(item => [item.id, item])).values()].sort(
+            (left, right) => left.sequence - right.sequence
+          );
+          return {
+            status: current.status,
+            items,
+            olderStatus: 'ready',
+            ...(page.pageIndex > 0 ? { olderPageIndex: page.pageIndex - 1 } : {})
+          };
+        });
+      }
+    } catch {
+      if (isCurrentLoad(abort, generation, sessionUid, loadGenerationRef.current, selectedRef, isMounted)) {
+        setTranscript(current => ({ ...current, olderStatus: 'error' }));
+      }
+    } finally {
+      if (loadAbortRef.current === abort) loadAbortRef.current = undefined;
+    }
+  }, [isMounted, selectedRef, setTranscript, transcriptRef, loadAbortRef, loadGenerationRef]);
 }
 
 function isCurrentLoad(
@@ -85,14 +127,20 @@ function isCurrentLoad(
 }
 
 function resolvedSessionLoad(
-  transcriptResult: PromiseSettledResult<AgentTranscriptMessage[]>,
+  transcriptResult: PromiseSettledResult<AgentTranscriptPage>,
   snapshotResult: PromiseSettledResult<AgentRunSnapshot | null>
 ) {
-  const items = transcriptResult.status === 'fulfilled' ? transcriptResult.value : [];
+  const items = transcriptResult.status === 'fulfilled' ? transcriptResult.value.items : [];
   const snapshot = snapshotResult.status === 'fulfilled' ? snapshotResult.value : null;
   const status = transcriptResult.status === 'fulfilled' && snapshotResult.status === 'fulfilled' ? 'ready' : 'error';
   return {
-    transcript: { status, items } satisfies AgentWorkspaceViewModel['transcript'],
+    transcript: {
+      status,
+      items,
+      ...(transcriptResult.status === 'fulfilled' && transcriptResult.value.pageIndex > 0
+        ? { olderPageIndex: transcriptResult.value.pageIndex - 1 }
+        : {})
+    } satisfies AgentWorkspaceViewModel['transcript'],
     result: { items, snapshot } satisfies AgentSessionLoad
   };
 }

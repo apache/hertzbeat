@@ -37,8 +37,8 @@ import org.junit.jupiter.api.Test;
 /**
  * Guards the shape of the Flyway migration chain shipped by the startup module.
  * The chain is part of the release contract: 1.9.0 ended at V190 and 2.0.0 adds
- * exactly one versioned migration per dialect, V200, alongside the B200 baseline
- * that provisions fresh installations.
+ * V200 plus the additive AI workflow V201 per dialect. B200 remains immutable;
+ * B201 provisions current fresh installations.
  */
 class MigrationInventoryTest {
 
@@ -50,22 +50,20 @@ class MigrationInventoryTest {
 
     private static final int LAST_RELEASED_VERSION = 190;
 
-    private static final int CURRENT_VERSION = 200;
+    private static final int CURRENT_VERSION = 201;
 
     private static final List<Integer> WITHDRAWN_VERSIONS = List.of(181, 182, 183);
 
     @Test
-    @DisplayName("every dialect ends the chain with V190 followed by V200")
+    @DisplayName("every dialect ends the chain with V190 followed by V200 and V201")
     void chainEndsWithLastReleasedVersionThenCurrentVersion() throws URISyntaxException {
         for (String vendor : VENDORS) {
             List<Integer> versions = versionsOf(vendor);
 
-            assertTrue(versions.size() >= 2, () -> vendor + " must ship at least V180 and V190");
-            assertEquals(CURRENT_VERSION, versions.get(versions.size() - 1),
-                    () -> vendor + " must end at V" + CURRENT_VERSION + " but ends at " + versions);
-            assertEquals(LAST_RELEASED_VERSION, versions.get(versions.size() - 2),
-                    () -> vendor + " must apply V" + CURRENT_VERSION + " directly after the last released V"
-                            + LAST_RELEASED_VERSION + " but has " + versions);
+            assertTrue(versions.size() >= 3, () -> vendor + " must ship the released and current upgrade chain");
+            assertEquals(List.of(LAST_RELEASED_VERSION, 200, CURRENT_VERSION),
+                    versions.subList(versions.size() - 3, versions.size()),
+                    () -> vendor + " must end at V190, V200, V201 but has " + versions);
         }
     }
 

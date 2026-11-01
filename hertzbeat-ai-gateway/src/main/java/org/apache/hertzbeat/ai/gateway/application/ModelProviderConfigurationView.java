@@ -52,6 +52,11 @@ public record ModelProviderConfigurationView(
             String code,
             String baseUrl,
             String model,
-            boolean apiKeyConfigured) {
+            boolean apiKeyConfigured,
+            @com.fasterxml.jackson.annotation.JsonInclude(com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL)
+            String protocol) {
+        public Provider(String uid, String type, String code, String baseUrl, String model, boolean apiKeyConfigured) {
+            this(uid, type, code, baseUrl, model, apiKeyConfigured, null);
+        }
     }
 }

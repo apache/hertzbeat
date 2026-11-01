@@ -32,6 +32,7 @@ import org.apache.hertzbeat.ai.gateway.contract.GatewayEnvelope;
 import org.apache.hertzbeat.ai.gateway.contract.UserInput;
 import org.apache.hertzbeat.ai.gateway.contract.UserInput.Message;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeHistoryWindow;
+import org.apache.hertzbeat.ai.gateway.runtime.AgentModelPartsCodec;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEntryType;
 import org.apache.hertzbeat.ai.gateway.runtime.TranscriptMessage;
 import org.apache.hertzbeat.ai.gateway.identity.ActorSupport;
@@ -207,15 +208,26 @@ public class AgentSessionService {
     }
 
     public Page<AgentTranscriptEntry> findTranscriptEntries(Long sessionId, Pageable pageable) {
-        return transcriptEntryDao.findBySessionIdOrderBySessionSequenceAsc(sessionId, pageable);
+        return publicTranscriptPage(transcriptEntryDao.findBySessionIdOrderBySessionSequenceAsc(sessionId, pageable));
     }
 
     public Page<AgentTranscriptEntry> findConversationTranscriptEntries(Long sessionId, Pageable pageable) {
-        return transcriptEntryDao.findBySessionIdAndMessageRoleInOrderBySessionSequenceDesc(
+        return publicTranscriptPage(transcriptEntryDao.findBySessionIdAndMessageRoleInOrderBySessionSequenceDesc(
             sessionId,
             List.of(TranscriptMessage.TranscriptRole.USER.wireValue(),
                 TranscriptMessage.TranscriptRole.ASSISTANT.wireValue()),
-            pageable);
+            pageable));
+    }
+
+    private static Page<AgentTranscriptEntry> publicTranscriptPage(Page<AgentTranscriptEntry> page) {
+        if (page.stream().noneMatch(entry -> entry.getPayloadJson() != null
+                && entry.getPayloadJson().contains("\"modelPartsCiphertext\""))) {
+            return page;
+        }
+        // Return detached views. Mutating a managed entity here could erase the private replay sidecar on flush.
+        return page.map(entry -> AgentTranscriptEntry.builder().id(entry.getId()).sessionId(entry.getSessionId())
+                .runId(entry.getRunId()).sessionSequence(entry.getSessionSequence()).messageRole(entry.getMessageRole())
+                .gmtCreate(entry.getGmtCreate()).payloadJson(AgentModelPartsCodec.publicJson(entry.getPayloadJson())).build());
     }
 
     public Optional<TranscriptMessage> findFirstRunTranscriptMessage(Long runId, TranscriptMessage.TranscriptRole role) {

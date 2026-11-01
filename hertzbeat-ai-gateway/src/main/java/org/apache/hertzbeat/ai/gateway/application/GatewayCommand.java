@@ -88,7 +88,12 @@ public sealed interface GatewayCommand permits
             String commandId,
             AgentRuntimeEntryType originEntryType,
             String approvalId,
-            AgentApprovalDecision decision) implements GatewayCommand {
+            AgentApprovalDecision decision, String collectionPlanHash) implements GatewayCommand {
+
+        public ApprovalDecisionCommand(GatewayEnvelope envelope, ReplyMode replyMode, String commandId,
+                AgentRuntimeEntryType originEntryType, String approvalId, AgentApprovalDecision decision) {
+            this(envelope, replyMode, commandId, originEntryType, approvalId, decision, null);
+        }
 
         public ApprovalDecisionCommand {
             envelope = Objects.requireNonNull(envelope, "envelope is required");
