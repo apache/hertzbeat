@@ -157,21 +157,23 @@ public class BulletinServiceImpl implements BulletinService {
 
                     List<List<BulletinMetricsData.Field>> fieldsList;
                     if (currentMetricsData != null) {
-                        fieldsList = currentMetricsData.getValues().stream()
-                                .map(valueRow -> {
-                                    List<BulletinMetricsData.Field> fieldList = currentMetricsData.getFields().stream()
-                                            .map(field -> BulletinMetricsData.Field.builder()
-                                                    .key(field.getName())
-                                                    .unit(field.getUnit())
-                                                    .build())
-                                            .toList();
+                        try (currentMetricsData) {
+                            fieldsList = currentMetricsData.getValues().stream()
+                                    .map(valueRow -> {
+                                        List<BulletinMetricsData.Field> fieldList = currentMetricsData.getFields().stream()
+                                                .map(field -> BulletinMetricsData.Field.builder()
+                                                        .key(field.getName())
+                                                        .unit(field.getUnit())
+                                                        .build())
+                                                .toList();
 
-                                    for (int i = 0; i < fieldList.size(); i++) {
-                                        fieldList.get(i).setValue(valueRow.getColumns(i));
-                                    }
-                                    return fieldList.stream().filter(field -> fields.contains(field.getKey())).toList();
-                                })
-                                .toList();
+                                        for (int i = 0; i < fieldList.size(); i++) {
+                                            fieldList.get(i).setValue(valueRow.getColumns(i));
+                                        }
+                                        return fieldList.stream().filter(field -> fields.contains(field.getKey())).toList();
+                                    })
+                                    .toList();
+                        }
                     } else {
                         fieldsList = Collections.singletonList(fields.stream()
                                 .map(field -> BulletinMetricsData.Field.builder()

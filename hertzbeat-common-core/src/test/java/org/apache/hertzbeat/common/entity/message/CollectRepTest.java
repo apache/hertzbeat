@@ -22,18 +22,37 @@ package org.apache.hertzbeat.common.entity.message;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.stream.Stream;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.MethodSource;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 /**
  * Test case for {@link CollectRep}
  */
 public class CollectRepTest {
+
+    @Test
+    void closeIsIdempotent() {
+        CollectRep.MetricsData metricsData = CollectRep.MetricsData.newBuilder()
+                .setId(1L)
+                .setMetrics("cpu")
+                .setCode(CollectRep.Code.SUCCESS)
+                .addField(CollectRep.Field.newBuilder().setName("usage").setType(0).build())
+                .addValueRow(CollectRep.ValueRow.newBuilder().addColumn("1").build())
+                .build();
+
+        metricsData.close();
+        assertDoesNotThrow(metricsData::close);
+        assertTrue(metricsData.getFields().isEmpty());
+        assertEquals(0, metricsData.getValuesCount());
+    }
 
     @ParameterizedTest
     @CsvSource(value = {
