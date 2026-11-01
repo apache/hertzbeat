@@ -237,14 +237,16 @@ public class SshHelper {
 
     private static void addIdentity(ClientSession clientSession, String host, String password, String privateKey,
                                     String privateKeyPassphrase) throws IOException, GeneralSecurityException {
+        // Offer both password and public-key identities when both are configured;
+        // the SSH client will try them in the order preferred by the server.
+        // Previously, a configured password short-circuited the private key, so servers
+        // that only allow public-key auth failed even when a valid key was set.
         if (StringUtils.hasText(password)) {
             clientSession.addPasswordIdentity(password);
-            return;
         }
-        if (!StringUtils.hasText(privateKey)) {
-            return;
+        if (StringUtils.hasText(privateKey)) {
+            loadKeyPairs(host, privateKey, privateKeyPassphrase).forEach(clientSession::addPublicKeyIdentity);
         }
-        loadKeyPairs(host, privateKey, privateKeyPassphrase).forEach(clientSession::addPublicKeyIdentity);
     }
 
     private static List<KeyPair> loadKeyPairs(String host, String privateKey, String privateKeyPassphrase)
@@ -339,11 +341,13 @@ public class SshHelper {
         if (StringUtils.hasText(password)) {
             identity.add("target-password");
             identity.add(password);
-        } else if (StringUtils.hasText(privateKey)) {
+        }
+        if (StringUtils.hasText(privateKey)) {
             identity.add("target-private-key");
             identity.add(privateKey);
             identity.add(textOrEmpty(privateKeyPassphrase));
-        } else {
+        }
+        if (identity.isEmpty()) {
             identity.add("target-default");
         }
     }
