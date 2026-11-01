@@ -59,9 +59,9 @@ class EmbeddedH2BaselineResourceTest {
                             "SELECT \"version\", \"type\", \"script\" FROM \"flyway_schema_history\" "
                                     + "WHERE \"version\" IS NOT NULL ORDER BY \"installed_rank\"")) {
                 assertThat(history.next()).isTrue();
-                assertThat(history.getString("version")).isEqualTo("200");
+                assertThat(history.getString("version")).isEqualTo("201");
                 assertThat(history.getString("type")).isEqualTo("SQL_BASELINE");
-                assertThat(history.getString("script")).isEqualTo("B200__current_schema.sql");
+                assertThat(history.getString("script")).isEqualTo("B201__current_schema.sql");
                 assertThat(history.next()).isFalse();
             }
         }
@@ -73,11 +73,11 @@ class EmbeddedH2BaselineResourceTest {
         byte[] shared;
         String embedded;
         ClassLoader loader = getClass().getClassLoader();
-        try (InputStream input = loader.getResourceAsStream("db/migration/mysql/B200__current_schema.sql")) {
+        try (InputStream input = loader.getResourceAsStream("db/migration/mysql/B201__current_schema.sql")) {
             assertThat(input).isNotNull();
             shared = input.readAllBytes();
         }
-        try (InputStream input = loader.getResourceAsStream("db/migration/h2/B200__current_schema.sql")) {
+        try (InputStream input = loader.getResourceAsStream("db/migration/h2/B201__current_schema.sql")) {
             assertThat(input).isNotNull();
             embedded = new String(input.readAllBytes(), StandardCharsets.UTF_8);
         }

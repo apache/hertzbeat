@@ -30,6 +30,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -43,6 +45,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 /**
  * Tests for {@link PeriodicAlertRuleScheduler}.
@@ -300,15 +303,35 @@ class PeriodicAlertRuleSchedulerTest {
 
     private void assertPausedTicksResumeOnce(VirtualThreadProperties properties) throws Exception {
         scheduler.stop();
-        CountDownLatch pausedTicks = new CountDownLatch(2);
+        CountDownLatch thirdTickAtHook = new CountDownLatch(1);
+        CountDownLatch releaseThirdTick = new CountDownLatch(1);
+        AtomicInteger scheduledTicks = new AtomicInteger();
         scheduler = new PeriodicAlertRuleScheduler(
                 metricsCalculator, logCalculator, traceCalculator, alertDefineDao, properties) {
             @Override
             void beforeRuleTrigger(AlertDefine rule) {
-                pausedTicks.countDown();
+                if (!Thread.currentThread().getName().startsWith("periodic-alert-threshold-worker-")) {
+                    return;
+                }
+                if (scheduledTicks.incrementAndGet() == 3) {
+                    thirdTickAtHook.countDown();
+                    boolean interrupted = false;
+                    while (releaseThirdTick.getCount() != 0) {
+                        try {
+                            releaseThirdTick.await();
+                        } catch (InterruptedException e) {
+                            interrupted = true;
+                        }
+                    }
+                    if (interrupted) {
+                        Thread.currentThread().interrupt();
+                    }
+                }
             }
         };
         scheduler.start();
+        ScheduledExecutorService scheduled = (ScheduledExecutorService) ReflectionTestUtils.getField(scheduler, "scheduledExecutor");
+        ExecutorService periodic = (ExecutorService) ReflectionTestUtils.getField(scheduler, "periodicExecutor");
         CountDownLatch calculated = new CountDownLatch(1);
         AtomicInteger invocations = new AtomicInteger();
         doAnswer(invocation -> {
@@ -317,17 +340,27 @@ class PeriodicAlertRuleSchedulerTest {
             return null;
         }).when(metricsCalculator).calculate(any(AlertDefine.class));
         AlertDefine rule = metricRule(11L);
-
-        scheduler.pauseAdmission();
-        scheduler.updateSchedule(rule);
-        assertTrue(pausedTicks.await(3, TimeUnit.SECONDS));
-        scheduler.awaitDrained(0);
-
-        scheduler.resumeAdmission();
-        scheduler.resumeAdmission();
-        assertTrue(calculated.await(1, TimeUnit.SECONDS));
-        scheduler.cancelSchedule(rule.getId());
-        assertEquals(1, invocations.get());
+        try {
+            scheduler.pauseAdmission();
+            scheduler.updateSchedule(rule);
+            // Fixed-rate executions of one task do not overlap; two earlier paused ticks completed.
+            assertTrue(thirdTickAtHook.await(5, TimeUnit.SECONDS));
+            scheduler.awaitDrained(0);
+            scheduler.resumeAdmission();
+            scheduler.resumeAdmission();
+            assertTrue(calculated.await(5, TimeUnit.SECONDS));
+            scheduler.awaitDrained(TimeUnit.SECONDS.toNanos(5));
+            scheduler.cancelSchedule(rule.getId());
+            assertEquals(1, invocations.get());
+        } finally {
+            scheduler.cancelSchedule(rule.getId());
+            releaseThirdTick.countDown();
+            scheduler.stop();
+            boolean scheduledTerminated = scheduled.awaitTermination(5, TimeUnit.SECONDS);
+            boolean periodicTerminated = periodic == null || periodic.awaitTermination(5, TimeUnit.SECONDS);
+            assertTrue(scheduledTerminated);
+            assertTrue(periodicTerminated);
+        }
     }
 
     private AlertDefine metricRule(Long id) {

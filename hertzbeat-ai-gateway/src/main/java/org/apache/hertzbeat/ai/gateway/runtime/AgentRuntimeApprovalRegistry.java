@@ -17,6 +17,11 @@
 
 package org.apache.hertzbeat.ai.gateway.runtime;
 
+import org.apache.hertzbeat.ai.gateway.tool.core.AgentApprovalConsumption;
+import org.apache.hertzbeat.ai.gateway.tool.core.AgentApprovalDecision;
+import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
+
 import java.time.Duration;
 import java.util.Objects;
 import java.util.Optional;
@@ -26,21 +31,22 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import org.apache.hertzbeat.ai.gateway.tool.core.AgentApprovalDecision;
-import org.apache.hertzbeat.ai.gateway.tool.core.AgentApprovalConsumption;
-import org.springframework.stereotype.Service;
-import org.springframework.util.StringUtils;
 
-/**
- * Active approval waiters for currently running runtime loops.
- */
+/** Active approval waiters for currently running runtime loops. */
 @Service
 public class AgentRuntimeApprovalRegistry {
 
     private final ConcurrentMap<String, ApprovalWaiter> approvals = new ConcurrentHashMap<>();
 
+    /** Observes an active waiter without reserving, consuming or completing it. */
+    public boolean isAwaitingDecision(String approvalId) {
+        ApprovalWaiter waiter = approvalId == null ? null : approvals.get(approvalId);
+        return waiter != null && waiter.isAwaitingDecision();
+    }
+
     public CompletableFuture<AgentApprovalDecision> register(String approvalId) {
-        // Approval IDs are persisted ledger identities and must be complete before a runtime waiter is registered.
+        // Approval IDs are persisted ledger identities and must be complete before a runtime waiter
+        // is registered.
         if (!StringUtils.hasText(approvalId)) {
             throw new IllegalArgumentException("Approval id is required");
         }
@@ -53,17 +59,18 @@ public class AgentRuntimeApprovalRegistry {
     }
 
     public boolean complete(String approvalId, AgentApprovalDecision decision) {
-        // Command normalization supplies both values; a null completion would corrupt the waiting lifecycle.
+        // Command normalization supplies both values; a null completion would corrupt the waiting
+        // lifecycle.
         if (!StringUtils.hasText(approvalId)) {
             throw new IllegalArgumentException("Approval id is required");
         }
         Objects.requireNonNull(decision, "Approval decision is required");
-        return reserve(approvalId).map(reservation -> reservation.deliver(decision).accepted()).orElse(false);
+        return reserve(approvalId)
+                .map(reservation -> reservation.deliver(decision).accepted())
+                .orElse(false);
     }
 
-    /**
-     * Atomically reserves one active waiter while its durable decision is committed.
-     */
+    /** Atomically reserves one active waiter while its durable decision is committed. */
     public Optional<ApprovalReservation> reserve(String approvalId) {
         if (!StringUtils.hasText(approvalId)) {
             throw new IllegalArgumentException("Approval id is required");
@@ -83,7 +90,8 @@ public class AgentRuntimeApprovalRegistry {
     }
 
     public boolean isWaiting(String approvalId) {
-        // Approval lookups use normalized command identities; blank values indicate a caller contract violation.
+        // Approval lookups use normalized command identities; blank values indicate a caller
+        // contract violation.
         if (!StringUtils.hasText(approvalId)) {
             throw new IllegalArgumentException("Approval id is required");
         }
@@ -94,9 +102,7 @@ public class AgentRuntimeApprovalRegistry {
         return new CompletableFuture<>();
     }
 
-    /**
-     * One-use claim that prevents runtime cancellation from racing a durable decision.
-     */
+    /** One-use claim that prevents runtime cancellation from racing a durable decision. */
     public final class ApprovalReservation {
 
         private final ApprovalWaiter waiter;
@@ -106,7 +112,8 @@ public class AgentRuntimeApprovalRegistry {
         }
 
         public ApprovalDelivery deliver(AgentApprovalDecision decision) {
-            return waiter.deliver(this, Objects.requireNonNull(decision, "Approval decision is required"));
+            return waiter.deliver(
+                    this, Objects.requireNonNull(decision, "Approval decision is required"));
         }
 
         public void release() {
@@ -171,6 +178,14 @@ public class AgentRuntimeApprovalRegistry {
             this.future = new ApprovalFuture(this);
         }
 
+        private synchronized boolean isAwaitingDecision() {
+            return approvals.get(approvalId) == this
+                    && !future.isDone()
+                    && !cancelRequested
+                    && reservation == null
+                    && delivery == null;
+        }
+
         private synchronized Optional<ApprovalReservation> reserve() {
             if (reservation != null || future.isDone() || approvals.get(approvalId) != this) {
                 return Optional.empty();
@@ -179,8 +194,11 @@ public class AgentRuntimeApprovalRegistry {
             return Optional.of(reservation);
         }
 
-        private synchronized ApprovalDelivery deliver(ApprovalReservation claim, AgentApprovalDecision decision) {
-            if (reservation != claim || delivery != null || future.isDone()
+        private synchronized ApprovalDelivery deliver(
+                ApprovalReservation claim, AgentApprovalDecision decision) {
+            if (reservation != claim
+                    || delivery != null
+                    || future.isDone()
                     || approvals.get(approvalId) != this) {
                 return new ApprovalDelivery(this, false);
             }
@@ -242,8 +260,11 @@ public class AgentRuntimeApprovalRegistry {
 
         private synchronized Optional<AgentApprovalConsumption.Claim> beginConsumption(
                 AgentApprovalDecision decision) {
-            if (delivery == null || consumption != null || cancelRequested
-                    || deliveredDecision != decision || approvals.get(approvalId) != this) {
+            if (delivery == null
+                    || consumption != null
+                    || cancelRequested
+                    || deliveredDecision != decision
+                    || approvals.get(approvalId) != this) {
                 if (delivery != null && cancelRequested) {
                     delivery.complete(false);
                     approvals.remove(approvalId, this);

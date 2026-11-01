@@ -27,6 +27,7 @@ public enum AgentRuntimeEventType {
     ITEM_COMPLETED,
     REQUESTED_ACTION,
     REQUEST_COMPLETED,
+    MODEL_RETRY,
     RUN_COMPLETED,
     ERROR
 }

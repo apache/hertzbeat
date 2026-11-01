@@ -18,15 +18,18 @@
 package org.apache.hertzbeat.collector.collect.ipmi2.cache;
 
 
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.apache.hertzbeat.collector.collect.common.cache.AbstractConnection;
 import org.apache.hertzbeat.collector.collect.ipmi2.client.IpmiConnection;
 
 /**
  * ipmi connect session
  */
-public class IpmiConnect extends AbstractConnection<IpmiConnection> {
+public final class IpmiConnect extends AbstractConnection<IpmiConnection> {
 
     private final IpmiConnection ipmiConnection;
+
+    private final AtomicBoolean closed = new AtomicBoolean();
 
     public IpmiConnect(IpmiConnection ipmiConnection) {
         this.ipmiConnection = ipmiConnection;
@@ -39,7 +42,7 @@ public class IpmiConnect extends AbstractConnection<IpmiConnection> {
 
     @Override
     public void closeConnection() throws Exception {
-        if (ipmiConnection != null) {
+        if (ipmiConnection != null && closed.compareAndSet(false, true)) {
             ipmiConnection.close();
         }
     }

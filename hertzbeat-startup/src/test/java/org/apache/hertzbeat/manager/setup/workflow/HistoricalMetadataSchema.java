@@ -51,7 +51,7 @@ final class HistoricalMetadataSchema {
                 .baselineVersion("159")
                 .baselineOnMigrate(true)
                 .cleanDisabled(true)
-                .target("200")
+                .target(TargetSchemaBaseline.VERSION)
                 .validateMigrationNaming(true)
                 .load();
         flyway.migrate();

@@ -33,6 +33,7 @@ import org.apache.hertzbeat.ai.gateway.application.GatewayEvent.InputRequestedPa
 import org.apache.hertzbeat.ai.gateway.application.GatewayEvent.InputCompletedPayload;
 import org.apache.hertzbeat.ai.gateway.application.GatewayEvent.MessageDeltaPayload;
 import org.apache.hertzbeat.ai.gateway.application.GatewayEvent.MessageStartedPayload;
+import org.apache.hertzbeat.ai.gateway.application.GatewayEvent.ModelRetryPayload;
 import org.apache.hertzbeat.ai.gateway.application.GatewayEvent.RunCompletedPayload;
 import org.apache.hertzbeat.ai.gateway.application.GatewayEvent.RunStartedPayload;
 import org.apache.hertzbeat.ai.gateway.application.GatewayEvent.ToolCompletedPayload;
@@ -69,6 +70,14 @@ public class GatewayRuntimeEventProjector {
                     runUid, RunCompletedPayload.builder()
                             .traceId(event.getTraceId())
                             .build());
+            case MODEL_RETRY -> gatewayEvent(event, GatewayEventType.MODEL_RETRY, conversationId, sessionUid, runUid,
+                    ModelRetryPayload.builder()
+                            .traceId(event.getTraceId())
+                            .attempt(event.getRetryAttempt())
+                            .maxAttempts(event.getRetryMaxAttempts())
+                            .delayMs(event.getRetryDelayMs())
+                            .errorMessage(GatewayText.redactSecrets(event.getErrorMessage()))
+                            .build());
             case ERROR -> gatewayEvent(event, GatewayEventType.ERROR, conversationId, sessionUid, runUid,
                     errorPayload(event, event.getErrorMessage()));
         };
@@ -82,7 +91,7 @@ public class GatewayRuntimeEventProjector {
                             .traceId(event.getTraceId())
                             .toolName(event.getToolName())
                             .toolCallId(event.getToolCallId())
-                            .arguments(event.getToolArguments())
+                            .arguments(displayArguments(event.getToolArguments()))
                             .status(event.getStatus() == null ? EventStatus.IN_PROGRESS.externalName()
                                     : event.getStatus().externalName())
                             .build());
@@ -131,6 +140,7 @@ public class GatewayRuntimeEventProjector {
             return gatewayEvent(event, GatewayEventType.MESSAGE_COMPLETED, conversationId, sessionUid, runUid,
                     MessageCompletedPayload.builder()
                             .traceId(event.getTraceId())
+                            .parts(event.getMessageParts())
                             .build());
         }
         return unsupported(event, conversationId, sessionUid, runUid,
@@ -159,6 +169,10 @@ public class GatewayRuntimeEventProjector {
         }
         return gatewayEvent(event, GatewayEventType.APPROVAL_REQUESTED, conversationId, sessionUid, runUid,
                 ApprovalRequestedPayload.builder()
+                        .summary(event.getRequestPayload() != null && event.getRequestPayload().get("summary")
+                                instanceof org.apache.hertzbeat.ai.gateway.conversation.AgentApprovalSummary summary ? summary : null)
+                        .canDecide(event.getRequestPayload() != null
+                                && Boolean.TRUE.equals(event.getRequestPayload().get("canDecide")))
                         .traceId(event.getTraceId())
                         .toolName(event.getToolName())
                         .approvalId(event.getApprovalId())
@@ -227,7 +241,8 @@ public class GatewayRuntimeEventProjector {
             return eventRunUid + ":event:" + event.getEventSequence();
         }
         String stableId = Stream.of(event.getRequestId(), event.getApprovalId(), event.getItemId(),
-                        event.getToolCallId(), event.getTraceId())
+                        event.getToolCallId(), event.getRetryAttempt() == null ? null : "attempt-"
+                                + event.getRetryAttempt(), event.getTraceId())
                 .filter(StringUtils::hasText)
                 .findFirst()
                 .orElse("event");
@@ -278,6 +293,20 @@ public class GatewayRuntimeEventProjector {
                 .filter(Map.class::isInstance)
                 .map(item -> Map.copyOf((Map<String, Object>) item))
                 .toList();
+    }
+
+    /** SSE shows bounded numeric routing facts only; arbitrary parameter aliases may hold secrets. */
+    private static java.util.Map<String, Object> displayArguments(java.util.Map<String, Object> arguments) {
+        if (arguments == null) return java.util.Map.of();
+        java.util.Map<String, Object> safe = new java.util.LinkedHashMap<>();
+        for (String key : java.util.List.of("monitorId", "entityId", "id", "limit", "pageIndex", "pageSize")) {
+            Object value = arguments.get(key);
+            if (value instanceof Byte || value instanceof Short || value instanceof Integer || value instanceof Long) {
+                long numeric = ((Number) value).longValue();
+                if (numeric >= 0) safe.put(key, value);
+            }
+        }
+        return java.util.Map.copyOf(safe);
     }
 
 }
