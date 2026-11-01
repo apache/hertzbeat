@@ -28,6 +28,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.io.IOException;
+import java.lang.management.ManagementFactory;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Duration;
@@ -353,17 +354,25 @@ class DeploymentMigrationCommandRunnerReviewTest {
     @Test
     void activeOperationProjectionCannotMissTaskCreatedBeforeJournalWrite() throws Exception {
         Path caseRoot = root.resolve("active-linearized");
-        FileMigrationOperationStore store = new FileMigrationOperationStore(caseRoot);
+        FileMigrationOperationStore store = org.mockito.Mockito.spy(new FileMigrationOperationStore(caseRoot));
         SecureSetupFileLock fileLock = new SecureSetupFileLock(
                 caseRoot, "data/config/.metadata-migration-operations.lock");
         CountDownLatch lockHeld = new CountDownLatch(1);
         CountDownLatch releaseLock = new CountDownLatch(1);
+        CountDownLatch projectionEnteredStore = new CountDownLatch(1);
+        org.mockito.Mockito.doAnswer(invocation -> {
+            projectionEnteredStore.countDown();
+            return invocation.callRealMethod();
+        }).when(store).selectUniqueNonterminalForStartup();
+        DeploymentMigrationCommandRunner runner = runner(
+                store, mock(RetainedCutoverCoordinator.class), Clock.fixed(NOW, ZoneOffset.UTC),
+                Executors.newSingleThreadExecutor());
         CompletableFuture<Void> holder = CompletableFuture.runAsync(() -> {
             try {
                 fileLock.execute(() -> {
                     lockHeld.countDown();
                     try {
-                        assertThat(releaseLock.await(5, SECONDS)).isTrue();
+                        releaseLock.await();
                     } catch (InterruptedException interrupted) {
                         Thread.currentThread().interrupt();
                         throw new IOException("test lock interrupted");
@@ -374,33 +383,50 @@ class DeploymentMigrationCommandRunnerReviewTest {
                 throw new AssertionError(failure);
             }
         });
-        assertThat(lockHeld.await(5, SECONDS)).isTrue();
-        DeploymentMigrationCommandRunner runner = runner(
-                store, mock(RetainedCutoverCoordinator.class), Clock.fixed(NOW, ZoneOffset.UTC),
-                Executors.newSingleThreadExecutor());
         AtomicReference<Optional<String>> projected = new AtomicReference<>();
-        Thread projection = Thread.ofPlatform().start(
-                () -> projected.set(runner.activeOperationId()));
+        AtomicReference<Throwable> projectionFailure = new AtomicReference<>();
         AtomicReference<Throwable> startFailure = new AtomicReference<>();
-        Thread start = Thread.ofPlatform().start(() -> {
+        Thread projection = Thread.ofPlatform().unstarted(() -> {
+            try {
+                projected.set(runner.activeOperationId());
+            } catch (Throwable failure) {
+                projectionFailure.set(failure);
+            }
+        });
+        Thread start = Thread.ofPlatform().unstarted(() -> {
             try {
                 runner.start(request());
-            } catch (RuntimeException | Error failure) {
+            } catch (Throwable failure) {
                 startFailure.set(failure);
             }
         });
         try {
+            assertThat(lockHeld.await(5, SECONDS)).isTrue();
+            projection.start();
+            assertThat(projectionEnteredStore.await(5, SECONDS)).isTrue();
+            start.start();
             awaitState(start, Thread.State.BLOCKED);
+            var blocked = ManagementFactory.getThreadMXBean().getThreadInfo(start.threadId());
+            assertThat(blocked.getLockOwnerId()).isEqualTo(projection.threadId());
+            assertThat(blocked.getLockInfo().getIdentityHashCode()).isEqualTo(System.identityHashCode(runner));
             releaseLock.countDown();
             projection.join(5000);
+            assertThat(projection.isAlive()).isFalse();
+            assertThat(projectionFailure.get()).isNull();
             assertThat(projected.get()).isEmpty();
         } finally {
             releaseLock.countDown();
-            holder.get(5, SECONDS);
-            start.join(5000);
-            assertThat(startFailure.get()).isInstanceOf(MetadataMigrationException.class);
-            runner.close();
+            try {
+                projection.join(5000);
+                start.join(5000);
+                holder.get(5, SECONDS);
+            } finally {
+                runner.close();
+            }
         }
+        assertThat(projection.isAlive()).isFalse();
+        assertThat(start.isAlive()).isFalse();
+        assertThat(startFailure.get()).isInstanceOf(MetadataMigrationException.class);
     }
 
     private DeploymentMigrationCommandRunner runner(
