@@ -35,7 +35,8 @@ import org.springframework.ai.openai.OpenAiChatOptions;
  */
 class OpenAiCompatibleAgentModelProviderTest {
 
-    private final OpenAiCompatibleAgentModelProvider provider = new OpenAiCompatibleAgentModelProvider();
+    private final OpenAiCompatibleAgentModelProvider provider =
+            new OpenAiCompatibleAgentModelProvider(new org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeProperties());
 
     @Test
     void optionsShouldExposeEverySupportedCompatiblePreset() {

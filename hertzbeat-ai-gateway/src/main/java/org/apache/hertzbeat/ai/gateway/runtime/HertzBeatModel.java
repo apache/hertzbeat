@@ -54,6 +54,11 @@ import org.springframework.util.StringUtils;
 public class HertzBeatModel {
 
     private static final int MODEL_ERROR_MESSAGE_LIMIT = 1024;
+
+    // SDK wrappers prefix messages with the originating Java class (e.g.
+    // "com.openai.errors.RateLimitException: 429: ..."); users only need the reason itself.
+    private static final Pattern EXCEPTION_CLASS_MESSAGE_PREFIX =
+            Pattern.compile("^([a-zA-Z_][a-zA-Z0-9_]*\\.)+[A-Z][a-zA-Z0-9_$]*Exception:\\s*");
     private static final String FUNCTION_TOOL_TYPE = "function";
     private static final Pattern WIRE_UNSAFE_TOOL_NAME_CHARS = Pattern.compile("[^a-zA-Z0-9_-]");
     private static final TypeReference<Map<String, Object>> MAP_TYPE = new TypeReference<>() {
@@ -120,9 +125,9 @@ public class HertzBeatModel {
             }
             // Provider exception messages can include request or credential details and cross into runtime errors.
             String providerMessage = AgentRuntimeTextSanitizer
-                    .sanitizeAndLimit(exception.getMessage(), MODEL_ERROR_MESSAGE_LIMIT);
+                    .sanitizeAndLimit(userFacingFailureMessage(exception), MODEL_ERROR_MESSAGE_LIMIT);
             throw AgentRuntimeModelException.retryable(
-                    "Spring AI chat model stream failed: " + providerMessage, exception);
+                    "Model provider request failed: " + providerMessage, exception);
         } finally {
             timing.finish(accumulator.metadata, accumulator.finishReason, streamCompleted, control.isStopRequested());
             try {
@@ -135,6 +140,14 @@ public class HertzBeatModel {
         AgentRuntimeModelResponse response = accumulator.toRuntimeResponse();
         AgentRuntimeSafeTrace.model(control.getRunUid(), request, response, accumulator.finishReason);
         return response;
+    }
+
+    private static String userFacingFailureMessage(RuntimeException exception) {
+        String message = exception.getMessage();
+        if (message == null) {
+            return exception.getClass().getSimpleName();
+        }
+        return EXCEPTION_CLASS_MESSAGE_PREFIX.matcher(message).replaceFirst("");
     }
 
     private Prompt toPrompt(AgentRuntimeModelRequest request, ToolNameCodec toolNameCodec) {
@@ -502,8 +515,7 @@ public class HertzBeatModel {
             if (java.util.Set.of("length", "max_tokens").contains(AgentRuntimeSafeTrace.finishReason(finishReason)))
                 return AgentRuntimeModelResponse.invalidResponse("MODEL_OUTPUT_LIMIT_REACHED: incomplete output cannot authorize tools or completion", toRuntimeUsage(metadata));
             if (text.isEmpty() && toolCalls.isEmpty()) {
-                throw new AgentRuntimeModelException("Spring AI chat model stream returned no assistant message.",
-                        true);
+                throw new AgentRuntimeModelException("Model provider returned an empty response.", true);
             }
             String finalText = aggregated == null ? text.toString() : aggregated.getText();
             AgentRuntimeModelResponse result = HertzBeatModel.this.toRuntimeResponse(finalText, toolCalls, metadata);

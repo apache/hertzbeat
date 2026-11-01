@@ -55,6 +55,11 @@ public class IpmiProtocol implements CommonRequestProtocol, Protocol {
     private String password;
 
     /**
+     * (Optional) max wait in milliseconds for one IPMI UDP response
+     */
+    private String timeout;
+
+    /**
      * command type: Chassis | Sensor | Raw
      */
     private String type;

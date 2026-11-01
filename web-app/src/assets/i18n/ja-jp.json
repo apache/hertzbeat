@@ -4440,6 +4440,9 @@
     "targetUnavailable": "現在、このタスク対象を確認できません。タスクは開始されていません。",
     "invalidTarget": "このタスクリンクの対象は無効か、まだ対応していません。元の画面に戻ってやり直してください。",
     "activeObservationPaused": "ライブ監視を一時停止しました。永続化された実行は進行中のままで、完了したとは見なしません。",
+    "modelRetrying": "モデルリクエストが失敗しました：{{reason}}。{{delay}} 秒後に再試行します（{{attempt}}/{{maxAttempts}}）…",
+    "modelRetryingNoDelay": "モデルリクエストが失敗しました：{{reason}}。再試行中（{{attempt}}/{{maxAttempts}}）…",
+    "modelRetryUnknownReason": "不明なサーバーエラー",
     "context": {
       "label": "実行コンテキスト",
       "open": "実行の詳細を開く",

@@ -20,7 +20,6 @@ import { z } from 'zod';
 import { agentEvidenceSchema } from './agent-evidence-schema';
 import { isAgentApprovalSummary } from '../model/agent-approval-summary';
 import type { AgentApprovalSummary } from '../model/agent-approval-summary';
-import { agentGatewayEventTypes } from '../model/agent-workspace-contract';
 import { agentRunTargetSchema, agentSourceTargetWireSchema } from './agent-target-schema';
 export { agentSourceTargetSchema } from './agent-target-schema';
 
@@ -33,7 +32,9 @@ const publicMessagePartsSchema = z.array(
 
 export const agentGatewayEventSchema = z
   .object({
-    type: z.enum(agentGatewayEventTypes),
+    // Accept unknown event types so a newer backend never breaks an older UI stream;
+    // unrecognized types are dropped in agent-chat-stream.ts before reaching the reducer.
+    type: z.string(),
     eventId: z.string().min(1),
     conversationId: z.string().nullable(),
     sessionUid: z.string().nullable(),

@@ -4440,6 +4440,9 @@
     "targetUnavailable": "O HertzBeat não consegue verificar este alvo de tarefa agora. Nenhuma tarefa foi iniciada.",
     "invalidTarget": "Este link de tarefa contém um alvo inválido ou ainda não suportado. Volte à página de origem e tente novamente.",
     "activeObservationPaused": "A observação em tempo real foi pausada. A execução persistente continua em andamento; nenhuma conclusão foi presumida.",
+    "modelRetrying": "Falha na requisição do modelo: {{reason}}. Nova tentativa em {{delay}}s ({{attempt}}/{{maxAttempts}})…",
+    "modelRetryingNoDelay": "Falha na requisição do modelo: {{reason}}. Tentando novamente ({{attempt}}/{{maxAttempts}})…",
+    "modelRetryUnknownReason": "erro desconhecido do servidor",
     "context": {
       "label": "Contexto da execução",
       "open": "Abrir detalhes da execução",
