@@ -26,14 +26,19 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.clearInvocations;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import org.apache.hertzbeat.alert.dao.AlertDefineDao;
 import org.apache.hertzbeat.common.config.VirtualThreadProperties;
 import org.apache.hertzbeat.common.entity.alerter.AlertDefine;
@@ -43,6 +48,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 /**
  * Tests for {@link PeriodicAlertRuleScheduler}.
@@ -300,15 +306,23 @@ class PeriodicAlertRuleSchedulerTest {
 
     private void assertPausedTicksResumeOnce(VirtualThreadProperties properties) throws Exception {
         scheduler.stop();
-        CountDownLatch pausedTicks = new CountDownLatch(2);
         scheduler = new PeriodicAlertRuleScheduler(
-                metricsCalculator, logCalculator, traceCalculator, alertDefineDao, properties) {
+                metricsCalculator, logCalculator, traceCalculator, alertDefineDao, properties);
+        scheduler.start();
+        AtomicReference<Runnable> trigger = new AtomicReference<>();
+        // Keep real execution, but admit ticks explicitly so none can race with resume.
+        ScheduledThreadPoolExecutor controlledTimer = new ScheduledThreadPoolExecutor(1) {
             @Override
-            void beforeRuleTrigger(AlertDefine rule) {
-                pausedTicks.countDown();
+            public ScheduledFuture<?> scheduleAtFixedRate(Runnable command, long initialDelay,
+                                                          long period, TimeUnit unit) {
+                trigger.set(command);
+                return mock(ScheduledFuture.class);
             }
         };
-        scheduler.start();
+        ScheduledExecutorService originalTimer =
+                (ScheduledExecutorService) ReflectionTestUtils.getField(scheduler, "scheduledExecutor");
+        originalTimer.shutdownNow();
+        ReflectionTestUtils.setField(scheduler, "scheduledExecutor", controlledTimer);
         CountDownLatch calculated = new CountDownLatch(1);
         AtomicInteger invocations = new AtomicInteger();
         doAnswer(invocation -> {
@@ -320,12 +334,14 @@ class PeriodicAlertRuleSchedulerTest {
 
         scheduler.pauseAdmission();
         scheduler.updateSchedule(rule);
-        assertTrue(pausedTicks.await(3, TimeUnit.SECONDS));
+        trigger.get().run();
+        trigger.get().run();
         scheduler.awaitDrained(0);
 
         scheduler.resumeAdmission();
         scheduler.resumeAdmission();
         assertTrue(calculated.await(1, TimeUnit.SECONDS));
+        scheduler.awaitDrained(TimeUnit.SECONDS.toNanos(5));
         scheduler.cancelSchedule(rule.getId());
         assertEquals(1, invocations.get());
     }
