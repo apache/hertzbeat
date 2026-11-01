@@ -21,6 +21,21 @@
   grid-template-columns: minmax(180px, 1fr) minmax(150px, 200px) minmax(140px, 160px) minmax(180px, 1fr);
   gap: 8px;
 }
+.stickyToolbar {
+  position: sticky;
+  top: var(--hb-shell-header-height, 52px);
+  z-index: 5;
+  min-width: 0;
+  background: var(--hb-bg-navigation);
+  border-bottom: 1px solid var(--hb-border-subtle);
+}
+
+@media (max-width: 800px) {
+  .stickyToolbar {
+    max-height: 60dvh;
+    overflow-y: auto;
+  }
+}
 .filterActions,
 .managementActions {
   display: flex;
