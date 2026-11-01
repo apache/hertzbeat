@@ -23,6 +23,7 @@ import { configDefaults, defineConfig } from 'vitest/config';
 
 import bundleLimits from './scripts/bundle-limits.json' with { type: 'json' };
 import vitestResourcePolicy from './scripts/vitest-resource-policy.json' with { type: 'json' };
+import { localeCatalogPlugin } from './scripts/locale-catalog-plugin';
 
 const backendOrigin = process.env.BACKEND_ORIGIN || 'http://127.0.0.1:1157';
 const requireGanttDependency = createRequire(
@@ -37,7 +38,7 @@ const backendProxy = {
 };
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), localeCatalogPlugin(fileURLToPath(new URL('./src/assets/i18n/', import.meta.url)))],
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))

@@ -209,7 +209,7 @@ class OpenAiStreamCancellationTest {
         config.setBaseUrl("http://127.0.0.1:" + port + "/v1");
         config.setModel("local-stream-proof");
         config.setApiKey("local-proof-key");
-        return new OpenAiCompatibleAgentModelProvider().createModel(config);
+        return new OpenAiCompatibleAgentModelProvider(new AgentRuntimeProperties()).createModel(config);
     }
 
     private enum IdlePrefix {

@@ -250,7 +250,7 @@ public class MonitorServiceImpl implements MonitorService {
         } catch (Exception e) {
             log.error("Error while adding monitor: {}", e.getMessage(), e);
             collectJobScheduling.cancelAsyncCollectJob(jobId);
-            throw new MonitorDatabaseException(e.getMessage());
+            throw new MonitorDatabaseException(e.getMessage(), e);
         }
     }
 

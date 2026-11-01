@@ -80,7 +80,9 @@ export function useShellAlertNotificationController(
     [client]
   );
   // One shell-owned stream refreshes the header and every mounted Alert Center query.
-  useAlertCenterRealtimeRefresh(refreshAlerts, sound.onAlert);
+  useAlertCenterRealtimeRefresh(refreshAlerts, sound.onAlert, {
+    keepAliveWhenHidden: sound.state.kind === 'ready' && !sound.state.muted
+  });
   return {
     count: readCountState(countQuery.isPending, countQuery.error, countQuery.data),
     list: readListState(listQuery.isPending, listQuery.error, listQuery.data?.content),

@@ -21,7 +21,8 @@ import { getAgentRun } from '../api/agent-gateway-api';
 import type { AgentGatewayEvent, AgentRunSnapshot } from '../model/agent-workspace-contract';
 import type { AgentWorkspaceAction } from '../model/agent-workspace-reducer';
 
-const activeObservationTimeoutMs = 5_000;
+const activeObservationTimeoutMs = 90_000;
+const maximumObservationMs = 31 * 60_000;
 const activeObservationIntervalMs = 1_000;
 
 type ObservationRefs = {
@@ -52,11 +53,25 @@ export async function observeActiveRun(
   dispatch: Dispatch<AgentWorkspaceAction>,
   converge: (sessionUid?: string, preserveRun?: boolean, signal?: AbortSignal) => Promise<void>
 ) {
-  const observation = await pollRun(runUid, abort.signal);
+  const observation = await pollRun(runUid, abort.signal, snapshot => {
+    if (!refs.isMounted()) {
+      abort.abort();
+      return;
+    }
+    publishAgentEvent(runStatusEvent(snapshot, conversationId, false, false, true), refs, abort, dispatch);
+  });
   const { snapshot } = observation;
   const terminalError =
     snapshot.status !== 'SUCCEEDED' && snapshot.status !== 'RUNNING' && snapshot.status !== 'CREATED';
   publishAgentEvent(runStatusEvent(snapshot, conversationId, observation.expired, false, true), refs, abort, dispatch);
+  if (refs.isMounted() && !abort.signal.aborted) {
+    dispatch({
+      type: 'RUN_EVIDENCE_LOADED',
+      runUid: snapshot.runUid,
+      evidence: snapshot.evidence,
+      executionSummary: snapshot.executionSummary
+    });
+  }
   await converge(refs.getStreamedSession(), terminalError || observation.expired, abort.signal);
   if (!terminalError && !observation.expired) refs.setLastRequest();
 }
@@ -91,6 +106,8 @@ export function runStatusEvent(
     itemId: null,
     payload: {
       status: snapshot.status,
+      recoveredApprovals: snapshot.recoveredApprovals,
+      approvalRecoveryUnavailable: snapshot.approvalRecoveryUnavailable,
       result: snapshot.result,
       errorMessage: snapshot.errorMessage,
       replayAvailable: snapshot.replayAvailable,
@@ -113,12 +130,26 @@ function terminalStatusIsError(event: AgentGatewayEvent) {
   return status === 'FAILED' || status === 'CANCELLED' || status === 'RECOVERY_REQUIRED';
 }
 
-async function pollRun(runUid: string, signal: AbortSignal): Promise<{ snapshot: AgentRunSnapshot; expired: boolean }> {
-  const deadline = Date.now() + activeObservationTimeoutMs;
+async function pollRun(
+  runUid: string,
+  signal: AbortSignal,
+  onSnapshot: (snapshot: AgentRunSnapshot) => void
+): Promise<{ snapshot: AgentRunSnapshot; expired: boolean }> {
+  let deadline = Date.now() + activeObservationTimeoutMs;
+  const hardDeadline = Date.now() + maximumObservationMs;
   for (;;) {
     const snapshot = await getAgentRun(runUid, signal);
+    onSnapshot(snapshot);
+    if (signal.aborted) throw new DOMException('Aborted', 'AbortError');
     if (snapshot.status !== 'CREATED' && snapshot.status !== 'RUNNING') return { snapshot, expired: false };
-    if (Date.now() >= deadline) return { snapshot, expired: true };
+    if (
+      snapshot.recoveredApprovals?.some(
+        approval => approval.canDecide && ['PENDING', 'WAITING_APPROVAL'].includes(approval.status.toUpperCase())
+      )
+    ) {
+      deadline = Math.min(hardDeadline, Date.now() + activeObservationTimeoutMs);
+    }
+    if (Date.now() >= deadline || Date.now() >= hardDeadline) return { snapshot, expired: true };
     await abortableDelay(Math.min(activeObservationIntervalMs, deadline - Date.now()), signal);
   }
 }

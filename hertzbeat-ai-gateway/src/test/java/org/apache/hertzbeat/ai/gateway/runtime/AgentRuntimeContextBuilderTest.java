@@ -49,6 +49,22 @@ class AgentRuntimeContextBuilderTest {
     private static final Instant NOW = Instant.parse("2026-04-19T00:00:00Z");
 
     @Test
+    void recentWindowRemainsAtDurableCreationOnResumeAndRejectsMissingAnchor() {
+        AgentRun run = run();
+        run.setGmtCreate(java.time.LocalDateTime.ofInstant(NOW, java.time.ZoneId.systemDefault()));
+        var request = AgentRuntimeRequest.builder().envelope(envelope()).session(session()).run(run)
+                .entryType(AgentRuntimeEntryType.USER_INPUT).approvalHandling(AgentApprovalHandling.DENY)
+                .userInput(userInput("inspect last 15 minutes")).build();
+        var first = builder("first").build(request, new AgentRuntimeProperties());
+        var resumed = new AgentRuntimeContextBuilder(Clock.fixed(NOW.plusSeconds(600), ZoneOffset.UTC), () -> "resume")
+                .build(request, new AgentRuntimeProperties());
+        assertEquals(NOW.toEpochMilli(), first.getRequestedQueryWindow().end());
+        assertEquals(first.getRequestedQueryWindow(), resumed.getRequestedQueryWindow());
+        run.setGmtCreate(null);
+        assertThrows(IllegalArgumentException.class, () -> builder("missing").build(request, new AgentRuntimeProperties()));
+    }
+
+    @Test
     void shouldUseDefaultConfigGeneratedTraceAndContextSnapshot() {
         UserInput userInput = UserInput.builder()
                 .conversationId("conversation-1")
