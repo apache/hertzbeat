@@ -114,4 +114,29 @@ class SslCertificateCollectImplTest {
         Assertions.assertTrue(builder.getValuesCount() > 0, "expected cert rows, got: " + builder.getMsg());
         Assertions.assertEquals("CN=test", builder.getValues(0).getColumns(0));
     }
+
+    @Test
+    void collectHonoursConfiguredTimeout() {
+        // TEST-NET-1 (RFC 5737) is reserved and unroutable: the TLS handshake cannot complete.
+        // Without a connect/read timeout this call would block for the OS-level TCP timeout.
+        HttpProtocol http = new HttpProtocol();
+        http.setHost("192.0.2.1");
+        http.setPort("443");
+        http.setSsl("true");
+        http.setTimeout("800");
+        Metrics metrics = Metrics.builder()
+                .http(http)
+                .aliasFields(List.of("subject"))
+                .build();
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+
+        long start = System.nanoTime();
+        new SslCertificateCollectImpl().collect(builder, metrics);
+        long elapsedMillis = (System.nanoTime() - start) / 1_000_000L;
+
+        Assertions.assertTrue(elapsedMillis < 8_000,
+                "collect must honour the configured timeout, took " + elapsedMillis + "ms");
+        Assertions.assertNotEquals(CollectRep.Code.SUCCESS, builder.getCode());
+        Assertions.assertEquals(0, builder.getValuesCount());
+    }
 }
