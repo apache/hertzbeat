@@ -31,6 +31,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -40,10 +41,20 @@ class CommonHttpClientVirtualThreadTest {
 
     private final PoolingHttpClientConnectionManager originalConnectionManager = CommonHttpClient.getConnectionManager();
 
+    @BeforeEach
+    void awaitPreviousCleanup() throws InterruptedException {
+        assertTrue(CommonHttpClient.awaitConnectionPoolCleanupIdleForTest(5, TimeUnit.SECONDS));
+    }
+
     @AfterEach
-    void tearDown() {
-        CommonHttpClient.setBeforeCleanupHookForTest(null);
-        CommonHttpClient.setConnectionManagerForTest(originalConnectionManager);
+    void tearDown() throws InterruptedException {
+        try {
+            // The entry hook fires before cleanup; drain before replacing its shared manager.
+            assertTrue(CommonHttpClient.awaitConnectionPoolCleanupIdleForTest(5, TimeUnit.SECONDS));
+        } finally {
+            CommonHttpClient.setBeforeCleanupHookForTest(null);
+            CommonHttpClient.setConnectionManagerForTest(originalConnectionManager);
+        }
     }
 
     @Test
@@ -123,6 +134,7 @@ class CommonHttpClientVirtualThreadTest {
 
         assertTrue(expiredConnectionsClosed.await(5, TimeUnit.SECONDS));
         assertTrue(idleConnectionsClosed.await(5, TimeUnit.SECONDS));
+        assertTrue(CommonHttpClient.awaitConnectionPoolCleanupIdleForTest(5, TimeUnit.SECONDS));
         verify(manager, times(1)).closeExpiredConnections();
         verify(manager, times(1)).closeIdleConnections(40, TimeUnit.SECONDS);
     }
