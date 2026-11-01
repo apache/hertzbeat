@@ -65,6 +65,7 @@ public class NginxCollectImpl extends AbstractCollect {
     private static final String NGINX_STATUS_NAME = "nginx_status";
     private static final String REQ_STATUS_NAME = "req_status";
     private static final String AVAILABLE = "available";
+    private static final String DEFAULT_NGINX_STATUS_URL = "/nginx-status";
     private static final String CONNECTIONS = "connections";
     private static final String ACTIVE = "active";
     private static final String GET = "get";
@@ -89,8 +90,16 @@ public class NginxCollectImpl extends AbstractCollect {
 
         NginxProtocol nginxProtocol = metrics.getNginx();
         String url = nginxProtocol.getUrl();
-        if (StringUtils.isEmpty(url) || !url.startsWith(RIGHT_DASH)) {
-            nginxProtocol.setUrl(url == null ? RIGHT_DASH : RIGHT_DASH + url.trim());
+        if (StringUtils.isBlank(url)) {
+            url = StringUtils.equalsAny(metrics.getName(), NGINX_STATUS_NAME, AVAILABLE)
+                    ? DEFAULT_NGINX_STATUS_URL : RIGHT_DASH;
+            nginxProtocol.setUrl(url);
+        } else {
+            url = url.trim();
+            if (!url.startsWith(RIGHT_DASH)) {
+                url = RIGHT_DASH + url;
+            }
+            nginxProtocol.setUrl(url);
         }
 
         HttpContext httpContext = createHttpContext(metrics.getNginx());
