@@ -31,6 +31,7 @@ export const createMonitorHistoryChart = (element: HTMLDivElement, input: Monito
   const runtime = createTimeSeriesChart(element, monitorHistoryInput(input));
   return {
     update: (next: MonitorHistoryChartRenderInput) => runtime.update(monitorHistoryInput(next)),
+    exportPng: runtime.exportPng,
     dispose: runtime.dispose
   };
 };

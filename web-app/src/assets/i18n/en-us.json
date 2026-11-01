@@ -1768,6 +1768,7 @@
     "storageDegraded": "Historical storage is degraded. Available charts may be incomplete.",
     "storageUnknown": "Historical storage availability is unknown.",
     "saveImage": "Save chart image",
+    "saveImageError": "Unable to save the chart image. Please try again.",
     "favorites": "Favorites",
     "favoriteEmpty": "No favorite metrics have been saved.",
     "favoriteSelect": "Select a favorite metric to inspect its data.",
