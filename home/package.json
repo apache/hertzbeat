@@ -7,7 +7,7 @@
     "start": "docusaurus start",
     "start-en": "docusaurus start --locale en",
     "start-zh-cn": "docusaurus start --locale zh-cn",
-    "build": "pnpm docs:check && docusaurus build",
+    "build": "pnpm docs:check && node --test scripts/render-to-html.test.mjs && docusaurus build && node scripts/check-built-html.mjs",
     "swizzle": "docusaurus swizzle",
     "deploy": "docusaurus deploy",
     "serve": "docusaurus serve",
@@ -54,7 +54,10 @@
       "core-js",
       "core-js-pure",
       "swiper"
-    ]
+    ],
+    "patchedDependencies": {
+      "@docusaurus/core@3.9.2": "patches/@docusaurus__core@3.9.2.patch"
+    }
   },
   "browserslist": {
     "production": [
