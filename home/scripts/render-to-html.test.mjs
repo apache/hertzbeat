@@ -46,3 +46,57 @@ test('static rendering rejects component errors', async () => {
   const boundary = React.createElement(React.Suspense, { fallback: 'Loading' }, React.createElement(Broken));
   await assert.rejects(renderToHtml(boundary), /render failed/);
 });
+
+async function observeWithin(promise, timeoutMs = 500) {
+  let timer;
+  try {
+    return await Promise.race([
+      promise.then((value) => ({ fulfilled: true, value }), (reason) => ({ fulfilled: false, reason })),
+      new Promise((resolve) => { timer = setTimeout(() => resolve({ timedOut: true }), timeoutMs); }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+test('a render error rejects promptly when another boundary never resolves', async () => {
+  const failure = new Error('render failed');
+  const Broken = () => { throw failure; };
+  let release;
+  let attempts = 0;
+  const pending = new Promise((resolve) => { release = resolve; });
+  const Waiting = () => { attempts += 1; throw pending; };
+  const page = React.createElement(React.Fragment, null,
+    React.createElement(React.Suspense, { fallback: 'Loading error' }, React.createElement(Broken)),
+    React.createElement(React.Suspense, { fallback: 'Loading forever' }, React.createElement(Waiting)),
+  );
+  const result = await observeWithin(renderToHtml(page));
+  assert.equal(result.fulfilled, false);
+  assert.equal(result.reason, failure);
+  // Let abort callbacks run, then ensure resolving the abandoned work does not retry it.
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  release();
+  await new Promise((resolve) => setTimeout(resolve, 20));
+  assert.equal(attempts, 1);
+});
+
+for (const value of [0, null]) {
+  test(`a falsy thrown value is rejected unchanged: ${value}`, async () => {
+    const Broken = () => { throw value; };
+    const page = React.createElement(React.Suspense, { fallback: 'Loading' }, React.createElement(Broken));
+    const result = await observeWithin(renderToHtml(page));
+    assert.equal(result.fulfilled, false);
+    assert.equal(result.reason, value);
+  });
+}
+
+test('a temporarily suspended component renders its final content', async () => {
+  let ready = false;
+  const pending = new Promise((resolve) => setTimeout(() => { ready = true; resolve(); }, 20));
+  const Component = () => { if (!ready) throw pending; return 'Final content'; };
+  const page = React.createElement(React.Suspense, { fallback: 'Loading' }, React.createElement(Component));
+  const result = await observeWithin(renderToHtml(page));
+  assert.equal(result.fulfilled, true);
+  assert.match(result.value, /Final content/);
+  assert.doesNotMatch(result.value, /Loading/);
+});

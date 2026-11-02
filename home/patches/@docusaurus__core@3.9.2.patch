@@ -1,8 +1,8 @@
 diff --git a/lib/client/renderToHtml.js b/lib/client/renderToHtml.js
-index 68460847961d505e78ea6c7ee43cdbf2b9a2d220..d14bf336dec3d792bb8b4dbe8a7af9299585e660 100644
+index 68460847961d505e78ea6c7ee43cdbf2b9a2d220..bb648d3a9906145d3bba725209cff1d6a8405da9 100644
 --- a/lib/client/renderToHtml.js
 +++ b/lib/client/renderToHtml.js
-@@ -4,22 +4,15 @@
+@@ -4,22 +4,27 @@
   * This source code is licensed under the MIT license found in the
   * LICENSE file in the root directory of this source tree.
   */
@@ -17,19 +17,29 @@ index 68460847961d505e78ea6c7ee43cdbf2b9a2d220..d14bf336dec3d792bb8b4dbe8a7af929
 -    return new Promise((resolve, reject) => {
 -        const passThrough = new PassThrough();
 -        const { pipe } = renderToPipeableStream(app, {
--            onError(error) {
++    const controller = new AbortController();
++    let failed = false;
++    let rejectOnError;
++    const errorPromise = new Promise((_, reject) => { rejectOnError = reject; });
++    const renderPromise = (async () => {
++        const stream = await renderToReadableStream(app, {
++            signal: controller.signal,
+             onError(error) {
 -                reject(error);
 -            },
 -            onAllReady() {
 -                pipe(passThrough);
 -                text(passThrough).then(resolve, reject);
--            },
--        });
-+    let renderError;
-+    const stream = await renderToReadableStream(app, {
-+        onError(error) { renderError ??= error; },
-     });
-+    await stream.allReady;
-+    if (renderError) throw renderError;
-+    return text(stream);
++                if (!failed) {
++                    failed = true;
++                    rejectOnError(error);
++                    queueMicrotask(() => controller.abort());
++                }
+             },
+         });
+-    });
++        await stream.allReady;
++        return text(stream);
++    })();
++    return Promise.race([renderPromise, errorPromise]);
  }
