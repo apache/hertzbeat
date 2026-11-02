@@ -2891,7 +2891,8 @@
       "larkApp": "飛書應用",
       "ntfy": "Ntfy",
       "unknown": "未知",
-      "wpush": "WPUSH"
+      "wpush": "WPUSH",
+      "bark": "Bark"
     },
     "larkReceiveTypes": {
       "0": "使用者",
@@ -2934,7 +2935,9 @@
       "ntfyToken": "Ntfy 權杖",
       "wpushToken": "WPUSH API Key",
       "wpushChannel": "WPUSH 渠道",
-      "wpushTopicCode": "WPUSH 主題碼"
+      "wpushTopicCode": "WPUSH 主題碼",
+      "barkServerUrl": "Bark 服務位址",
+      "barkDeviceKey": "Bark 裝置 Key"
     }
   },
   "noticeTemplates": {

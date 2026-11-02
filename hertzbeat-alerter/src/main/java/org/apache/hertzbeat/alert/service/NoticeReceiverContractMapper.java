@@ -34,7 +34,7 @@ public class NoticeReceiverContractMapper {
     private static final Set<String> SECRET_FIELDS = Set.of(
             "hookUrl", "hookAuthToken", "wechatId", "accessToken", "tgBotToken", "slackWebHookUrl",
             "appSecret", "discordBotToken", "smnAk", "smnSk", "serverChanToken", "gotifyToken",
-            "ntfyToken", "wpushToken");
+            "ntfyToken", "wpushToken", "barkDeviceKey");
     private static final Map<Byte, String> TYPE_KEYS = Map.ofEntries(
             Map.entry((byte) 0, "sms"), Map.entry((byte) 1, "email"), Map.entry((byte) 2, "webhook"),
             Map.entry((byte) 3, "wechat-official"), Map.entry((byte) 4, "wecom-robot"),
@@ -43,7 +43,7 @@ public class NoticeReceiverContractMapper {
             Map.entry((byte) 9, "discord-bot"), Map.entry((byte) 10, "wecom-app"),
             Map.entry((byte) 11, "huawei-smn"), Map.entry((byte) 12, "server-chan"),
             Map.entry((byte) 13, "gotify"), Map.entry((byte) 14, "feishu-app"),
-            Map.entry((byte) 15, "ntfy"), Map.entry((byte) 16, "wpush"));
+            Map.entry((byte) 15, "ntfy"), Map.entry((byte) 16, "wpush"), Map.entry((byte) 17, "bark"));
     private static final Map<Byte, Set<String>> ALLOWED_FIELDS = Map.ofEntries(
             Map.entry((byte) 0, Set.of("phone")),
             Map.entry((byte) 1, Set.of("email")),
@@ -61,7 +61,8 @@ public class NoticeReceiverContractMapper {
             Map.entry((byte) 13, Set.of("gotifyToken")),
             Map.entry((byte) 14, Set.of("appId", "appSecret", "larkReceiveType", "userId", "chatId", "partyId")),
             Map.entry((byte) 15, Set.of("ntfyServerUrl", "ntfyTopic", "ntfyToken")),
-            Map.entry((byte) 16, Set.of("wpushToken", "wpushChannel", "wpushTopicCode")));
+            Map.entry((byte) 16, Set.of("wpushToken", "wpushChannel", "wpushTopicCode")),
+            Map.entry((byte) 17, Set.of("barkServerUrl", "barkDeviceKey")));
 
     public NoticeReceiver toEntity(NoticeReceiverRequest request, NoticeReceiver existing) {
         Byte type = request.getType();
@@ -114,6 +115,7 @@ public class NoticeReceiverContractMapper {
         options.setNtfyTopic(receiver.getNtfyTopic());
         options.setWpushChannel(receiver.getWpushChannel());
         options.setWpushTopicCode(receiver.getWpushTopicCode());
+        options.setBarkServerUrl(receiver.getBarkServerUrl());
         options.setClearSecrets(null);
         Set<String> configuredSecrets = configuredSecrets(receiver);
         return new NoticeReceiverResponse(
@@ -144,6 +146,7 @@ public class NoticeReceiverContractMapper {
         target.setNtfyTopic(source.getNtfyTopic());
         target.setWpushChannel(source.getWpushChannel());
         target.setWpushTopicCode(source.getWpushTopicCode());
+        target.setBarkServerUrl(source.getBarkServerUrl());
         target.setHookUrl(secret("hookUrl", source.getHookUrl(), existing == null ? null : existing.getHookUrl(), source));
         target.setHookAuthToken(secret("hookAuthToken", source.getHookAuthToken(), existing == null ? null : existing.getHookAuthToken(), source));
         target.setWechatId(secret("wechatId", source.getWechatId(), existing == null ? null : existing.getWechatId(), source));
@@ -158,6 +161,7 @@ public class NoticeReceiverContractMapper {
         target.setGotifyToken(secret("gotifyToken", source.getGotifyToken(), existing == null ? null : existing.getGotifyToken(), source));
         target.setNtfyToken(secret("ntfyToken", source.getNtfyToken(), existing == null ? null : existing.getNtfyToken(), source));
         target.setWpushToken(secret("wpushToken", source.getWpushToken(), existing == null ? null : existing.getWpushToken(), source));
+        target.setBarkDeviceKey(secret("barkDeviceKey", source.getBarkDeviceKey(), existing == null ? null : existing.getBarkDeviceKey(), source));
     }
 
     private String secret(String field, String supplied, String existing, NoticeReceiverOptions options) {
@@ -214,6 +218,7 @@ public class NoticeReceiverContractMapper {
             case 13 -> require(receiver.getGotifyToken(), "gotifyToken");
             case 15 -> require(receiver.getNtfyTopic(), "ntfyTopic");
             case 16 -> require(receiver.getWpushToken(), "wpushToken");
+            case 17 -> require(receiver.getBarkDeviceKey(), "barkDeviceKey");
             case 14 -> {
                 require(receiver.getAppId(), "appId");
                 require(receiver.getAppSecret(), "appSecret");
@@ -267,6 +272,8 @@ public class NoticeReceiverContractMapper {
         add(fields, "wpushToken", options.getWpushToken());
         add(fields, "wpushChannel", options.getWpushChannel());
         add(fields, "wpushTopicCode", options.getWpushTopicCode());
+        add(fields, "barkServerUrl", options.getBarkServerUrl());
+        add(fields, "barkDeviceKey", options.getBarkDeviceKey());
         return fields;
     }
 
@@ -286,6 +293,7 @@ public class NoticeReceiverContractMapper {
         add(fields, "gotifyToken", receiver.getGotifyToken());
         add(fields, "ntfyToken", receiver.getNtfyToken());
         add(fields, "wpushToken", receiver.getWpushToken());
+        add(fields, "barkDeviceKey", receiver.getBarkDeviceKey());
         return fields;
     }
 

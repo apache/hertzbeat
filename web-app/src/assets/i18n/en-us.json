@@ -2891,7 +2891,8 @@
       "larkApp": "Lark app",
       "ntfy": "Ntfy",
       "unknown": "Unknown",
-      "wpush": "WPUSH"
+      "wpush": "WPUSH",
+      "bark": "Bark"
     },
     "larkReceiveTypes": {
       "0": "User",
@@ -2934,7 +2935,9 @@
       "ntfyToken": "Ntfy token",
       "wpushToken": "WPUSH API key",
       "wpushChannel": "WPUSH channel",
-      "wpushTopicCode": "WPUSH topic code"
+      "wpushTopicCode": "WPUSH topic code",
+      "barkServerUrl": "Bark server URL",
+      "barkDeviceKey": "Bark device key"
     }
   },
   "noticeTemplates": {

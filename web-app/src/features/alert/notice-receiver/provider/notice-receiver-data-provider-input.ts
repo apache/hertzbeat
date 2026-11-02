@@ -82,6 +82,8 @@ const draftShape = {
   wpushToken: z.string(),
   wpushChannel: z.string(),
   wpushTopicCode: z.string(),
+  barkServerUrl: z.string(),
+  barkDeviceKey: z.string(),
   configuredSecrets: secretKeyArraySchema,
   clearSecrets: secretKeyArraySchema
 };

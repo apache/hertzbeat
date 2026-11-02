@@ -63,8 +63,8 @@ final class AgentWorkflowUpgradeProof {
         Flyway current = Flyway.configure().dataSource(url, user, password)
                 .locations("classpath:db/migration/" + vendor).cleanDisabled(false).load();
         try {
-            assertThat(current.info().pending()).extracting(info -> info.getVersion().getVersion()).containsExactly("201");
-            assertThat(current.migrate().migrationsExecuted).isEqualTo(1);
+            assertThat(current.info().pending()).extracting(info -> info.getVersion().getVersion()).containsExactly("201", "202");
+            assertThat(current.migrate().migrationsExecuted).isEqualTo(2);
             current.validate();
             assertThat(current.migrate().migrationsExecuted).isZero();
             try (var connection = DriverManager.getConnection(url, user, password); var statement = connection.createStatement()) {

@@ -101,10 +101,10 @@ public class AgentNoticeToolService {
                                         + " userId, chatId, partyId, tagId, discordChannelId,"
                                         + " hookAuthType, appId, corpId, agentId, larkReceiveType,"
                                         + " smnProjectId, smnRegion, smnTopicUrn, ntfyTopic,"
-                                        + " wpushChannel, wpushTopicCode. Empty map preserves"
+                                        + " wpushChannel, wpushTopicCode, barkServerUrl. Empty map preserves"
                                         + " destinations.")
                     Map<String, String> fields) {
-        if (fields == null || fields.size() > 21 || fields.values().stream().anyMatch(value -> value == null || value.length() > 255)) {
+        if (fields == null || fields.size() > 22 || fields.values().stream().anyMatch(value -> value == null || value.length() > 255)) {
             throw new IllegalArgumentException(
                     "Bounded non-secret destination fields are required");
         }
@@ -134,6 +134,7 @@ public class AgentNoticeToolService {
                 case "ntfyTopic" -> options.setNtfyTopic(entry.getValue());
                 case "wpushChannel" -> options.setWpushChannel(entry.getValue());
                 case "wpushTopicCode" -> options.setWpushTopicCode(entry.getValue());
+                case "barkServerUrl" -> options.setBarkServerUrl(entry.getValue());
                 default ->
                         throw new IllegalArgumentException(
                                 "Unsupported receiver field; use the native receiver editor");

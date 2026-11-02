@@ -300,6 +300,20 @@ public class NoticeReceiver {
     @Column(length = 300)
     private String wpushTopicCode;
 
+    @Schema(title = "Bark server URL : The notification method is valid for Bark",
+            description = "Bark server URL : The notification method is valid for Bark, default is https://api.day.app",
+            example = "https://api.day.app", accessMode = READ_WRITE)
+    @Size(max = 300)
+    @Column(length = 300)
+    private String barkServerUrl;
+
+    @Schema(title = "Bark device key : The notification method is valid for Bark",
+            description = "Bark device key : The device key shown on the Bark app home page",
+            example = "eP7Kq2mZx8Rb1sVd", accessMode = READ_WRITE)
+    @Size(max = 300)
+    @Column(length = 300)
+    private String barkDeviceKey;
+
     @Schema(title = "The creator of this record", example = "tom",
             accessMode = READ_ONLY)
     @CreatedBy

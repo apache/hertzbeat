@@ -91,6 +91,8 @@ export function createNoticeReceiverDraft(): NoticeReceiverDraft {
     wpushToken: '',
     wpushChannel: '',
     wpushTopicCode: '',
+    barkServerUrl: '',
+    barkDeviceKey: '',
     configuredSecrets: [],
     clearSecrets: []
   };

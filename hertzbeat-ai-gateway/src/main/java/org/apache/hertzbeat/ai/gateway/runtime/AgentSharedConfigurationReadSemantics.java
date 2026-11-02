@@ -56,7 +56,8 @@ final class AgentSharedConfigurationReadSemantics {
                     "serverChanToken",
                     "gotifyToken",
                     "ntfyToken",
-                    "wpushToken");
+                    "wpushToken",
+                    "barkDeviceKey");
 
     static boolean supports(String tool) {
         return TOOLS.contains(tool);

@@ -79,6 +79,8 @@ public class NoticeReceiverRequest {
             case "wpushToken" -> options.setWpushToken(asString(value));
             case "wpushChannel" -> options.setWpushChannel(asString(value));
             case "wpushTopicCode" -> options.setWpushTopicCode(asString(value));
+            case "barkServerUrl" -> options.setBarkServerUrl(asString(value));
+            case "barkDeviceKey" -> options.setBarkDeviceKey(asString(value));
             case "clearSecrets" -> options.setClearSecrets(asStringSet(value));
             case "creator", "modifier", "gmtCreate", "gmtUpdate" -> { }
             default -> throw new IllegalArgumentException("Unsupported receiver field: " + name);

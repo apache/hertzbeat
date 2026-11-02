@@ -66,7 +66,8 @@ public final class NoticeReceiverMaskUtil {
             new SecretField(NoticeReceiver::getServerChanToken, NoticeReceiver::setServerChanToken),
             new SecretField(NoticeReceiver::getGotifyToken, NoticeReceiver::setGotifyToken),
             new SecretField(NoticeReceiver::getNtfyToken, NoticeReceiver::setNtfyToken),
-            new SecretField(NoticeReceiver::getWpushToken, NoticeReceiver::setWpushToken));
+            new SecretField(NoticeReceiver::getWpushToken, NoticeReceiver::setWpushToken),
+            new SecretField(NoticeReceiver::getBarkDeviceKey, NoticeReceiver::setBarkDeviceKey));
 
     private NoticeReceiverMaskUtil() {
     }
@@ -143,6 +144,12 @@ public final class NoticeReceiverMaskUtil {
                 incoming.getNtfyServerUrl(),
                 existing.getNtfyServerUrl(),
                 "ntfy server URL");
+        rejectChangedSecretDestination(
+                incoming.getBarkDeviceKey(),
+                existing.getBarkDeviceKey(),
+                incoming.getBarkServerUrl(),
+                existing.getBarkServerUrl(),
+                "Bark server URL");
         resolveMask(incoming, existing);
     }
 

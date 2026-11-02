@@ -77,5 +77,8 @@ public class NoticeReceiverOptions {
     private String wpushToken;
     private String wpushChannel;
     private String wpushTopicCode;
+    private String barkServerUrl;
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    private String barkDeviceKey;
     private Set<String> clearSecrets = new LinkedHashSet<>();
 }

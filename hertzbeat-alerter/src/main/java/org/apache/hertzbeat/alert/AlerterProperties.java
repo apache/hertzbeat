@@ -85,6 +85,11 @@ public class AlerterProperties {
     private String wpushWebhookUrl = "https://api.wpush.cn/api/v1/send";
 
     /**
+     * Bark default server url
+     */
+    private String barkDefaultServerUrl = "https://api.day.app";
+
+    /**
      * Data entry configuration properties
      */
     private EntranceProperties entrance;

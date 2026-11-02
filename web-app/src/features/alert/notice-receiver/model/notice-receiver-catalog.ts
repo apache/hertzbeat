@@ -58,7 +58,9 @@ export type NoticeReceiverOptionKey =
   | 'ntfyToken'
   | 'wpushToken'
   | 'wpushChannel'
-  | 'wpushTopicCode';
+  | 'wpushTopicCode'
+  | 'barkServerUrl'
+  | 'barkDeviceKey';
 
 export const noticeReceiverSecretKeyCatalog = [
   'hookUrl',
@@ -74,7 +76,8 @@ export const noticeReceiverSecretKeyCatalog = [
   'serverChanToken',
   'gotifyToken',
   'ntfyToken',
-  'wpushToken'
+  'wpushToken',
+  'barkDeviceKey'
 ] as const;
 export type NoticeReceiverSecretKey = (typeof noticeReceiverSecretKeyCatalog)[number];
 
@@ -195,6 +198,11 @@ export const receiverTypeDefinitions = [
       field('wpushChannel', 'text', false),
       field('wpushTopicCode', 'text', false)
     ]
+  },
+  {
+    type: 17,
+    labelKey: 'noticeReceivers.types.bark',
+    fields: [field('barkServerUrl', 'url', false), field('barkDeviceKey', 'password')]
   }
 ] as const satisfies readonly {
   type: number;
@@ -223,7 +231,8 @@ export const noticeReceiverTypeKeys: Record<NoticeReceiverType, string> = {
   13: 'gotify',
   14: 'feishu-app',
   15: 'ntfy',
-  16: 'wpush'
+  16: 'wpush',
+  17: 'bark'
 };
 
 const receiverTypeDefinitionByType = new Map(

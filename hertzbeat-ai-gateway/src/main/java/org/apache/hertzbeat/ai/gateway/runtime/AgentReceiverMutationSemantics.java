@@ -55,7 +55,8 @@ final class AgentReceiverMutationSemantics {
                     "smnTopicUrn",
                     "ntfyTopic",
                     "wpushChannel",
-                    "wpushTopicCode");
+                    "wpushTopicCode",
+                    "barkServerUrl");
 
     static boolean supports(String tool) {
         return TOOLS.contains(tool);
