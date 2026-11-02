@@ -327,7 +327,7 @@ module.exports = {
           remarkPlugins: [
             [require('@docusaurus/remark-plugin-npm2yarn'), { sync: true }],
           ],
-          lastVersion: '1.9.0',
+          lastVersion: '1.9.1',
           versions: {
             current: {
               label: 'current',
