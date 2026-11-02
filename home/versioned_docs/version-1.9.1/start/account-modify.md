@@ -37,7 +37,7 @@ springdoc:
 
 Once enabled, the document endpoints are still scoped to the `admin` role by the shipped `resourceRole` rules and the backend management gate. Sign in to the HertzBeat web application as an administrator before opening `/swagger-ui/index.html`; the Swagger UI attaches the stored HertzBeat token to its same-origin document and try-it-out requests, and the page loads without asking for anything.
 
-Without that session the document is not exposed, but the page does not fail silently either. `/swagger-ui/index.html` is a static file and still loads; its request for `/v3/api-docs/swagger-config` is answered with `401` and a `WWW-Authenticate: Digest` challenge, so the browser asks for a username and password. Administrator credentials entered there let the document through, and an account without the `admin` role is answered with `403`.
+Without a valid session, a request for `/v3/api-docs/swagger-config` is rejected with `401`. The shipped `sureness.auths` enables Basic and JWT; Digest is disabled by default. If Digest is explicitly enabled, an unauthenticated request may receive a `WWW-Authenticate: Digest` challenge and the browser may show a username/password prompt. A non-admin account is denied by the shipped OpenAPI resource rules. See [authentication modes](docker-deploy).
 
 The document can also be fetched directly with an administrator token:
 

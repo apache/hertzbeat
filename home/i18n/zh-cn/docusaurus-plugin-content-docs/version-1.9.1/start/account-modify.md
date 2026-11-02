@@ -35,9 +35,9 @@ springdoc:
     enabled: true
 ```
 
-开启之后，文档接口仍然被上面的 `resourceRole` 规则收敛在 `admin` 角色。请先以管理员身份登录 HertzBeat Web 应用，再打开 `/swagger-ui/index.html`；Swagger UI 会在同源的文档请求与 try-it-out 请求中附带 HertzBeat 保存的令牌，页面不会再要求任何输入。
+开启之后，随包的 `resourceRole` 规则和后端管理检查仍将文档接口限制为 `admin`。请先以管理员身份登录 HertzBeat Web 应用，再打开 `/swagger-ui/index.html`；Swagger UI 会在同源的文档请求与 try-it-out 请求中附带 HertzBeat 保存的令牌，页面不会再要求任何输入。
 
-没有该会话时文档同样不会泄露，但页面并非静默失败：`/swagger-ui/index.html` 是静态文件，仍然可以打开，而它请求 `/v3/api-docs/swagger-config` 会得到 `401` 与 `WWW-Authenticate: Digest` 挑战，浏览器因此弹出用户名密码框。在该弹框中输入管理员账号可以正常加载文档；没有 `admin` 角色的账号则会收到 `403`。
+没有有效会话时，请求 `/v3/api-docs/swagger-config` 会被拒绝并返回 `401`。随包的 `sureness.auths` 启用 Basic 和 JWT，默认不启用 Digest。只有显式启用 Digest 后，未认证请求才可能收到 `WWW-Authenticate: Digest` 质询，浏览器也可能弹出用户名密码框。随包的 OpenAPI 资源规则拒绝非 admin 账号访问。详见[认证方式](docker-deploy)。
 
 也可以直接携带管理员令牌获取文档：
 

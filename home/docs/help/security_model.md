@@ -10,7 +10,7 @@ This document will introduce the security model of Apache HertzBeat.
 The security model here mainly involves the security boundaries that users need to pay attention to in the extension process, and how to ensure that user customization will not cause security risks to the system.
 :::
 
-> The users mentioned below refer to authenticated users of the system, regardless of their roles.
+> The permissions below depend on the configured roles and the endpoint being accessed.
 
 ## User Permission Security
 
@@ -18,7 +18,9 @@ Apache HertzBeat™ uses [Sureness](https://github.com/dromara/sureness) to supp
 
 Use the `sureness.yml` provided by Sureness to configure user accounts, roles, API resources, etc. It is strongly recommended that the initial user modify the account password. For details, refer to [Account Permission Management](../start/account-modify)
 
-Please note that the role permission function is being improved, please do not use roles to control user permissions, all users have management permissions.
+The bundled account source initially contains only `admin`; change its default password. The current 2.0 development version does not enforce an admin-only management boundary. Configured `user`, `guest`, and custom roles may access routes permitted by the active `sureness.yml` `resourceRole` rules and endpoint-specific checks; some `user` rules permit writes. Review the deployed configuration and grant access only to trusted identities. Do not assume these roles provide complete resource or credential isolation.
+
+Machine-ingestion routes retain their own policies. For example, the shipped OTLP and Alertmanager rules allow `user`; this is separate from granting an account full administrative privileges.
 
 ## Monitoring Template Security
 

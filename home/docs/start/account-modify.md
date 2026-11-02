@@ -6,166 +6,20 @@ sidebar_label: Update Account Secret
 
 ## Update Account
 
-Apache HertzBeat™ default built-in three user accounts, respectively admin/hertzbeat tom/hertzbeat guest/hertzbeat
-If you need add, delete or modify account or password, configure `sureness.yml`. Ignore this step without this demand.
-Modify the following **part parameters** in sureness.yml：**[Note⚠️Other default sureness configuration parameters should be retained]**
+The bundled `sureness.yml` contains one initial account, `admin`. Change its default password before use. Your deployed account source can differ; review the configuration actually mounted or used by the manager.
+
+Edit reviewed accounts in `sureness.yml` while preserving your existing credentials, route rules, and other configuration. For example:
 
 ```yaml
-
-resourceRole:
-  - /api/account/auth/refresh===post===[admin,user,guest]
-  - /api/apps/**===get===[admin,user,guest]
-  - /api/monitor/**===get===[admin,user,guest]
-  - /api/monitor/**===post===[admin,user]
-  - /api/monitor/**===put===[admin,user]
-  - /api/monitor/**===delete==[admin]
-  - /api/monitors/**===get===[admin,user,guest]
-  - /api/monitors/**===post===[admin,user]
-  - /api/monitors/**===put===[admin,user]
-  - /api/monitors/**===delete===[admin]
-  - /api/alert/**===get===[admin,user,guest]
-  - /api/alert/**===post===[admin,user]
-  - /api/alert/**===put===[admin,user]
-  - /api/alert/**===delete===[admin]
-  - /api/alerts/**===get===[admin,user,guest]
-  - /api/alerts/**===post===[admin,user]
-  - /api/alerts/**===put===[admin,user]
-  - /api/alerts/**===delete===[admin]
-  - /api/notice/**===get===[admin,user,guest]
-  - /api/notice/**===post===[admin,user]
-  - /api/notice/**===put===[admin,user]
-  - /api/notice/**===delete===[admin]
-  - /api/config/email===get===[admin,user,guest]
-  - /api/config/email===post===[admin]
-  - /api/config/sms===get===[admin,user,guest]
-  - /api/config/sms===post===[admin]
-  - /api/config/system===get===[admin,user,guest]
-  - /api/config/system===post===[admin]
-  - /api/config/timezones===get===[admin,user,guest]
-  - /api/config/oss===get===[admin,user,guest]
-  - /api/config/oss===post===[admin]
-  - /api/config/mute===get===[admin,user,guest]
-  - /api/config/mute===post===[admin]
-  - /api/config/template===get===[admin,user,guest]
-  - /api/config/template===post===[admin]
-  - /api/config/template/*===put===[admin]
-  - /api/config/secret===get===[admin]
-  - /api/config/secret===post===[admin]
-  - /api/config/provider===get===[admin]
-  - /api/config/provider===post===[admin]
-  - /api/label===get===[admin,user,guest]
-  - /api/label===post===[admin,user]
-  - /api/label===put===[admin,user]
-  - /api/label===delete===[admin]
-  - /api/summary/**===get===[admin,user,guest]
-  - /api/summary/**===post===[admin,user]
-  - /api/summary/**===put===[admin,user]
-  - /api/summary/**===delete===[admin]
-  - /api/collector===get===[admin,user,guest]
-  - /api/collector/*/runtime-config===get===[admin,user,guest]
-  - /api/collector/**===get===[admin,user,guest]
-  - /api/collector/**===post===[admin,user]
-  - /api/collector/online===put===[admin,user]
-  - /api/collector/offline===put===[admin,user]
-  - /api/collector/*/runtime-config===put===[admin,user]
-  - /api/collector/**===put===[admin,user]
-  - /api/collector===delete===[admin]
-  - /api/collector/**===delete===[admin]
-  - /api/status/page/**===get===[admin,user,guest]
-  - /api/status/page/**===post===[admin,user]
-  - /api/status/page/**===put===[admin,user]
-  - /api/status/page/**===delete===[admin]
-  # The OpenAPI document is a map of every route, parameter and model, so it is
-  # scoped like any other administrative resource instead of being anonymous
-  - /v3/api-docs/**===get===[admin]
-  - /v3/api-docs.yaml===get===[admin]
-  - /v3/api-docs.yaml/**===get===[admin]
-  - /v2/api-docs/**===get===[admin]
-  - /swagger-resources/**===get===[admin]
-
-# config the resource restful api that need bypass auth protection
-# rule: api===method 
-# eg: /api/v1/source3===get means /api/v1/source3===get can be access by anyone, no need auth.
-excludedResource:
-  - /api/account/auth/**===*
-  - /api/i18n/**===get
-  - /api/apps/hierarchy===get
-  - /api/push/**===*
-  - /api/status/page/public/**===*
-  # web ui resource
-  - /===get
-  - /dashboard/**===get
-  - /monitors/**===get
-  - /alert/**===get
-  - /account/**===get
-  - /setting/**===get
-  - /passport/**===get
-  - /status/**===get
-  - /**/*.html===get
-  - /**/*.js===get
-  - /**/*.css===get
-  - /**/*.ico===get
-  - /**/*.ttf===get
-  - /**/*.png===get
-  - /**/*.gif===get
-  - /**/*.jpg===get
-  - /**/*.svg===get
-  - /**/*.json===get
-  - /**/*.woff===get
-  - /**/*.eot===get
-  # h2 database
-  - /h2-console/**===*
-
-# account info config
-# eg: admin has role [admin,user], password is hertzbeat
-# eg: tom has role [user], password is hertzbeat
-# eg: lili has role [guest], plain password is lili, salt is 123, salted password is 1A676730B0C7F54654B0E09184448289
 account:
-  - appId: admin
-    credential: hertzbeat
+  - appId: reviewed-operator
+    credential: replace-with-a-strong-password
     role: [admin]
-  - appId: tom
-    credential: hertzbeat
-    role: [user]
-  - appId: guest
-    credential: hertzbeat
-    role: [guest]
-  - appId: lili
-    # credential = MD5(password + salt)
-    # plain password: hertzbeat
-    # attention: digest authentication does not support salted encrypted password accounts
-    credential: 94C6B34E7A199A9F9D4E1F208093B489
-    salt: 123
-    role: [user]
 ```
 
-Modify the following **part parameters** in sureness.yml **[Note⚠️Other default sureness configuration parameters should be retained]**：
+Do not replace a production configuration with this example. Restart after changing the account source. The current 2.0 development version does not enforce an admin-only management boundary: configured `user`, `guest`, or custom roles can access routes allowed by the active `resourceRole` rules and endpoint checks. Some `user` rules allow write operations. Review those rules and grant roles only to trusted identities; do not assume they provide complete resource or credential isolation.
 
-```yaml
-
-# user account information
-# Here is admin tom lili three accounts
-# eg: admin has role [admin,user], password is hertzbeat
-# eg: tom has role [user], password is hertzbeat
-# eg: lili has role [guest], plain password is lili, salt is 123, salted password is 1A676730B0C7F54654B0E09184448289
-account:
-  - appId: admin
-    credential: hertzbeat
-    role: [admin]
-  - appId: tom
-    credential: hertzbeat
-    role: [user]
-  - appId: guest
-    credential: hertzbeat
-    role: [guest]
-  - appId: lili
-    # credential = MD5(password + salt)
-    # plain password: hertzbeat
-    # attention: digest authentication does not support salted encrypted password accounts
-    credential: 94C6B34E7A199A9F9D4E1F208093B489
-    salt: 123
-    role: [user]
-```
+Machine-ingestion routes have their own rules. For example, the shipped OTLP and Alertmanager ingestion rules allow `user`; do not replace machine credentials with an admin token merely to make ingestion work. See the [security model](../help/security_model).
 
 ## OpenAPI Document And Swagger UI
 
@@ -181,9 +35,9 @@ springdoc:
     enabled: true
 ```
 
-Once enabled, the document endpoints are still scoped to the `admin` role by the `resourceRole` rules above. Sign in to the HertzBeat web application as an administrator before opening `/swagger-ui/index.html`; the Swagger UI attaches the stored HertzBeat token to its same-origin document and try-it-out requests, and the page loads without asking for anything.
+Once enabled, the shipped `resourceRole` rules scope the document endpoints to `admin`. Sign in to the HertzBeat web application as an administrator before opening `/swagger-ui/index.html`; same-origin requests can use the authenticated browser session. If access fails, check the active rules and any explicit `Authorization` header.
 
-Without that session the document is not exposed, but the page does not fail silently either. `/swagger-ui/index.html` is a static file and still loads; its request for `/v3/api-docs/swagger-config` is answered with `401` and a `WWW-Authenticate: Digest` challenge, so the browser asks for a username and password. Administrator credentials entered there let the document through, and an account without the `admin` role is answered with `403`.
+Without a valid session, a request for `/v3/api-docs/swagger-config` is rejected with `401`. The shipped `sureness.auths` enables Basic and JWT; Digest is disabled by default. If Digest is explicitly enabled, an unauthenticated request may receive a `WWW-Authenticate: Digest` challenge and the browser may show a username/password prompt. A non-admin account is denied by the shipped OpenAPI resource rules. See [authentication modes](docker-deploy).
 
 The document can also be fetched directly with an administrator token:
 

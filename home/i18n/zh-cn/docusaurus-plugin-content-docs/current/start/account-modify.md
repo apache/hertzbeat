@@ -6,167 +6,20 @@ sidebar_label: 更新账户和密钥
 
 ## 更新账户
 
-Apache HertzBeat™ 默认内置三个用户账户,分别为 admin/hertzbeat tom/hertzbeat guest/hertzbeat
-若需要新增删除修改账户或密码，可以通过配置 `sureness.yml` 实现，若无此需求可忽略此步骤
-修改位于安装目录下的 `/hertzbeat/config/sureness.yml` 的配置文件，docker环境目录为`opt/hertzbeat/config/sureness.yml`，建议提前挂载映射
-配置文件内容参考如下
+随包的 `sureness.yml` 只包含一个初始账号 `admin`，使用前请修改默认密码。实际部署的账号来源可能不同，请检查管理端实际挂载或使用的配置。
+
+在 `sureness.yml` 中编辑已审查的账号，同时保留现有凭据、路由规则和其他配置。例如：
 
 ```yaml
-
-resourceRole:
-  - /api/account/auth/refresh===post===[admin,user,guest]
-  - /api/apps/**===get===[admin,user,guest]
-  - /api/monitor/**===get===[admin,user,guest]
-  - /api/monitor/**===post===[admin,user]
-  - /api/monitor/**===put===[admin,user]
-  - /api/monitor/**===delete==[admin]
-  - /api/monitors/**===get===[admin,user,guest]
-  - /api/monitors/**===post===[admin,user]
-  - /api/monitors/**===put===[admin,user]
-  - /api/monitors/**===delete===[admin]
-  - /api/alert/**===get===[admin,user,guest]
-  - /api/alert/**===post===[admin,user]
-  - /api/alert/**===put===[admin,user]
-  - /api/alert/**===delete===[admin]
-  - /api/alerts/**===get===[admin,user,guest]
-  - /api/alerts/**===post===[admin,user]
-  - /api/alerts/**===put===[admin,user]
-  - /api/alerts/**===delete===[admin]
-  - /api/notice/**===get===[admin,user,guest]
-  - /api/notice/**===post===[admin,user]
-  - /api/notice/**===put===[admin,user]
-  - /api/notice/**===delete===[admin]
-  - /api/config/email===get===[admin,user,guest]
-  - /api/config/email===post===[admin]
-  - /api/config/sms===get===[admin,user,guest]
-  - /api/config/sms===post===[admin]
-  - /api/config/system===get===[admin,user,guest]
-  - /api/config/system===post===[admin]
-  - /api/config/timezones===get===[admin,user,guest]
-  - /api/config/oss===get===[admin,user,guest]
-  - /api/config/oss===post===[admin]
-  - /api/config/mute===get===[admin,user,guest]
-  - /api/config/mute===post===[admin]
-  - /api/config/template===get===[admin,user,guest]
-  - /api/config/template===post===[admin]
-  - /api/config/template/*===put===[admin]
-  - /api/config/secret===get===[admin]
-  - /api/config/secret===post===[admin]
-  - /api/config/provider===get===[admin]
-  - /api/config/provider===post===[admin]
-  - /api/label===get===[admin,user,guest]
-  - /api/label===post===[admin,user]
-  - /api/label===put===[admin,user]
-  - /api/label===delete===[admin]
-  - /api/summary/**===get===[admin,user,guest]
-  - /api/summary/**===post===[admin,user]
-  - /api/summary/**===put===[admin,user]
-  - /api/summary/**===delete===[admin]
-  - /api/collector===get===[admin,user,guest]
-  - /api/collector/*/runtime-config===get===[admin,user,guest]
-  - /api/collector/**===get===[admin,user,guest]
-  - /api/collector/**===post===[admin,user]
-  - /api/collector/online===put===[admin,user]
-  - /api/collector/offline===put===[admin,user]
-  - /api/collector/*/runtime-config===put===[admin,user]
-  - /api/collector/**===put===[admin,user]
-  - /api/collector===delete===[admin]
-  - /api/collector/**===delete===[admin]
-  - /api/status/page/**===get===[admin,user,guest]
-  - /api/status/page/**===post===[admin,user]
-  - /api/status/page/**===put===[admin,user]
-  - /api/status/page/**===delete===[admin]
-  # OpenAPI 文档包含全部路由、参数与数据模型,等同于一份接口地图,
-  # 因此按普通管理类资源收敛到 admin,不再匿名开放
-  - /v3/api-docs/**===get===[admin]
-  - /v3/api-docs.yaml===get===[admin]
-  - /v3/api-docs.yaml/**===get===[admin]
-  - /v2/api-docs/**===get===[admin]
-  - /swagger-resources/**===get===[admin]
-
-# 需要被过滤保护的资源,不认证鉴权直接访问
-# /api/v1/source3===get 表示 /api/v1/source3===get 可以被任何人访问 无需登录认证鉴权
-excludedResource:
-  - /api/account/auth/**===*
-  - /api/i18n/**===get
-  - /api/apps/hierarchy===get
-  - /api/push/**===*
-  - /api/status/page/public/**===*
-  # web ui resource
-  - /===get
-  - /dashboard/**===get
-  - /monitors/**===get
-  - /alert/**===get
-  - /account/**===get
-  - /setting/**===get
-  - /passport/**===get
-  - /status/**===get
-  - /**/*.html===get
-  - /**/*.js===get
-  - /**/*.css===get
-  - /**/*.ico===get
-  - /**/*.ttf===get
-  - /**/*.png===get
-  - /**/*.gif===get
-  - /**/*.jpg===get
-  - /**/*.svg===get
-  - /**/*.json===get
-  - /**/*.woff===get
-  - /**/*.eot===get
-  # h2 database
-  - /h2-console/**===*
-
-# 用户账户信息
-# 下面有 admin tom lili 三个账户
-# eg: admin 拥有[admin]角色,密码为 hertzbeat 
-# eg: tom 拥有[user],密码为 hertzbeat
-# eg: lili 拥有[guest],明文密码为 hertzbeat, 加盐 123 后密码为 94C6B34E7A199A9F9D4E1F208093B489
 account:
-  - appId: admin
-    credential: hertzbeat
+  - appId: reviewed-operator
+    credential: replace-with-a-strong-password
     role: [admin]
-  - appId: tom
-    credential: hertzbeat
-    role: [user]
-  - appId: guest
-    credential: hertzbeat
-    role: [guest]
-  - appId: lili
-    # credential = MD5(password + salt)
-    # plain password: hertzbeat
-    # attention: digest authentication does not support salted encrypted password accounts
-    credential: 94C6B34E7A199A9F9D4E1F208093B489
-    salt: 123
-    role: [user]
 ```
 
-修改`sureness.yml`的如下**部分参数**：**[注意⚠️sureness配置的其它默认参数需保留]**
+不要用此示例覆盖生产配置。更改账号来源后重启。当前 2.0 开发版没有强制的 admin-only 管理边界：显式配置的 `user`、`guest` 或自定义角色可以访问当前 `resourceRole` 规则和接口检查所允许的路由，其中部分 `user` 规则允许写操作。请审查实际规则，只向可信身份授予角色；不要假定这些角色提供完整的资源或凭据隔离。
 
-```yaml
-
-# 用户账户信息
-# 下面有 admin tom lili 三个账户
-# eg: admin 拥有[admin,user]角色,密码为hertzbeat 
-# eg: tom 拥有[user],密码为hertzbeat
-# eg: lili 拥有[guest],明文密码为 hertzbeat, 加盐 123 后密码为 94C6B34E7A199A9F9D4E1F208093B489
-account:
-  - appId: admin
-    credential: hertzbeat
-    role: [admin]
-  - appId: tom
-    credential: hertzbeat
-    role: [user]
-  - appId: guest
-    credential: hertzbeat
-    role: [guest]
-  - appId: lili
-    # credential = MD5(password + salt)
-    # plain password: hertzbeat
-    # attention: digest authentication does not support salted encrypted password accounts
-    credential: 94C6B34E7A199A9F9D4E1F208093B489
-    salt: 123
-    role: [user]
-```
+机器上报入口使用各自的规则。例如，随包的 OTLP 和 Alertmanager 上报规则允许 `user`；不要仅为恢复上报就将机器凭据替换为 admin token。详见[安全模型](../help/security_model)。
 
 ## OpenAPI 文档与 Swagger UI
 
@@ -182,9 +35,9 @@ springdoc:
     enabled: true
 ```
 
-开启之后，文档接口仍然被上面的 `resourceRole` 规则收敛在 `admin` 角色。请先以管理员身份登录 HertzBeat Web 应用，再打开 `/swagger-ui/index.html`；Swagger UI 会在同源的文档请求与 try-it-out 请求中附带 HertzBeat 保存的令牌，页面不会再要求任何输入。
+开启后，随包的 `resourceRole` 规则将文档接口限制为 `admin`。请先以管理员身份登录 HertzBeat Web 应用，再打开 `/swagger-ui/index.html`；同源请求可以使用已认证的浏览器会话。如果访问失败，请检查实际规则和显式的 `Authorization` 请求头。
 
-没有该会话时文档同样不会泄露，但页面并非静默失败：`/swagger-ui/index.html` 是静态文件，仍然可以打开，而它请求 `/v3/api-docs/swagger-config` 会得到 `401` 与 `WWW-Authenticate: Digest` 挑战，浏览器因此弹出用户名密码框。在该弹框中输入管理员账号可以正常加载文档；没有 `admin` 角色的账号则会收到 `403`。
+没有有效会话时，请求 `/v3/api-docs/swagger-config` 会被拒绝并返回 `401`。随包的 `sureness.auths` 启用 Basic 和 JWT，默认不启用 Digest。只有显式启用 Digest 后，未认证请求才可能收到 `WWW-Authenticate: Digest` 质询，浏览器也可能弹出用户名密码框。随包的 OpenAPI 资源规则拒绝非 admin 账号访问。详见[认证方式](docker-deploy)。
 
 也可以直接携带管理员令牌获取文档：
 
