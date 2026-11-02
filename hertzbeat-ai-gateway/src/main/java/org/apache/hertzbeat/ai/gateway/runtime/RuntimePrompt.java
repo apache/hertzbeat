@@ -84,7 +84,8 @@ public class RuntimePrompt {
         RUNTIME("runtime", "Runtime"),
         TARGET("target", "Target"),
         INCIDENT("incident", "Incident"),
-        TOOL_PROTOCOL("tool_protocol", "Tool Protocol");
+        TOOL_PROTOCOL("tool_protocol", "Tool Protocol"),
+        EXECUTION_FACTS("execution_facts", "Execution Facts");
 
         private final String id;
         private final String title;

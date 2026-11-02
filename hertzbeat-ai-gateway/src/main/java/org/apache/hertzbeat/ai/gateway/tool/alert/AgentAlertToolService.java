@@ -27,6 +27,7 @@ import java.util.Set;
 import java.util.function.Function;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolArguments;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolContextSupport;
+import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolAccess;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolExposure;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolPolicy;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolRisk;
@@ -163,7 +164,7 @@ public class AgentAlertToolService {
     }
 
     @Tool(name = "alert.resolve", description = "Mark exact single or grouped alerts as resolved.")
-    @AgentToolPolicy(risk = AgentToolRisk.CHANGE,
+    @AgentToolPolicy(risk = AgentToolRisk.CHANGE, access = AgentToolAccess.USER,
             exposure = AgentToolExposure.MODEL_ON_DEMAND)
     public Map<String, Object> resolveAlerts(
             @ToolParam(description = "Alert type: single or group.") String alertType,
@@ -184,7 +185,7 @@ public class AgentAlertToolService {
     }
 
     @Tool(name = "alert.delete", description = "Permanently delete exact single or grouped alerts.")
-    @AgentToolPolicy(risk = AgentToolRisk.DANGEROUS,
+    @AgentToolPolicy(risk = AgentToolRisk.DANGEROUS, access = AgentToolAccess.ADMIN,
             exposure = AgentToolExposure.MODEL_ON_DEMAND)
     public Map<String, Object> deleteAlerts(
             @ToolParam(description = "Alert type: single or group.") String alertType,

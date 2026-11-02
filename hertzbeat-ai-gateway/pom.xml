@@ -31,10 +31,14 @@
     <description>HertzBeat Agent Gateway shell and read-only runtime boundary.</description>
 
     <properties>
-        <spring-ai.version>2.0.1</spring-ai.version>
+        <spring-ai.version>2.1.0-M1</spring-ai.version>
     </properties>
 
     <dependencies>
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-tool-search-tool</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.apache.hertzbeat</groupId>
             <artifactId>hertzbeat-common-spring</artifactId>

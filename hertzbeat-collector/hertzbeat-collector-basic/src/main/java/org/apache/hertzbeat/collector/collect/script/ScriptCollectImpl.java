@@ -71,6 +71,7 @@ public class ScriptCollectImpl extends AbstractCollect {
     public void collect(CollectRep.MetricsData.Builder builder, Metrics metrics) {
         ScriptProtocol scriptProtocol = metrics.getScript();
         long startTime = System.currentTimeMillis();
+        var inlinePermit = org.apache.hertzbeat.common.entity.job.InlineCollectionPermit.find(metrics);
         ProcessBuilder processBuilder;
         // use command
         if (StringUtils.hasText(scriptProtocol.getScriptCommand())) {
@@ -108,7 +109,12 @@ public class ScriptCollectImpl extends AbstractCollect {
         }
         // execute command
         try {
+            if (inlinePermit != null) {
+                inlinePermit.consume(processBuilder.command(),
+                        processBuilder.directory() == null ? System.getProperty("user.dir") : processBuilder.directory().getAbsolutePath());
+            }
             Process process = processBuilder.start();
+            if (inlinePermit != null) inlinePermit.markStarted();
             BufferedReader reader = new BufferedReader(new InputStreamReader(process.getInputStream(), Charset.forName(scriptProtocol.getCharset())));
             BufferedReader errorReader = new BufferedReader(
                     new InputStreamReader(process.getErrorStream(), Charset.forName(scriptProtocol.getCharset())));

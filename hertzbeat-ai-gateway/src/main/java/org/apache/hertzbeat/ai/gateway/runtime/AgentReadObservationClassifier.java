@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import org.apache.hertzbeat.common.observability.dto.log.LogRepeatedErrors;
 
 /** Classifies only production-shaped, semantically non-empty READ outputs. */
 final class AgentReadObservationClassifier {
@@ -30,6 +31,9 @@ final class AgentReadObservationClassifier {
     private static final ObjectMapper QUIET_JSON = JsonMapper.builder().build();
 
     Observation classify(AgentRuntimeToolCall call, String outputJson) {
+        if (call != null && AgentNativeReadContracts.supports(call.getToolName())) {
+            return AgentNativeReadContracts.classify(call, outputJson);
+        }
         return classify(call, object(outputJson));
     }
 
@@ -43,7 +47,12 @@ final class AgentReadObservationClassifier {
             case "monitor.query" -> page(output, "monitor-list", RowShape.MONITOR);
             case "metrics.realtime" -> realtime(call, output);
             case "metrics.history" -> metricHistory(call, output);
+            case "metrics.otlp_console" -> new AgentOtlpConsoleReadSemantics().classify(arguments(call), projectedData(output));
             case "logs.query" -> page(output, "log-records", RowShape.LOG);
+            case "logs.repeated_errors.summary" -> repeatedErrors(call, output);
+            case "logs.overview_stats" -> logOverview(call, output);
+            case "logs.analysis" -> new AgentLogAnalysisReadSemantics().classify(arguments(call), projectedData(output));
+            case "logs.group_by_stats" -> logGroups(call, output);
             case "traces.query" -> page(output, "trace-records", RowShape.TRACE);
             case "traces.get" -> traceDetail(call, output);
             case "entity.get" -> matchingNestedId(call, output, "entityId", "entity", "id", "entity");
@@ -63,6 +72,104 @@ final class AgentReadObservationClassifier {
                     "database.mysql_global_status", "database.explain_query" -> databaseRows(output);
             default -> null;
         };
+    }
+
+    private Map<String, Object> projectedData(Map<String, Object> output) {
+        if (!"json_text".equals(output.get("format"))
+                || !Boolean.FALSE.equals(output.get("partial"))
+                || !Boolean.FALSE.equals(output.get("projectionTruncated"))) {
+            return null;
+        }
+        Map<String, Object> envelope = object(text(output.get("data")));
+        return envelope != null && Objects.equals(0L, nonNegativeLong(envelope.get("code")))
+                ? cast(map(envelope.get("data"))) : null;
+    }
+
+    private Observation logOverview(AgentRuntimeToolCall call, Map<String, Object> output) {
+        Map<String, Object> data = projectedData(output);
+        if (logQuery(call) == null || data == null || data.containsKey("state")) {
+            return null;
+        }
+        Long total = nonNegativeLong(data.get("totalCount"));
+        if (total == null || total > Integer.MAX_VALUE) {
+            return null;
+        }
+        long severityTotal = 0;
+        for (String key : List.of("errorCount", "warnCount", "infoCount", "debugCount", "fatalCount")) {
+            Long count = nonNegativeLong(data.get(key));
+            if (count == null || count > total || count > total - severityTotal) {
+                return null;
+            }
+            severityTotal += count;
+        }
+        Long traces = nonNegativeLong(data.get("traceCount"));
+        Map<?, ?> coverage = map(data.get("traceCoverage"));
+        if (traces == null || traces > total || coverage == null) {
+            return null;
+        }
+        for (String key : List.of("withTrace", "withoutTrace", "withSpan", "withBothTraceAndSpan")) {
+            Long count = nonNegativeLong(coverage.get(key));
+            if (count == null || count > total) {
+                return null;
+            }
+        }
+        return new Observation("log-events", total.intValue());
+    }
+
+    private Observation logGroups(AgentRuntimeToolCall call, Map<String, Object> output) {
+        Map<?, ?> query = logQuery(call);
+        Map<String, Object> data = projectedData(output);
+        String groupBy = query == null ? null : text(query.get("groupBy"));
+        if (groupBy == null || data == null || !Objects.equals(groupBy, text(data.get("groupBy")))) {
+            return null;
+        }
+        List<?> groups = list(data.get("groups"));
+        var seen = new java.util.HashSet<String>();
+        if (groups == null) {
+            return null;
+        }
+        for (Object item : groups) {
+            Map<?, ?> group = map(item);
+            if (group == null || text(group.get("value")) == null || positiveLong(group.get("count")) == null
+                    || !seen.add(text(group.get("value")))) {
+                return null;
+            }
+        }
+        return new Observation("log-groups", groups.size());
+    }
+
+    private Map<?, ?> logQuery(AgentRuntimeToolCall call) {
+        Map<?, ?> query = map(arguments(call).get("q"));
+        Long start = query == null ? null : nonNegativeLong(query.get("start"));
+        Long end = query == null ? null : nonNegativeLong(query.get("end"));
+        return start != null && end != null && end > start && end - start <= 7L * 24 * 60 * 60 * 1_000
+                ? query : null;
+    }
+
+    private Observation repeatedErrors(AgentRuntimeToolCall call, Map<String, Object> output) {
+        Map<String, Object> data = projectedData(output);
+        if (data == null) {
+            return null;
+        }
+        try {
+            var result = QUIET_JSON.convertValue(data,
+                    LogRepeatedErrors.Result.class);
+            if (result == null || !"ready".equals(result.state())
+                    || !Objects.equals(result.scope().start(), nonNegativeLong(arguments(call).get("start")))
+                    || !Objects.equals(result.scope().end(), nonNegativeLong(arguments(call).get("end")))
+                    || !matchesDimension(call, "serviceName", result.scope().serviceName())
+                    || !matchesDimension(call, "environment", result.scope().environment())) {
+                return null;
+            }
+            return new Observation("repeated-error-events", Math.toIntExact(result.matchingEvents()));
+        } catch (IllegalArgumentException | ArithmeticException invalid) {
+            return null;
+        }
+    }
+
+    private boolean matchesDimension(AgentRuntimeToolCall call, String key, String actual) {
+        Object requested = arguments(call).get(key);
+        return Objects.equals(requested == null ? "" : requested, actual);
     }
 
     private Observation realtime(AgentRuntimeToolCall call, Map<String, Object> output) {
@@ -279,6 +386,9 @@ final class AgentReadObservationClassifier {
 
     @SuppressWarnings("unchecked")
     private Map<String, Object> object(String json) {
+        if (json == null) {
+            return null;
+        }
         try {
             Object value = QUIET_JSON.readValue(json, Object.class);
             return value instanceof Map<?, ?> map ? (Map<String, Object>) map : null;

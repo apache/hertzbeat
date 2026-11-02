@@ -15,10 +15,24 @@
  * limitations under the License.
  */
 
-import { act, renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook as renderRawHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { PropsWithChildren } from 'react';
 import { useAgentWorkspaceController } from './use-agent-workspace-controller';
+
+const renderHook: typeof renderRawHook = (callback, options) => {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const Wrapper = ({ children }: PropsWithChildren) => (
+    <QueryClientProvider client={client}>{children}</QueryClientProvider>
+  );
+  return renderRawHook(callback, { ...options, wrapper: Wrapper });
+};
+vi.mock('../api/agent-batch-api', () => ({
+  getAgentBatch: vi.fn().mockResolvedValue(null),
+  streamAgentBatch: vi.fn()
+}));
 
 const api = vi.hoisted(() => ({
   decideAgentApproval: vi.fn(),
@@ -31,7 +45,13 @@ const api = vi.hoisted(() => ({
   submitAgentInteraction: vi.fn()
 }));
 
-vi.mock('../api/agent-gateway-api', () => api);
+vi.mock('../api/agent-gateway-api', () => ({
+  ...api,
+  listAgentTranscriptPage: async (sessionUid: string, signal?: AbortSignal) => ({
+    items: await api.listAgentTranscript(sessionUid, signal),
+    pageIndex: 0
+  })
+}));
 
 describe('AI workspace durable session reload', () => {
   beforeEach(() => {
@@ -39,6 +59,33 @@ describe('AI workspace durable session reload', () => {
     api.listAgentSessions.mockResolvedValue([session()]);
     api.listAgentTranscript.mockResolvedValue([durableUser()]);
     api.getLatestAgentRun.mockResolvedValue(failedSnapshot());
+  });
+
+  it('restores typed evidence from the exact durable snapshot and clears it for a new investigation', async () => {
+    const evidence = [
+      {
+        evidenceId: 'e-1',
+        runUid: 'run-1',
+        toolCallId: 'call-1',
+        toolName: 'logs.query',
+        signalType: 'logs',
+        resourceType: 'entity',
+        resourceId: '7',
+        start: 1000,
+        end: 2000,
+        observationCount: 1,
+        status: 'OBSERVED',
+        summary: 'One matching observation',
+        partial: null
+      }
+    ];
+    api.getLatestAgentRun.mockResolvedValue({ ...failedSnapshot(), evidence });
+    const { result } = renderHook(() => useAgentWorkspaceController());
+    await waitFor(() => expect(result.current.sessions.status).toBe('ready'));
+    await act(async () => result.current.actions.selectSession('session-1'));
+    expect(result.current.run.evidence).toEqual(evidence);
+    act(() => result.current.actions.newInvestigation());
+    expect(result.current.run.evidence).toBeUndefined();
   });
 
   it('keeps a durable USER visible when latest-run loading fails', async () => {

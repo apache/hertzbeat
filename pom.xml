@@ -143,7 +143,7 @@
         <damengc-driver.version>8.1.2.141</damengc-driver.version>
         <postgresql.version>42.5.5</postgresql.version>
         <xugu-jdbc.version>12.3.5</xugu-jdbc.version>
-        <h2.version>2.2.224</h2.version>
+        <h2.version>2.3.232</h2.version>
         <taos-jdbcdriver.version>3.0.0</taos-jdbcdriver.version>
         <iotdb-session.version>0.13.3</iotdb-session.version>
         <questdb.version>9.0.2</questdb.version>

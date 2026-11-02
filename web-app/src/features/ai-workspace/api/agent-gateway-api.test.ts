@@ -16,20 +16,185 @@
  */
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import { apiFetch } from '@/core/http/http-client';
 
 import {
   activateAgentProvider,
+  agentGatewayFailureDetails,
   createAgentProvider,
+  decideAgentApproval,
   deleteAgentProvider,
   getAgentRun,
   getLatestAgentRun,
   listAgentProviderConfigurations,
   listAgentProviderOptions,
-  listAgentTranscript,
+  listAgentTranscriptPage,
   streamAgentChat
 } from './agent-gateway-api';
 
+describe('safe stream admission diagnostics', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+  const request = {
+    conversationId: 'local-conversation',
+    messageId: 'stable-message',
+    message: 'private input must not be logged',
+    attachments: []
+  };
+  const flush = async () => {
+    for (let i = 0; i < 24; i++) await Promise.resolve();
+  };
+
+  it('distinguishes queue timeout and never emits the chat fetch after expiry', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('navigator', {});
+    const log = vi.spyOn(console, 'info').mockImplementation(() => {});
+    let release!: (response: Response) => void;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn<typeof fetch>(
+        () =>
+          new Promise(resolve => {
+            release = resolve;
+          })
+      )
+    );
+    const writer = apiFetch('/api/ui/session', { method: 'POST' }).catch(() => undefined);
+    await flush();
+    const result = streamAgentChat(request, () => {}).catch(error => error as unknown);
+    await flush();
+    await vi.advanceTimersByTimeAsync(30_001);
+    const detail = agentGatewayFailureDetails(await result);
+    expect(detail?.code).toBe('QUEUE_TIMEOUT');
+    expect(detail?.requestId).toMatch(/^[0-9a-f-]{36}$/);
+    release(new Response(null, { status: 200 }));
+    await writer;
+    await flush();
+    expect(fetch).toHaveBeenCalledOnce();
+    expect(JSON.stringify(log.mock.calls)).not.toContain(request.message);
+  });
+
+  it('correlates a started header timeout, aborts it and never replays a mutation', async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal('navigator', {});
+    vi.spyOn(console, 'info').mockImplementation(() => {});
+    let submitted: RequestInit | undefined;
+    vi.stubGlobal(
+      'fetch',
+      vi.fn<typeof fetch>((_input, init) => {
+        submitted = init;
+        return new Promise((_resolve, reject) =>
+          init?.signal?.addEventListener('abort', () => reject(new Error('Transport aborted')), { once: true })
+        );
+      })
+    );
+    const result = streamAgentChat(request, () => {}).catch(error => error as unknown);
+    await flush();
+    await vi.advanceTimersByTimeAsync(30_001);
+    const detail = agentGatewayFailureDetails(await result);
+    expect(detail?.code).toBe('HEADER_TIMEOUT');
+    expect(new Headers(submitted?.headers).get('X-HertzBeat-Agent-Request-Id')).toBe(detail?.requestId);
+    expect(submitted?.signal?.aborted).toBe(true);
+    expect(JSON.parse(submitted?.body as string).messageId).toBe('stable-message');
+    expect(fetch).toHaveBeenCalledOnce();
+  });
+
+  it('shows HTTP rejection separately without logging bodies or replaying401', async () => {
+    const log = vi.spyOn(console, 'info').mockImplementation(() => {});
+    vi.stubGlobal(
+      'fetch',
+      vi.fn<typeof fetch>().mockResolvedValue(new Response('private response detail', { status: 401 }))
+    );
+    const error = await streamAgentChat(request, () => {}).catch(reason => reason as unknown);
+    expect(agentGatewayFailureDetails(error)).toMatchObject({ code: 'HTTP_REJECTED', httpStatus: 401 });
+    expect(fetch).toHaveBeenCalledOnce();
+    expect(JSON.stringify(log.mock.calls)).not.toContain('private');
+  });
+});
+
 describe('Agent Gateway browser API', () => {
+  it('sends only the confirmed collection hash and rejects unsuccessful decision envelopes', async () => {
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(message({ body: { status: 'completed' } }))
+      .mockResolvedValueOnce(message({ body: { status: 'failed' } }));
+    vi.stubGlobal('fetch', fetchMock);
+    await expect(decideAgentApproval('approval-fixed', 'approve', 'a'.repeat(64))).resolves.toMatchObject({
+      body: { status: 'completed' }
+    });
+    expect(fetchMock.mock.calls[0]?.[1]?.body).toBe(JSON.stringify({ collectionPlanHash: 'a'.repeat(64) }));
+    await expect(decideAgentApproval('approval-fixed', 'approve', 'a'.repeat(64))).rejects.toThrow(
+      'Approval response was not accepted'
+    );
+  });
+
+  it('restores pending approvals by a read-only owned-run query after reload', async () => {
+    const snapshot = {
+      runUid: 'run-restore',
+      sessionUid: 'session-restore',
+      messageId: 'message',
+      status: 'RUNNING',
+      target: null,
+      result: null,
+      errorMessage: null,
+      replayAvailable: true,
+      startedAt: null,
+      completedAt: null,
+      retryRequest: null
+    };
+    const approval = {
+      approvalId: 'approval-restore',
+      toolCallId: 'tool',
+      toolName: 'monitor.create_batch',
+      status: 'WAITING_APPROVAL',
+      expiresAt: '2026-10-22T09:01:00',
+      canDecide: true
+    };
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(message(snapshot))
+      .mockResolvedValueOnce(
+        message({ runUid: snapshot.runUid, sessionUid: snapshot.sessionUid, truncated: false, approvals: [approval] })
+      );
+    vi.stubGlobal('fetch', fetchMock);
+    await expect(getAgentRun(snapshot.runUid)).resolves.toMatchObject({
+      recoveredApprovals: [approval],
+      approvalRecoveryUnavailable: false
+    });
+    expect(fetchMock.mock.calls[1]?.[0]).toBe('/api/agent/runs/run-restore/pending-approvals');
+    expect(fetchMock.mock.calls.every(call => !call[1]?.method || call[1]?.method === 'GET')).toBe(true);
+  });
+
+  it('does not project a different session approval response or fabricate permission on failure', async () => {
+    const snapshot = {
+      runUid: 'run-restore',
+      sessionUid: 'session-restore',
+      messageId: 'message',
+      status: 'RUNNING',
+      target: null,
+      result: null,
+      errorMessage: null,
+      replayAvailable: true,
+      startedAt: null,
+      completedAt: null,
+      retryRequest: null
+    };
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn<typeof fetch>()
+        .mockResolvedValueOnce(message(snapshot))
+        .mockResolvedValueOnce(
+          message({ runUid: 'other-run', sessionUid: 'other-session', truncated: false, approvals: [] })
+        )
+    );
+    const result = await getAgentRun(snapshot.runUid);
+    expect(result.approvalRecoveryUnavailable).toBe(true);
+    expect(result.recoveredApprovals).toBeUndefined();
+  });
+
   afterEach(() => vi.unstubAllGlobals());
 
   it('preserves recorded tool identities without exposing inputs or inventing execution metadata', async () => {
@@ -68,7 +233,7 @@ describe('Agent Gateway browser API', () => {
         })
       )
     );
-    const messages = await listAgentTranscript('session-1');
+    const messages = (await listAgentTranscriptPage('session-1')).items;
     expect(messages[0]).toMatchObject({ text: '', toolCalls: [{ toolCallId: 'call-1', toolName: 'logs.query' }] });
     expect(messages[0]?.toolCalls?.[0]).not.toHaveProperty('input');
     expect(messages[1]).toMatchObject({
@@ -79,6 +244,88 @@ describe('Agent Gateway browser API', () => {
     expect(messages[1]).not.toHaveProperty('elapsedMs');
     expect(messages[1]).not.toHaveProperty('status');
     expect(messages[2]?.toolCalls).toEqual([{ toolCallId: 'transcript:3:call:0', toolName: 'tool.search' }]);
+  });
+
+  it('maps explicit durable tool execution metadata and preserves empty success', async () => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(
+        Response.json({
+          code: 0,
+          data: {
+            content: [
+              {
+                id: 1,
+                sessionSequence: 1,
+                messageRole: 'toolResult',
+                gmtCreate: null,
+                payloadJson: JSON.stringify({
+                  role: 'toolResult',
+                  toolCallId: 'call-1',
+                  toolName: 'logs.query',
+                  toolStatus: 'SUCCEEDED',
+                  toolElapsedMs: 0,
+                  content: [{ type: 'text', text: '{"content":[]}' }]
+                })
+              }
+            ],
+            totalElements: 1,
+            totalPages: 1,
+            number: 0,
+            size: 200
+          }
+        })
+      )
+    );
+    expect((await listAgentTranscriptPage('session-1')).items[0]).toMatchObject({
+      toolStatus: 'SUCCEEDED',
+      toolElapsedMs: 0
+    });
+  });
+
+  it('loads the latest bounded transcript page and allows older pages', async () => {
+    const fetchMock = vi.fn((input: RequestInfo | URL) => {
+      const url = new URL(
+        typeof input === 'string' ? input : input instanceof URL ? input.href : input.url,
+        'http://localhost'
+      );
+      const pageIndex = Number(url.searchParams.get('pageIndex'));
+      return Promise.resolve(
+        Response.json({
+          code: 0,
+          data: {
+            content: [
+              {
+                id: pageIndex + 1,
+                sessionSequence: pageIndex * 200 + 1,
+                messageRole: 'assistant',
+                payloadJson: JSON.stringify({
+                  role: 'assistant',
+                  content: [{ type: 'text', text: `Page ${pageIndex}` }]
+                }),
+                gmtCreate: null
+              }
+            ],
+            totalElements: 401,
+            totalPages: 3,
+            number: pageIndex,
+            size: 200
+          }
+        })
+      );
+    });
+    vi.stubGlobal('fetch', fetchMock);
+    const latest = await listAgentTranscriptPage('session-1');
+    expect(latest).toMatchObject({ pageIndex: 2, items: [{ text: 'Page 2' }] });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    const older = await listAgentTranscriptPage('session-1', undefined, 1);
+    expect(older).toMatchObject({ pageIndex: 1, items: [{ text: 'Page 1' }] });
+    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(
+      fetchMock.mock.calls.every(([url]) =>
+        (typeof url === 'string' ? url : url instanceof URL ? url.href : url.url).includes('pageSize=200')
+      )
+    ).toBe(true);
   });
 
   it('posts a long-lived authenticated stream and parses events split across chunks', async () => {
@@ -661,7 +908,7 @@ describe('Agent Gateway browser API', () => {
       );
     vi.stubGlobal('fetch', fetchMock);
 
-    await expect(listAgentTranscript('session-1')).resolves.toEqual([
+    await expect(listAgentTranscriptPage('session-1').then(page => page.items)).resolves.toEqual([
       expect.objectContaining({ id: 1, role: 'user', text: 'Inspect response time' })
     ]);
     const snapshot = await getLatestAgentRun('session-1');

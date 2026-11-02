@@ -156,7 +156,6 @@ metrics:
       platform: dm
       username: ^_^username^_^
       password: ^_^password^_^
-      database: ^_^database^_^
       timeout: ^_^timeout^_^
       # SQL Query Method：oneRow, multiRow, columns
       queryType: columns
@@ -185,7 +184,6 @@ metrics:
       platform: dm
       username: ^_^username^_^
       password: ^_^password^_^
-      database: ^_^database^_^
       timeout: ^_^timeout^_^
       # SQL Query Method：oneRow, multiRow, columns
       queryType: oneRow
@@ -233,7 +231,6 @@ metrics:
       platform: dm
       username: ^_^username^_^
       password: ^_^password^_^
-      database: ^_^database^_^
       timeout: ^_^timeout^_^
       # SQL Query Method：oneRow, multiRow, columns
       queryType: columns

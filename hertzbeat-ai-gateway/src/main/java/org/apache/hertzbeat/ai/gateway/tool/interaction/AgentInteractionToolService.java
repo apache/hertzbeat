@@ -39,9 +39,13 @@ public class AgentInteractionToolService {
     }
 
     @Tool(name = "interaction.request_input", description = """
-            Ask the user to fill a structured form and return a single-use inputRef for one targetTool call. Use this
-            when several values are needed or sensitive values should not be requested in chat. Form values are injected
-            at their targetPath only when the target tool executes.
+            Collect missing values only for monitor.create or monitor.update, whose schemas accept inputRef.
+            Never request values already supplied by the user. Other tools (including alert_inhibit.create) do not
+            accept this reference: use their discovered schemas with the supplied non-secret configuration directly.
+            This form does not perform the target operation or approve it. After submission call that target tool
+            with the returned single-use inputRef and its other required arguments in this same run, through normal
+            permission and approval checks. Do not finish the task merely because input was collected. Form values
+            remain hidden from the model and are injected at targetPath only when the supported target executes.
             """)
     @AgentToolPolicy
     public InteractionResult requestInput(

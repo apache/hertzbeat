@@ -86,9 +86,9 @@ class SshHelperTest {
                 firstFailure.connectFuture(), secondFailure.connectFuture(),
                 thirdFailure.connectFuture(), success.connectFuture());
 
-        SshProtocol badProtocol = protocol("bad-password", "ignored-private-key-a");
-        SshProtocol samePassword = protocol("bad-password", "ignored-private-key-b");
-        SshProtocol correctedProtocol = protocol("correct-password", "ignored-private-key-b");
+        SshProtocol badProtocol = protocol("bad-password", null);
+        SshProtocol samePassword = protocol("bad-password", null);
+        SshProtocol correctedProtocol = protocol("correct-password", null);
 
         try (MockedStatic<CommonSshClient> commonSshClient = mockStatic(CommonSshClient.class)) {
             commonSshClient.when(CommonSshClient::getSshClient).thenReturn(sshClient);
@@ -391,6 +391,27 @@ class SshHelperTest {
 
         verify(success.clientSession()).addPublicKeyIdentity(keyPair);
         verify(success.clientSession(), never()).addPasswordIdentity(any());
+    }
+
+    @Test
+    void offersPasswordAndPrivateKeyTogetherWhenBothConfigured() throws Exception {
+        ConnectAttempt success = successfulAttempt();
+        KeyPair keyPair = mock(KeyPair.class);
+        when(sshClient.connect("root", host, 22)).thenReturn(success.connectFuture());
+
+        try (MockedStatic<CommonSshClient> commonSshClient = mockStatic(CommonSshClient.class);
+             MockedStatic<SecurityUtils> securityUtils = mockStatic(SecurityUtils.class)) {
+            commonSshClient.when(CommonSshClient::getSshClient).thenReturn(sshClient);
+            securityUtils.when(() -> SecurityUtils.loadKeyPairIdentities(any(), any(), any(), any()))
+                    .thenReturn(List.of(keyPair));
+
+            assertSame(success.clientSession(), SshHelper.getConnectSession(
+                    host, "22", "root", "password", "private-key", null, TIMEOUT, false));
+        }
+
+        // Both identities must be offered so the server can pick whichever it allows
+        verify(success.clientSession()).addPasswordIdentity("password");
+        verify(success.clientSession()).addPublicKeyIdentity(keyPair);
     }
 
     @Test

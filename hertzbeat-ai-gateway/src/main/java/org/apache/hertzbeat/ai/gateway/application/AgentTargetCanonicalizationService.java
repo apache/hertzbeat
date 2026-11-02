@@ -43,6 +43,8 @@ public class AgentTargetCanonicalizationService {
     private final AgentTopologyTargetAuthorityService topologyAuthorityService;
     private final AgentTraceTargetCanonicalizationAdapter traceAdapter;
     private final AgentLogTargetCanonicalizationAdapter logAdapter;
+    private final AgentIncidentTargetAuthorityService incidentAuthority;
+    private final AgentEntityInvestigationAuthorityService investigationAuthority;
 
     public AgentTargetCanonicalizationService(EntityMonitorMetricTargetCanonicalizer canonicalizer,
                                                AgentSingleAlertTargetAuthorityService alertAuthorityService,
@@ -60,13 +62,27 @@ public class AgentTargetCanonicalizationService {
                 traceAdapter, null);
     }
 
-    @Autowired
     public AgentTargetCanonicalizationService(EntityMonitorMetricTargetCanonicalizer canonicalizer,
                                                AgentSingleAlertTargetAuthorityService alertAuthorityService,
                                                AgentEntityTargetAuthorityService entityAuthorityService,
                                                AgentTopologyTargetAuthorityService topologyAuthorityService,
                                                AgentTraceTargetCanonicalizationAdapter traceAdapter,
                                                AgentLogTargetCanonicalizationAdapter logAdapter) {
+        this(canonicalizer, alertAuthorityService, entityAuthorityService, topologyAuthorityService,
+                traceAdapter, logAdapter, null, null);
+    }
+
+    @Autowired
+    public AgentTargetCanonicalizationService(EntityMonitorMetricTargetCanonicalizer canonicalizer,
+                                               AgentSingleAlertTargetAuthorityService alertAuthorityService,
+                                               AgentEntityTargetAuthorityService entityAuthorityService,
+                                               AgentTopologyTargetAuthorityService topologyAuthorityService,
+                                               AgentTraceTargetCanonicalizationAdapter traceAdapter,
+                                               AgentLogTargetCanonicalizationAdapter logAdapter,
+                                               AgentIncidentTargetAuthorityService incidentAuthority,
+                                               AgentEntityInvestigationAuthorityService investigationAuthority) {
+        this.investigationAuthority = investigationAuthority;
+        this.incidentAuthority = incidentAuthority;
         this.canonicalizer = canonicalizer;
         this.alertAuthorityService = alertAuthorityService;
         this.entityAuthorityService = entityAuthorityService;
@@ -76,6 +92,9 @@ public class AgentTargetCanonicalizationService {
     }
 
     public boolean requiresCanonicalization(InvokeCommand command) {
+        if (command.entryType() == AgentRuntimeEntryType.ALERT_TRIGGER) {
+            return true;
+        }
         AgentTargetRef target = command.userInput().getTarget();
         AgentSignalRef signal = target == null ? null : target.getSignal();
         return command.entryType() == AgentRuntimeEntryType.USER_INPUT
@@ -86,6 +105,34 @@ public class AgentTargetCanonicalizationService {
     }
 
     public InvokeCommand canonicalize(InvokeCommand sourceCommand) {
+        if (sourceCommand.entryType() == AgentRuntimeEntryType.ALERT_TRIGGER) {
+            requireIncidentSource(sourceCommand);
+            if (incidentAuthority == null) {
+                throw unavailable();
+            }
+            try {
+                AgentTargetRef target = incidentAuthority.canonicalize(sourceCommand.envelope().getWorkspaceId(),
+                        sourceCommand.userInput().getAlertIncident(), sourceCommand.envelope().getReceivedAt());
+                requireSafeCanonicalTarget(target);
+                return withTarget(sourceCommand, target);
+            } catch (RuntimeException ignored) {
+                throw unavailable();
+            }
+        }
+        if (isInvestigationIntent(sourceCommand.userInput().getTarget())) {
+            AgentTargetRef source = requireInvestigationSource(sourceCommand.userInput().getTarget());
+            if (investigationAuthority == null) {
+                throw unavailable();
+            }
+            try {
+                AgentTargetRef target = investigationAuthority.canonicalize(sourceCommand.envelope().getWorkspaceId(),
+                        source.getEntityId(), source.getSignal());
+                requireSafeCanonicalTarget(target);
+                return withTarget(sourceCommand, target);
+            } catch (RuntimeException ignored) {
+                throw unavailable();
+            }
+        }
         if (isAlertIntent(sourceCommand.userInput().getTarget())) {
             return canonicalizeAlert(sourceCommand);
         }
@@ -146,6 +193,28 @@ public class AgentTargetCanonicalizationService {
     }
 
     public InvokeCommand replayCommand(InvokeCommand sourceCommand, AgentTargetRef persistedTarget) {
+        if (sourceCommand.entryType() == AgentRuntimeEntryType.ALERT_TRIGGER) {
+            requireIncidentSource(sourceCommand);
+            var incident = sourceCommand.userInput().getAlertIncident();
+            if (!AgentIncidentTargetAuthorityService.isCanonicalTarget(persistedTarget)
+                    || !Objects.equals(incident.triggerAlertId(), persistedTarget.getAlertId())
+                    || !Objects.equals(incident.analysisPolicyId(), persistedTarget.getIncident().analysisPolicyId())
+                    || !Objects.equals(incident.alertIds().stream().sorted().toList(), persistedTarget.getIncident().alertIds())
+                    || incident.alertCount() != persistedTarget.getIncident().alertIds().size()
+                    || incident.windowStartedAt() != persistedTarget.getIncident().windowStartedAt()) {
+                throw mismatch();
+            }
+            return withTarget(sourceCommand, persistedTarget);
+        }
+        if (isInvestigationIntent(sourceCommand.userInput().getTarget())) {
+            AgentTargetRef source = requireInvestigationSource(sourceCommand.userInput().getTarget());
+            if (!AgentEntityInvestigationAuthorityService.isCanonicalTarget(persistedTarget)
+                    || !Objects.equals(source.getEntityId(), persistedTarget.getEntityId())
+                    || !Objects.equals(source.getSignal(), persistedTarget.getSignal())) {
+                throw mismatch();
+            }
+            return withTarget(sourceCommand, persistedTarget);
+        }
         if (isAlertIntent(sourceCommand.userInput().getTarget())) {
             AgentTargetRef source = requireAlertSourceIntent(sourceCommand.userInput().getTarget());
             if (!isCanonicalAlertTarget(persistedTarget)
@@ -185,6 +254,9 @@ public class AgentTargetCanonicalizationService {
     }
 
     public static AgentTargetRef retrySourceIntent(AgentTargetRef target) {
+        if (AgentEntityInvestigationAuthorityService.isCanonicalTarget(target)) {
+            return AgentTargetRef.builder().entityId(target.getEntityId()).signal(target.getSignal()).build();
+        }
         if (isCanonicalAlertTarget(target)) {
             return alertSourceIntent(target);
         }
@@ -289,6 +361,37 @@ public class AgentTargetCanonicalizationService {
                         .timezone(signal.getTimezone())
                         .build())
                 .build();
+    }
+
+    private boolean isInvestigationIntent(AgentTargetRef target) {
+        return target != null && (AgentEntityInvestigationAuthorityService.TARGET_VERSION.equals(target.getVersion())
+                || target.getSignal() != null && "investigation".equals(target.getSignal().getType()));
+    }
+
+    private AgentTargetRef requireInvestigationSource(AgentTargetRef target) {
+        if (target == null || target.getEntityId() == null || target.getEntityId() <= 0
+                || target.getVersion() != null || target.getAuthority() != null || target.getService() != null
+                || target.getMonitorId() != null || target.getAlertId() != null || target.getAlertType() != null
+                || target.getCollector() != null || target.getTopology() != null || target.getTrace() != null
+                || target.getLog() != null || target.getIncident() != null) {
+            throw unavailable();
+        }
+        return target;
+    }
+
+    private void requireIncidentSource(InvokeCommand command) {
+        var incident = command.userInput().getAlertIncident();
+        var target = command.userInput().getTarget();
+        if (!org.apache.hertzbeat.ai.gateway.identity.AgentActor.alertAnalysisActor().equals(command.envelope().getActor())
+                || !org.apache.hertzbeat.ai.gateway.channel.core.ChannelId.SYSTEM.id().equals(command.envelope().getChannelId())
+                || incident == null || target == null || !Objects.equals(target.getAlertId(), incident.triggerAlertId())
+                || target.getVersion() != null || target.getAuthority() != null || target.getIncident() != null
+                || target.getEntityId() != null || target.getMonitorId() != null || target.getCollector() != null
+                || target.getSignal() != null || target.getTopology() != null || target.getTrace() != null
+                || target.getLog() != null || target.getService() != null
+                || target.getAlertType() != null && !"single".equals(target.getAlertType())) {
+            throw unavailable();
+        }
     }
 
     private InvokeCommand canonicalizeAlert(InvokeCommand command) {

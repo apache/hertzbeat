@@ -39,10 +39,12 @@ public class AgentRuntimeModelRequest {
 
     Integer maxCompletionTokens;
 
+    boolean toolCallRequired;
+
     @Builder
     private AgentRuntimeModelRequest(RuntimePrompt prompt, List<TranscriptMessage> chatHistory,
                                      List<AgentToolDescriptor> availableTools, Double temperature,
-                                     Integer maxCompletionTokens) {
+                                     Integer maxCompletionTokens, boolean toolCallRequired) {
         // Model requests cannot be repaired after streaming starts, so their prompt is mandatory at this boundary.
         this.prompt = Objects.requireNonNull(prompt, "Agent runtime model prompt is required");
         // New sessions and tool-free requests legitimately omit these builder values.
@@ -50,5 +52,6 @@ public class AgentRuntimeModelRequest {
         this.availableTools = availableTools == null ? List.of() : List.copyOf(availableTools);
         this.temperature = temperature;
         this.maxCompletionTokens = maxCompletionTokens;
+        this.toolCallRequired = toolCallRequired;
     }
 }

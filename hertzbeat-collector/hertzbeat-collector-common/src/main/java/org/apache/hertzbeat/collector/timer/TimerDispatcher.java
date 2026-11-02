@@ -119,15 +119,15 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
         if (addJob.isCyclic()) {
             long nextExecutionTime = initialCyclicDelay(addJob);
             Timeout timeout = wheelTimer.newTimeout(timerJob, nextExecutionTime, TimeUnit.SECONDS);
-            cancelPreviousTimeout(currentCyclicTaskMap.put(addJob.getId(), timeout));
+            retirePreviousTimeout(currentCyclicTaskMap.put(addJob.getId(), timeout));
         } else {
             for (Metrics metric : addJob.getMetrics()) {
                 metric.setInterval(0L);
             }
             addJob.setIntervals(new ConcurrentLinkedDeque<>(List.of(0L)));
-            Timeout timeout = wheelTimer.newTimeout(timerJob, addJob.getInterval(), TimeUnit.SECONDS);
-            cancelPreviousTimeout(currentTempTaskMap.put(addJob.getId(), timeout));
             eventListeners.put(addJob.getId(), eventListener);
+            Timeout timeout = wheelTimer.newTimeout(timerJob, addJob.getInterval(), TimeUnit.SECONDS);
+            retirePreviousTimeout(currentTempTaskMap.put(addJob.getId(), timeout));
         }
     }
 
@@ -138,11 +138,15 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
             return;
         }
         Long jobId = timerTask.getJob().getId();
-        // whether is the job has been canceled
-        if (currentCyclicTaskMap.containsKey(jobId)) {
-            Timeout timeout = wheelTimer.newTimeout(timerTask, interval, TimeUnit.SECONDS);
-            cancelPreviousTimeout(currentCyclicTaskMap.put(timerTask.getJob().getId(), timeout));
-        }
+        // Serialize replacement with deletion, and never let an old job replace a re-added job.
+        currentCyclicTaskMap.computeIfPresent(jobId, (id, current) -> {
+            if (!started.get() || timerTask.isCancelled() || current.task() != timerTask) {
+                return current;
+            }
+            Timeout next = wheelTimer.newTimeout(timerTask, interval, timeUnit);
+            current.cancel();
+            return next;
+        });
     }
 
     @Override
@@ -157,21 +161,22 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
         if (isCyclic) {
             Timeout timeout = currentCyclicTaskMap.remove(jobId);
             if (timeout != null) {
-                timeout.cancel();
+                retirePreviousTimeout(timeout);
             }
         } else {
+            eventListeners.remove(jobId);
             Timeout timeout = currentTempTaskMap.remove(jobId);
             if (timeout != null) {
-                timeout.cancel();
+                retirePreviousTimeout(timeout);
             }
         }
     }
 
     @Override
     public void goOnline() {
-        currentCyclicTaskMap.forEach((key, value) -> value.cancel());
+        currentCyclicTaskMap.forEach((key, value) -> retirePreviousTimeout(value));
         currentCyclicTaskMap.clear();
-        currentTempTaskMap.forEach((key, value) -> value.cancel());
+        currentTempTaskMap.forEach((key, value) -> retirePreviousTimeout(value));
         currentTempTaskMap.clear();
         started.set(true);
     }
@@ -179,9 +184,9 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
     @Override
     public void goOffline() {
         started.set(false);
-        currentCyclicTaskMap.forEach((key, value) -> value.cancel());
+        currentCyclicTaskMap.forEach((key, value) -> retirePreviousTimeout(value));
         currentCyclicTaskMap.clear();
-        currentTempTaskMap.forEach((key, value) -> value.cancel());
+        currentTempTaskMap.forEach((key, value) -> retirePreviousTimeout(value));
         currentTempTaskMap.clear();
     }
 
@@ -192,6 +197,9 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
         CollectResponseEventListener eventListener = eventListeners.remove(jobId);
         if (eventListener != null) {
             eventListener.response(metricsDataTemps);
+        } else if (metricsDataTemps != null) {
+            // A cancelled or expired waiter cannot be revived by a late response.
+            metricsDataTemps.forEach(CollectRep.MetricsData::close);
         }
     }
 
@@ -200,8 +208,9 @@ public class TimerDispatcher implements TimerDispatch, DisposableBean {
         this.wheelTimer.stop();
     }
 
-    private void cancelPreviousTimeout(Timeout previousTimeout) {
+    private void retirePreviousTimeout(Timeout previousTimeout) {
         if (previousTimeout != null) {
+            ((WheelTimerTask) previousTimeout.task()).cancel();
             previousTimeout.cancel();
         }
     }

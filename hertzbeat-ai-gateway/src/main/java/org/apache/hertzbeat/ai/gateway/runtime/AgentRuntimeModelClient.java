@@ -26,6 +26,14 @@ import java.util.function.Consumer;
 public interface AgentRuntimeModelClient {
 
     /**
+     * Whether this adapter can run an isolated, tool-free completion review.
+     * Adapters without this capability conservatively retain the evidence gate.
+     */
+    default boolean supportsReplyReview() {
+        return false;
+    }
+
+    /**
      * Invoke the configured model and report visible assistant text deltas as they are produced.
      */
     AgentRuntimeModelResponse stream(AgentRuntimeModelRequest request, AgentRuntimeControl control,

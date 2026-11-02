@@ -15,11 +15,25 @@
  * limitations under the License.
  */
 
-import { act, renderHook, waitFor } from '@testing-library/react';
+import { act, renderHook as renderRawHook, waitFor } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import type { AgentGatewayEvent, AgentSourceTarget } from '../model/agent-workspace-contract';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import type { PropsWithChildren } from 'react';
 import { useAgentWorkspaceController } from './use-agent-workspace-controller';
+
+const renderHook: typeof renderRawHook = (callback, options) => {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+  const Wrapper = ({ children }: PropsWithChildren) => (
+    <QueryClientProvider client={client}>{children}</QueryClientProvider>
+  );
+  return renderRawHook(callback, { ...options, wrapper: Wrapper });
+};
+vi.mock('../api/agent-batch-api', () => ({
+  getAgentBatch: vi.fn().mockResolvedValue(null),
+  streamAgentBatch: vi.fn()
+}));
 
 const api = vi.hoisted(() => ({
   decideAgentApproval: vi.fn(),
@@ -32,7 +46,13 @@ const api = vi.hoisted(() => ({
   submitAgentInteraction: vi.fn()
 }));
 
-vi.mock('../api/agent-gateway-api', () => api);
+vi.mock('../api/agent-gateway-api', () => ({
+  ...api,
+  listAgentTranscriptPage: async (sessionUid: string, signal?: AbortSignal) => ({
+    items: await api.listAgentTranscript(sessionUid, signal),
+    pageIndex: 0
+  })
+}));
 
 describe('useAgentWorkspaceController', () => {
   beforeEach(() => {
@@ -40,6 +60,62 @@ describe('useAgentWorkspaceController', () => {
     api.listAgentSessions.mockResolvedValue([]);
     api.listAgentTranscript.mockResolvedValue([]);
     api.getLatestAgentRun.mockResolvedValue(null);
+  });
+
+  it('cancels the entire pending run and only prepares a manually sent revision draft', async () => {
+    const pending = {
+      approvalId: 'a',
+      toolCallId: 'call-a',
+      toolName: 'monitor.favorite_set',
+      status: 'WAITING_APPROVAL',
+      canDecide: true
+    };
+    const running = {
+      ...snapshot('run-1', 'session-1', 'message-1', 'RUNNING'),
+      approvalRecoveryUnavailable: false,
+      recoveredApprovals: [pending, { ...pending, approvalId: 'b', toolCallId: 'call-b' }]
+    };
+    const cancelled = {
+      ...running,
+      status: 'CANCELLED',
+      recoveredApprovals: running.recoveredApprovals.map(a => ({ ...a, status: 'UNAVAILABLE', canDecide: false }))
+    };
+    api.listAgentSessions.mockResolvedValue([session('session-1', 'conversation-1', 'RUNNING')]);
+    api.getLatestAgentRun.mockResolvedValue(running);
+    api.getAgentRun.mockResolvedValueOnce(running).mockResolvedValueOnce(cancelled);
+    api.stopAgentRun.mockResolvedValue({ accepted: true });
+    const { result } = renderHook(() => useAgentWorkspaceController());
+    await waitFor(() => expect(result.current.sessions.status).toBe('ready'));
+    await act(async () => result.current.actions.selectSession('session-1'));
+    let ok = false;
+    await act(async () => {
+      const outcomes = await Promise.all([
+        result.current.actions.reviseApproval!('a', 'Disable only the dedicated test policy'),
+        result.current.actions.reviseApproval!('a', 'Second duplicate click')
+      ]);
+      expect(outcomes).toEqual([true, false]);
+      ok = outcomes[0]!;
+    });
+    expect(ok).toBe(true);
+    expect(result.current.composer).toBe('Disable only the dedicated test policy');
+    expect(result.current.run.status).not.toBe('running');
+    expect(result.current.run.approvals.every(a => a.canDecide !== true)).toBe(true);
+    expect(api.stopAgentRun).toHaveBeenCalledExactlyOnceWith('run-1');
+    expect(api.decideAgentApproval).not.toHaveBeenCalled();
+    expect(api.streamAgentChat).not.toHaveBeenCalled();
+    api.getLatestAgentRun.mockResolvedValue(snapshot('run-revised', 'session-1', 'message-new', 'SUCCEEDED'));
+    api.streamAgentChat.mockImplementation((_request, publish: (event: AgentGatewayEvent) => void) => {
+      publish(event('RUN_STARTED', {}, { runUid: 'run-revised', sessionUid: 'session-1' }));
+      publish(event('RUN_COMPLETED', {}, { runUid: 'run-revised', sessionUid: 'session-1' }));
+      return Promise.resolve();
+    });
+    await act(async () => result.current.actions.send());
+    expect(api.streamAgentChat).toHaveBeenCalledTimes(1);
+    expect(api.streamAgentChat.mock.calls[0]?.[0]).toEqual(
+      expect.objectContaining({ message: 'Disable only the dedicated test policy', messageId: expect.any(String) })
+    );
+    expect(api.streamAgentChat.mock.calls[0]?.[0].messageId).not.toBe('message-1');
+    expect(api.decideAgentApproval).not.toHaveBeenCalled();
   });
 
   it('does not move a selected session backwards when its snapshot timestamp is older', async () => {
@@ -212,6 +288,44 @@ describe('useAgentWorkspaceController', () => {
     expect(api.streamAgentChat).not.toHaveBeenCalled();
   });
 
+  it('converges a restored approval without replaying the model stream', async () => {
+    const pending = {
+      approvalId: 'approval-restored',
+      toolCallId: 'call',
+      toolName: 'monitor.create_batch',
+      status: 'WAITING_APPROVAL',
+      canDecide: true
+    };
+    api.listAgentSessions.mockResolvedValue([session('session-1', 'conversation-1', 'RUNNING')]);
+    api.getLatestAgentRun.mockResolvedValue({
+      ...snapshot('run-1', 'session-1', 'message-1', 'RUNNING'),
+      recoveredApprovals: [pending]
+    });
+    api.getAgentRun.mockResolvedValue({
+      ...snapshot('run-1', 'session-1', 'message-1', 'SUCCEEDED'),
+      result: 'Partial: HTTP_403',
+      replayAvailable: true,
+      recoveredApprovals: [{ ...pending, status: 'APPROVED', canDecide: false }]
+    });
+    api.decideAgentApproval.mockResolvedValue(undefined);
+    const { result } = renderHook(() => useAgentWorkspaceController());
+    await waitFor(() => expect(result.current.sessions.status).toBe('ready'));
+    await act(async () => result.current.actions.selectSession('session-1'));
+    expect(result.current.run.approvals).toHaveLength(1);
+    api.getLatestAgentRun.mockResolvedValue(
+      snapshot('run-1', 'session-1', 'message-1', 'SUCCEEDED', null, 'Partial: HTTP_403')
+    );
+    api.listAgentTranscript.mockResolvedValue([
+      { id: 2, sequence: 1, role: 'assistant', text: 'Partial: HTTP_403', createdAt: null }
+    ]);
+    await act(async () => result.current.actions.decideApproval('approval-restored', 'approve'));
+    expect(result.current.run.status).not.toBe('running');
+    expect(result.current.transcript.items).toEqual([expect.objectContaining({ text: 'Partial: HTTP_403' })]);
+    expect(result.current.run.approvals).toHaveLength(0);
+    expect(api.decideAgentApproval).toHaveBeenCalledTimes(1);
+    expect(api.streamAgentChat).not.toHaveBeenCalled();
+  });
+
   it('ignores stale stop, approval, and interaction failures after a workspace reset', async () => {
     api.listAgentSessions.mockResolvedValue([session('session-1', 'conversation-1', 'RUNNING')]);
     api.getLatestAgentRun.mockResolvedValue(snapshot('run-1', 'session-1', 'message-1', 'RUNNING'));
@@ -274,7 +388,7 @@ describe('useAgentWorkspaceController', () => {
       act(() => result.current.actions.setComposer('Inspect checkout'));
       await act(async () => {
         const execution = result.current.actions.send();
-        await vi.advanceTimersByTimeAsync(60_000);
+        await vi.advanceTimersByTimeAsync(95_000);
         await execution;
       });
 

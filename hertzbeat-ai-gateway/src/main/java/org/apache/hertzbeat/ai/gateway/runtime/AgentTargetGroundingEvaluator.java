@@ -30,6 +30,8 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import org.apache.hertzbeat.ai.gateway.application.AgentSingleAlertTargetAuthorityService;
+import org.apache.hertzbeat.ai.gateway.application.AgentIncidentTargetAuthorityService;
+import org.apache.hertzbeat.ai.gateway.application.AgentEntityInvestigationAuthorityService;
 import org.apache.hertzbeat.ai.gateway.contract.AgentLogRef;
 import org.apache.hertzbeat.ai.gateway.contract.AgentServiceRef;
 import org.apache.hertzbeat.ai.gateway.contract.AgentSignalRef;
@@ -87,6 +89,12 @@ final class AgentTargetGroundingEvaluator {
             return Optional.empty();
         }
         AgentSignalRef signal = target.getSignal();
+        if (AgentEntityInvestigationAuthorityService.isCanonicalTarget(target)) {
+            return investigationProof(runUid, target, targetFingerprint, call, result, output);
+        }
+        if (AgentIncidentTargetAuthorityService.isCanonicalTarget(target)) {
+            return incidentProof(runUid, target, targetFingerprint, call, result, output);
+        }
         if (isCanonicalSingleAlert(target)) {
             return alertProof(runUid, target, targetFingerprint, call, result, output);
         }
@@ -143,6 +151,88 @@ final class AgentTargetGroundingEvaluator {
         return evaluate(runUid, target, call, result)
                 .filter(proof::equals)
                 .isPresent();
+    }
+
+    private Optional<AgentGroundingProof> investigationProof(String runUid, AgentTargetRef target, String fingerprint,
+                                                             AgentRuntimeToolCall call, AgentToolExecutionResult result,
+                                                             Map<String, Object> output) {
+        if (!AgentEntityInvestigationAuthorityService.argumentsAllowed(target, call.getToolName(), call.getArguments())) {
+            return Optional.empty();
+        }
+        if ("entity.get".equals(call.getToolName())) {
+            return entitySemantics.matches(target, call, output)
+                    ? Optional.of(proof(runUid, target, fingerprint, call, result, "investigation-entity", null,
+                            null, null, null, null, null, 1)) : Optional.empty();
+        }
+        if (!("metrics.history".equals(call.getToolName()) || "traces.query".equals(call.getToolName())
+                || "logs.query".equals(call.getToolName()))) {
+            return Optional.empty();
+        }
+        Map<String, Object> args = call.getArguments();
+        Long start = new BigDecimal(args.get("start").toString()).longValueExact();
+        Long end = new BigDecimal(args.get("end").toString()).longValueExact();
+        if (!equalsLong(output.get("start"), start) || !equalsLong(output.get("end"), end)) {
+            return Optional.empty();
+        }
+        var observation = new AgentReadObservationClassifier().classify(call, result.getOutput());
+        if (observation == null || observation.count() == null || observation.count() <= 0) {
+            return Optional.empty();
+        }
+        Long monitorId = null;
+        String metricKey = null;
+        if ("metrics.history".equals(call.getToolName())) {
+            monitorId = new BigDecimal(args.get("monitorId").toString()).longValueExact();
+            metricKey = (String) args.get("metricKey");
+            if (observation.count() > new BigDecimal(args.get("maxPoints").toString()).intValueExact()) {
+                return Optional.empty();
+            }
+        } else {
+            int pageSize = new BigDecimal(args.get("pageSize").toString()).intValueExact();
+            if (!equalsLong(output.get("pageIndex"), new BigDecimal(args.get("pageIndex").toString()).longValueExact())
+                    || !equalsLong(output.get("pageSize"), (long) pageSize) || observation.count() > pageSize) {
+                return Optional.empty();
+            }
+            if ("logs.query".equals(call.getToolName()) && !investigationLogsMatch(target, call, output, start, end)) {
+                return Optional.empty();
+            }
+        }
+        return Optional.of(proof(runUid, target, fingerprint, call, result, "investigation-" + observation.kind(),
+                monitorId, null, null, metricKey, start, end, observation.count()));
+    }
+
+    private boolean investigationLogsMatch(AgentTargetRef target, AgentRuntimeToolCall call,
+                                           Map<String, Object> output, Long start, Long end) {
+        Map<String, Object> args = new java.util.LinkedHashMap<>(call.getArguments());
+        args.put("hideInternal", false);
+        args.put("hideNoise", false);
+        AgentLogRef log = AgentLogRef.builder().start(start).end(end)
+                .serviceName(target.getService().getName()).serviceNamespace(target.getService().getNamespace())
+                .environment(target.getService().getEnvironment()).hideInternal(false).hideNoise(false)
+                .pageIndex(new BigDecimal(args.get("pageIndex").toString()).intValueExact())
+                .pageSize(new BigDecimal(args.get("pageSize").toString()).intValueExact()).build();
+        AgentTargetRef logTarget = AgentTargetRef.builder().version("log-page.v1").log(log)
+                .authority(AgentTargetAuthority.builder().version("log-page-authority.v1")
+                        .hash(target.getAuthority().getHash()).build()).build();
+        AgentRuntimeToolCall normalized = AgentRuntimeToolCall.builder().toolName(call.getToolName())
+                .toolCallId(call.getToolCallId()).arguments(args).build();
+        return logSemantics.matchingObservationCount(logTarget, normalized, output) > 0;
+    }
+
+    private Optional<AgentGroundingProof> incidentProof(String runUid, AgentTargetRef target, String fingerprint,
+                                                        AgentRuntimeToolCall call, AgentToolExecutionResult result,
+                                                        Map<String, Object> output) {
+        if (!AgentIncidentTargetAuthorityService.permits(target, call.getToolName(), call.getArguments())
+                || !ALERT_GET.equals(call.getToolName())) {
+            return Optional.empty();
+        }
+        Long alertId = new BigDecimal(call.getArguments().get("alertId").toString()).longValueExact();
+        if (!Set.of("alertId", "alertType", "single").equals(output.keySet())
+                || !equalsLong(output.get("alertId"), alertId) || !SINGLE_ALERT.equals(output.get("alertType"))
+                || !(output.get("single") instanceof Map<?, ?> row) || !isSingleAlertRow(row, alertId)) {
+            return Optional.empty();
+        }
+        return Optional.of(proof(runUid, target, fingerprint, call, result, "incident-alert-fact", null,
+                alertId, SINGLE_ALERT, null, null, null, 1));
     }
 
     private Optional<AgentGroundingProof> monitorProof(String runUid, AgentTargetRef target, String targetFingerprint,
@@ -378,6 +468,9 @@ final class AgentTargetGroundingEvaluator {
         AgentTargetAuthority authority = target.getAuthority();
         StringBuilder canonical = new StringBuilder("target.v1;");
         append(canonical, "version", target.getVersion());
+        if (target.getIncident() != null) {
+            append(canonical, "incident", target.getIncident());
+        }
         append(canonical, "monitorId", target.getMonitorId());
         append(canonical, "alertId", target.getAlertId());
         append(canonical, "alertType", target.getAlertType());
