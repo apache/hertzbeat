@@ -7,7 +7,7 @@
     "start": "docusaurus start",
     "start-en": "docusaurus start --locale en",
     "start-zh-cn": "docusaurus start --locale zh-cn",
-    "build": "pnpm docs:check && node --test scripts/render-to-html.test.mjs scripts/security-docs.test.mjs && docusaurus build && node scripts/check-built-html.mjs",
+    "build": "pnpm docs:check && node --test scripts/render-to-html.test.mjs scripts/security-docs.test.mjs scripts/release-blog.test.mjs && docusaurus build && node scripts/check-built-html.mjs",
     "swizzle": "docusaurus swizzle",
     "deploy": "docusaurus deploy",
     "serve": "docusaurus serve",
@@ -18,7 +18,7 @@
     "md-lint-fix": "pnpm md-lint --fix",
     "github-avatar": "node github-avatar.js",
     "docs:check": "node scripts/verify-roadmap-docs.mjs",
-    "test:docs-contract": "node --test scripts/verify-roadmap-docs.test.mjs scripts/security-docs.test.mjs"
+    "test:docs-contract": "node --test scripts/verify-roadmap-docs.test.mjs scripts/security-docs.test.mjs scripts/release-blog.test.mjs"
   },
   "dependencies": {
     "@docusaurus/core": "3.9.2",
