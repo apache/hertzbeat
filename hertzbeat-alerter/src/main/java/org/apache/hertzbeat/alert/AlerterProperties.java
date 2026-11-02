@@ -17,6 +17,8 @@
 
 package org.apache.hertzbeat.alert;
 
+import java.util.ArrayList;
+import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.hertzbeat.common.config.BaseKafkaProperties;
@@ -83,6 +85,15 @@ public class AlerterProperties {
      * WPUSH Notify url
      */
     private String wpushWebhookUrl = "https://api.wpush.cn/api/v1/send";
+
+    /**
+     * SSRF hardening allowlist: hosts that are explicitly allowed even when they
+     * resolve to internal/private addresses (e.g. self-hosted notification
+     * endpoints used under the trusted-user model). Supports exact host names
+     * and {@code *.example.com} wildcard subdomains. Allowlisted hosts bypass
+     * the internal-address check without DNS resolution.
+     */
+    private List<String> internalUrlAllowlist = new ArrayList<>();
 
     /**
      * Data entry configuration properties
