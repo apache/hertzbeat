@@ -122,6 +122,58 @@ class AgentReadGroundingEvaluatorTest {
                 observation.toolName()));
     }
 
+    @Test
+    void repeatedErrorSummaryAcceptsReadyEmptyWindowAndRejectsOtherSemanticStates() {
+        Map<String, Object> arguments = Map.of("start", 1_000L, "end", 2_000L);
+        Map<String, Object> scope = Map.of("workspaceId", "default", "start", 1_000L, "end", 2_000L,
+                "serviceName", "", "environment", "");
+        Map<String, Object> ready = Map.of("state", "ready", "scope", scope, "coverage", "window",
+                "matchingEvents", 0, "groups", List.of());
+        Observation empty = observation("logs.repeated_errors.summary", arguments,
+                repeatedErrorEnvelope(ready), "repeated-error-events", 0);
+        AgentGroundingProof proof = evaluator.evaluate("run-1", call(empty), result(empty)).orElseThrow();
+        assertEquals(0, proof.getObservationCount());
+        assertEquals("repeated-error-events", proof.getObservationKind());
+        for (String state : List.of("unsupported", "unavailable", "over_budget")) {
+            Observation unavailable = observation("logs.repeated_errors.summary", arguments,
+                    repeatedErrorEnvelope(Map.of("state", state, "scope", scope, "groups", List.of())));
+            assertTrue(evaluator.evaluate("run-1", call(unavailable), result(unavailable)).isEmpty());
+        }
+        Observation mismatch = observation("logs.repeated_errors.summary", Map.of("start", 999L, "end", 2_000L),
+                repeatedErrorEnvelope(ready));
+        assertTrue(evaluator.evaluate("run-1", call(mismatch), result(mismatch)).isEmpty());
+        Map<String, Object> truncated = new java.util.HashMap<>(repeatedErrorEnvelope(ready));
+        truncated.put("projectionTruncated", true);
+        Observation partial = observation("logs.repeated_errors.summary", arguments, truncated);
+        assertTrue(evaluator.evaluate("run-1", call(partial), result(partial)).isEmpty());
+        Observation failed = observation("logs.repeated_errors.summary", arguments, repeatedErrorEnvelope(ready));
+        assertTrue(evaluator.evaluate("run-1", call(failed),
+                result(failed).toBuilder().status(AgentToolStatus.FAILED).build()).isEmpty());
+    }
+
+    private Map<String, Object> repeatedErrorEnvelope(Map<String, Object> data) {
+        return Map.of("format", "json_text", "partial", false, "projectionTruncated", false,
+                "data", JsonUtil.toJson(Map.of("code", 0, "data", data)));
+    }
+
+    @Test
+    void successfulEmptyLogOverviewAndGroupsAreTypedObservations() {
+        Map<String, Object> counts = Map.of("totalCount", 0, "errorCount", 0, "warnCount", 0,
+                "infoCount", 0, "debugCount", 0, "fatalCount", 0, "traceCount", 0,
+                "traceCoverage", Map.of("withTrace", 0, "withoutTrace", 0, "withSpan", 0, "withBothTraceAndSpan", 0));
+        Observation stats = observation("logs.overview_stats", Map.of("q", Map.of("start", 1_000L, "end", 2_000L)),
+                repeatedErrorEnvelope(counts), "log-events", 0);
+        assertEquals(0, evaluator.evaluate("run-1", call(stats), result(stats)).orElseThrow().getObservationCount());
+        Observation groups = observation("logs.group_by_stats",
+                Map.of("q", Map.of("start", 1_000L, "end", 2_000L, "groupBy", "service.name")),
+                repeatedErrorEnvelope(Map.of("groupBy", "service.name", "groups", List.of())), "log-groups", 0);
+        assertEquals(0, evaluator.evaluate("run-1", call(groups), result(groups)).orElseThrow().getObservationCount());
+        var invalid = new java.util.HashMap<String, Object>(counts);
+        invalid.put("errorCount", 1);
+        Observation inconsistent = observation("logs.overview_stats", stats.arguments(), repeatedErrorEnvelope(invalid));
+        assertTrue(evaluator.evaluate("run-1", call(inconsistent), result(inconsistent)).isEmpty());
+    }
+
     private Stream<Observation> positiveCases() {
         Map<String, Object> exactHistoryArguments = Map.of(
                 "monitorId", 7L, "metricKey", "basic.qps", "start", 1_000L, "end", 2_000L);

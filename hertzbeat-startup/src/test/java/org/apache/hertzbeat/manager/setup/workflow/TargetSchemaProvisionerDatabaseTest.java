@@ -24,6 +24,7 @@ import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.read.ListAppender;
 import jakarta.persistence.Entity;
+import java.nio.file.Files;
 import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
@@ -61,7 +62,7 @@ class TargetSchemaProvisionerDatabaseTest {
     private static final String PASSWORD = "test-only-password";
 
     @Test
-    void provisionsAndValidatesFreshMysqlSchema() throws Exception {
+    void provisionsFreshMysqlAndPreservesV200WorkflowDataDuringUpgrade() throws Exception {
         try (MySQLContainer database = new MySQLContainer("mysql:8.4")
                 .withDatabaseName(DATABASE)
                 .withUsername(USERNAME)
@@ -75,7 +76,7 @@ class TargetSchemaProvisionerDatabaseTest {
     }
 
     @Test
-    void provisionsAndValidatesFreshPostgresqlSchema() throws Exception {
+    void provisionsFreshPostgresqlAndPreservesV200WorkflowDataDuringUpgrade() throws Exception {
         try (PostgreSQLContainer database = new PostgreSQLContainer("postgres:17.6")
                 .withDatabaseName(DATABASE)
                 .withUsername(USERNAME)
@@ -199,6 +200,13 @@ class TargetSchemaProvisionerDatabaseTest {
     }
 
     private static void verify(String jdbcUrl, MetadataDatabaseKind kind, String dialect) throws Exception {
+        var oldLocation = Files.createTempDirectory("agent-v200-" + kind.value());
+        try {
+            AgentWorkflowUpgradeProof.verify(jdbcUrl, USERNAME, PASSWORD, kind.value(), oldLocation);
+        } finally {
+            Files.deleteIfExists(oldLocation.resolve("B200__current_schema.sql"));
+            Files.deleteIfExists(oldLocation);
+        }
         assertStandardFlywayCreatesFreshBaseline(jdbcUrl, kind);
         MetadataDatabaseConfiguration target =
                 new MetadataDatabaseConfiguration(kind, jdbcUrl, USERNAME, PASSWORD);
@@ -217,7 +225,7 @@ class TargetSchemaProvisionerDatabaseTest {
                             "SELECT version, type, installed_by, success "
                                     + "FROM flyway_schema_history ORDER BY installed_rank")) {
                 assertThat(history.next()).isTrue();
-                assertThat(history.getString("version")).isEqualTo("200");
+                assertThat(history.getString("version")).isEqualTo("201");
                 assertThat(history.getString("type")).isEqualTo("SQL_BASELINE");
                 assertThat(history.getString("installed_by")).isEqualTo("hertzbeat-migration");
                 assertThat(history.getBoolean("success")).isTrue();
@@ -233,8 +241,8 @@ class TargetSchemaProvisionerDatabaseTest {
         HistoricalMetadataSchema.rebuild(jdbcUrl, USERNAME, PASSWORD, kind.value());
         assertThat(historyRows(jdbcUrl))
                 .extracting(HistoryRow::version)
-                .containsExactly("159", "160", "170", "172", "173", "180", "181",
-                        "200");
+                .containsExactly("159", "160", "170", "172", "173", "180", "190",
+                        "200", "201");
         try (Connection connection = DriverManager.getConnection(jdbcUrl, USERNAME, PASSWORD)) {
             assertLargeAgentTextRoundTrip(connection);
             MetadataSchemaSnapshot migrated = MetadataSchemaSnapshot.capture(connection);
@@ -268,9 +276,9 @@ class TargetSchemaProvisionerDatabaseTest {
                     ResultSet history = statement.executeQuery(
                             "SELECT version, type, script FROM flyway_schema_history ORDER BY installed_rank")) {
                 assertThat(history.next()).isTrue();
-                assertThat(history.getString("version")).isEqualTo("200");
+                assertThat(history.getString("version")).isEqualTo("201");
                 assertThat(history.getString("type")).isEqualTo("SQL_BASELINE");
-                assertThat(history.getString("script")).isEqualTo("B200__current_schema.sql");
+                assertThat(history.getString("script")).isEqualTo("B201__current_schema.sql");
                 assertThat(history.next()).isFalse();
             }
         }

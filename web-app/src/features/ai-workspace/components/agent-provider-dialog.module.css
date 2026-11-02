@@ -39,6 +39,18 @@
   align-items: center;
   gap: var(--hb-space-2);
 }
+.formActions {
+  flex-wrap: wrap;
+}
+.testControls {
+  display: grid;
+  gap: var(--hb-space-3);
+  min-width: 0;
+}
+.testControls > :global(.ant-typography),
+.testControls > p {
+  margin: 0;
+}
 .failure {
   justify-content: space-between;
   padding: var(--hb-space-3);

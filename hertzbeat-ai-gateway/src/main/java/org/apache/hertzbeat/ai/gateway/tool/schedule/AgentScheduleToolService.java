@@ -17,20 +17,22 @@
 
 package org.apache.hertzbeat.ai.gateway.tool.schedule;
 
-import java.util.List;
 import org.apache.hertzbeat.ai.gateway.schedule.AgentSchedule;
 import org.apache.hertzbeat.ai.gateway.schedule.AgentScheduleExecutor;
 import org.apache.hertzbeat.ai.gateway.schedule.AgentScheduleService;
+import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolAccess;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolContextSupport;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolExposure;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolPolicy;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolRisk;
 import org.apache.hertzbeat.common.entity.agent.AgentRun;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
 
 /**
  * Gateway scheduled command tools.
@@ -47,18 +49,28 @@ public class AgentScheduleToolService {
         this.scheduleExecutor = scheduleExecutor;
     }
 
-    @Tool(name = "schedule.create", description = "Create a system-level recurring Agent inspection.")
-    @AgentToolPolicy(risk = AgentToolRisk.CHANGE,
+    @Tool(
+            name = "schedule.create",
+            description = "Create a system-level recurring Agent inspection.")
+    @AgentToolPolicy(
+            access = AgentToolAccess.ADMIN,
+            risk = AgentToolRisk.CHANGE,
             exposure = AgentToolExposure.MODEL_ON_DEMAND)
     public AgentSchedule createSchedule(
             @ToolParam(description = "Schedule name.") String name,
-            @ToolParam(description = "Inspection instruction to run at each scheduled time.") String instruction,
+            @ToolParam(description = "Inspection instruction to run at each scheduled time.")
+                    String instruction,
             @ToolParam(description = "Six-field Spring cron expression with seconds set to 0.")
-            String cronExpression,
-            @ToolParam(description = "Existing HertzBeat notice receiver IDs.") List<Long> receiverIds,
-            @ToolParam(required = false, description = "Existing notice template ID; omit to use channel defaults.")
-            Long templateId,
-            @ToolParam(required = false, description = "Whether the schedule starts enabled.") Boolean enabled) {
+                    String cronExpression,
+            @ToolParam(description = "Existing HertzBeat notice receiver IDs.")
+                    List<Long> receiverIds,
+            @ToolParam(
+                            required = false,
+                            description =
+                                    "Existing notice template ID; omit to use channel defaults.")
+                    Long templateId,
+            @ToolParam(required = false, description = "Whether the schedule starts enabled.")
+                    Boolean enabled) {
         var request = AgentToolContextSupport.invocation().getRequest();
         return scheduleService.create(AgentSchedule.builder()
                 .name(name)
@@ -72,24 +84,32 @@ public class AgentScheduleToolService {
     }
 
     @Tool(name = "schedule.list", description = "List system-level Agent schedules.")
-    @AgentToolPolicy(
-            exposure = AgentToolExposure.MODEL_ON_DEMAND)
+    @AgentToolPolicy(access = AgentToolAccess.ADMIN, exposure = AgentToolExposure.MODEL_ON_DEMAND)
     public List<AgentSchedule> listSchedules() {
         return scheduleService.list(PageRequest.of(0, 100)).getContent();
     }
 
-    @Tool(name = "schedule.update", description = "Update an existing system-level Agent inspection.")
-    @AgentToolPolicy(risk = AgentToolRisk.CHANGE,
+    @Tool(
+            name = "schedule.update",
+            description = "Update an existing system-level Agent inspection.")
+    @AgentToolPolicy(
+            access = AgentToolAccess.ADMIN,
+            risk = AgentToolRisk.CHANGE,
             exposure = AgentToolExposure.MODEL_ON_DEMAND)
     public AgentSchedule updateSchedule(
             @ToolParam(description = "Schedule id.") Long scheduleId,
             @ToolParam(description = "Schedule name.") String name,
-            @ToolParam(description = "Inspection instruction to run at each scheduled time.") String instruction,
+            @ToolParam(description = "Inspection instruction to run at each scheduled time.")
+                    String instruction,
             @ToolParam(description = "Six-field Spring cron expression with seconds set to 0.")
-            String cronExpression,
-            @ToolParam(description = "Existing HertzBeat notice receiver IDs.") List<Long> receiverIds,
-            @ToolParam(required = false, description = "Existing notice template ID; omit to use channel defaults.")
-            Long templateId) {
+                    String cronExpression,
+            @ToolParam(description = "Existing HertzBeat notice receiver IDs.")
+                    List<Long> receiverIds,
+            @ToolParam(
+                            required = false,
+                            description =
+                                    "Existing notice template ID; omit to use channel defaults.")
+                    Long templateId) {
         return scheduleService.update(scheduleId, AgentSchedule.builder()
                 .name(name)
                 .instruction(instruction)
@@ -100,12 +120,17 @@ public class AgentScheduleToolService {
     }
 
     @Tool(name = "schedule.delete", description = "Delete a recurring diagnostic schedule.")
-    @AgentToolPolicy(risk = AgentToolRisk.DANGEROUS,
+    @AgentToolPolicy(
+            access = AgentToolAccess.ADMIN,
+            risk = AgentToolRisk.DANGEROUS,
             exposure = AgentToolExposure.MODEL_ON_DEMAND)
     public String deleteSchedule(
             @ToolParam(description = "Schedule id.") Long scheduleId,
-            @ToolParam(description = "Operator-provided deletion reason recorded with the tool invocation.")
-            String reason) {
+            @ToolParam(
+                            description =
+                                    "Operator-provided deletion reason recorded with the tool"
+                                            + " invocation.")
+                    String reason) {
         if (reason == null || reason.isBlank()) {
             throw new IllegalArgumentException("reason is required for schedule.delete");
         }
@@ -113,8 +138,12 @@ public class AgentScheduleToolService {
         return "Schedule deleted: " + scheduleId;
     }
 
-    @Tool(name = "schedule.toggle", description = "Enable or disable a recurring diagnostic schedule.")
-    @AgentToolPolicy(risk = AgentToolRisk.CHANGE,
+    @Tool(
+            name = "schedule.toggle",
+            description = "Enable or disable a recurring diagnostic schedule.")
+    @AgentToolPolicy(
+            access = AgentToolAccess.ADMIN,
+            risk = AgentToolRisk.CHANGE,
             exposure = AgentToolExposure.MODEL_ON_DEMAND)
     public AgentSchedule toggleSchedule(
             @ToolParam(description = "Schedule id.") Long scheduleId,
@@ -123,7 +152,9 @@ public class AgentScheduleToolService {
     }
 
     @Tool(name = "schedule.run_now", description = "Run a system-level Agent schedule immediately.")
-    @AgentToolPolicy(risk = AgentToolRisk.CHANGE,
+    @AgentToolPolicy(
+            access = AgentToolAccess.ADMIN,
+            risk = AgentToolRisk.CHANGE,
             exposure = AgentToolExposure.MODEL_ON_DEMAND)
     public AgentRun runNow(@ToolParam(description = "Schedule id.") Long scheduleId) {
         return scheduleExecutor.executeNow(scheduleId);

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 import { openAlertGroupStream } from '../api/alert-api';
 import type { AlertEventSignal } from '../api/alert-event-schema';
@@ -28,12 +28,35 @@ const alertStreamCircuitBreakerMs = 5 * 60_000;
 
 export function useAlertCenterRealtimeRefresh(
   refresh: () => Promise<unknown>,
-  onAlert?: (event: AlertEventSignal | null) => void
+  onAlert?: (event: AlertEventSignal | null) => void,
+  options: { keepAliveWhenHidden?: boolean } = {}
 ) {
+  const keepAliveWhenHidden = options.keepAliveWhenHidden ?? false;
+  const backgroundDelivery = useRef(keepAliveWhenHidden);
+  const visibilityUpdate = useRef<(() => void) | undefined>(undefined);
   useEffect(() => {
-    const session = new AlertRealtimeSession(refresh, onAlert);
-    session.connect();
-    return () => session.close();
+    backgroundDelivery.current = keepAliveWhenHidden;
+    visibilityUpdate.current?.();
+  }, [keepAliveWhenHidden]);
+  useEffect(() => {
+    let session: AlertRealtimeSession | undefined;
+    const update = () => {
+      if (document.visibilityState === 'hidden' && !backgroundDelivery.current) {
+        session?.close();
+        session = undefined;
+      } else if (!session) {
+        session = new AlertRealtimeSession(refresh, onAlert);
+        session.connect();
+      }
+    };
+    visibilityUpdate.current = update;
+    document.addEventListener('visibilitychange', update);
+    update();
+    return () => {
+      if (visibilityUpdate.current === update) visibilityUpdate.current = undefined;
+      document.removeEventListener('visibilitychange', update);
+      session?.close();
+    };
   }, [onAlert, refresh]);
 }
 

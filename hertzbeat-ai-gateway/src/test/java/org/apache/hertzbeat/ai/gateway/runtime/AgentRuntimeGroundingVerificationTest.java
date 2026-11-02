@@ -177,7 +177,7 @@ class AgentRuntimeGroundingVerificationTest {
         AgentToolCallDao ledgerDao = mock(AgentToolCallDao.class);
         when(recorder.findRunGroundingMessages(2L)).thenReturn(List.of(proofMessage));
         when(ledgerDao.findByRunIdOrderByGmtCreateAsc(2L)).thenReturn(List.of(AgentToolCall.builder()
-                .runId(2L).runUid("run-1").toolCallId("call-1").toolName("metrics.history")
+                .runId(2L).runUid("run-1").sessionId(1L).toolCallId("call-1").toolName("metrics.history")
                 .risk(AgentToolRisk.READ.name()).status(AgentToolStatus.SUCCEEDED.name())
                 .inputJson(JsonUtil.toJson(arguments)).inputHash(proof.getInputHash())
                 .resultOutput(output).build()));
@@ -221,7 +221,7 @@ class AgentRuntimeGroundingVerificationTest {
         AgentToolCallDao ledgerDao = mock(AgentToolCallDao.class);
         when(recorder.findRunGroundingMessages(2L)).thenReturn(List.of(proofMessage));
         when(ledgerDao.findByRunIdOrderByGmtCreateAsc(2L)).thenReturn(List.of(AgentToolCall.builder()
-                .runId(2L).runUid("run-1").toolCallId("call-alert").toolName("alert.get")
+                .runId(2L).runUid("run-1").sessionId(1L).toolCallId("call-alert").toolName("alert.get")
                 .risk(AgentToolRisk.READ.name()).status(AgentToolStatus.SUCCEEDED.name())
                 .inputJson(JsonUtil.toJson(arguments)).inputHash(proof.getInputHash())
                 .resultOutput(output).build()));
@@ -245,7 +245,7 @@ class AgentRuntimeGroundingVerificationTest {
                 new AgentRuntimeContextBuilder(CLOCK, () -> "trace-1"),
                 new AgentToolBridge(new AgentToolRegistry(), new NoToolOrchestrator(),
                         new AgentRuntimeApprovalRegistry()),
-                model, new AgentRuntimeControlRegistry(), recorder,
+                AgentTaskCompletionTestClient.observation(model, "platform"), new AgentRuntimeControlRegistry(), recorder,
                 verifier, CLOCK, List.of());
     }
 
@@ -291,7 +291,7 @@ class AgentRuntimeGroundingVerificationTest {
         AgentToolCallDao ledgerDao = mock(AgentToolCallDao.class);
         when(recorder.findRunGroundingMessages(2L)).thenReturn(List.of(message));
         when(ledgerDao.findByRunIdOrderByGmtCreateAsc(2L)).thenReturn(List.of(AgentToolCall.builder()
-                .runId(2L).runUid("run-1").toolCallId("call-1").toolName(toolName)
+                .runId(2L).runUid("run-1").sessionId(1L).toolCallId("call-1").toolName(toolName)
                 .risk(AgentToolRisk.READ.name()).status(AgentToolStatus.SUCCEEDED.name())
                 .inputJson(JsonUtil.toJson(arguments)).inputHash(proof.getInputHash())
                 .resultOutput(output).build()));
@@ -346,7 +346,7 @@ class AgentRuntimeGroundingVerificationTest {
     }
 
     private AgentToolCall secretLedger(String inputHash) {
-        return AgentToolCall.builder().runId(2L).runUid("run-1")
+        return AgentToolCall.builder().runId(2L).runUid("run-1").sessionId(1L)
                 .toolCallId("call-1").toolName("monitor.get")
                 .risk(AgentToolRisk.READ.name()).status(AgentToolStatus.SUCCEEDED.name())
                 .inputJson("{\"monitorId\":99,\"authorization\":\"[REDACTED]\"}")
@@ -354,7 +354,7 @@ class AgentRuntimeGroundingVerificationTest {
     }
 
     private AgentToolCall groundedLedger() {
-        return AgentToolCall.builder().runId(2L).runUid("run-1")
+        return AgentToolCall.builder().runId(2L).runUid("run-1").sessionId(1L)
                 .toolCallId("call-1").toolName("monitor.get")
                 .risk(AgentToolRisk.READ.name()).status(AgentToolStatus.SUCCEEDED.name())
                 .inputJson("{\"monitorId\":99}")

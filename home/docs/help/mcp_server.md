@@ -7,7 +7,7 @@ mcp_availability: unavailable
 mcp_activation_requires: trusted-transport-identity-and-gateway-run-ledger
 ---
 
-### Availability in 2.0.0
+## Availability in 2.0.0
 
 Apache HertzBeat 2.0.0 does not provide a callable MCP endpoint. The MCP
 server and its tool callback converter are disabled by default.

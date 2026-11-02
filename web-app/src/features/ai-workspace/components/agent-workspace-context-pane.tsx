@@ -16,18 +16,24 @@
  */
 
 import { CloseOutlined } from '@ant-design/icons';
-import { Button, Input, Tag, Typography } from 'antd';
-import { useMemo, useState } from 'react';
+import { Button, Tag, Typography } from 'antd';
+import { ApprovalActions } from './agent-workspace-approval-actions';
+import { InputRequest } from './agent-workspace-input-request';
+import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 
-import type { AgentInputRequest, AgentToolActivity } from '../model/agent-workspace-reducer';
+import { agentRequestIsPending } from '../model/agent-runtime-status';
+import type { AgentToolActivity } from '../model/agent-workspace-reducer';
 import type { AgentWorkspaceViewModel } from '../model/agent-workspace-view-model';
+import { AgentApprovalSummaryView } from './agent-approval-summary-view';
+import { AgentWorkspaceEvidence } from './agent-workspace-evidence';
+import { agentTargetSourcePath } from '../model/agent-source-path';
 import { agentWorkspaceTargetFacts } from './agent-workspace-target-facts';
 import styles from './agent-workspace-context-pane.module.css';
 
+import { toolStatusLabel } from './agent-workspace-format';
 export function AgentWorkspaceContextPane({
   controller,
-  isAdmin,
   onClose
 }: {
   controller: AgentWorkspaceViewModel;
@@ -48,8 +54,9 @@ export function AgentWorkspaceContextPane({
         />
       </header>
       <ContextTarget target={controller.target} />
+      <AgentWorkspaceEvidence evidence={controller.run.evidence} running={controller.run.status === 'running'} />
       <ContextTools tools={controller.run.tools} />
-      <ContextApprovals controller={controller} isAdmin={isAdmin} />
+      <ContextApprovals controller={controller} />
       <ContextInputs controller={controller} />
     </aside>
   );
@@ -58,9 +65,15 @@ export function AgentWorkspaceContextPane({
 function ContextTarget({ target }: { target: AgentWorkspaceViewModel['target'] }) {
   const { t } = useTranslation();
   const facts = useMemo(() => agentWorkspaceTargetFacts(target, t), [t, target]);
+  const source = target ? agentTargetSourcePath(target) : undefined;
   return (
     <ContextSection title={t('aiWorkspace.context.target')}>
-      {facts.length ? facts.map(item => <Tag key={item}>{item}</Tag>) : <Muted value={t('aiWorkspace.context.none')} />}
+      {facts.length ? (
+        facts.map((item, index) => <Typography.Text key={index}>{item}</Typography.Text>)
+      ) : (
+        <Muted value={t('aiWorkspace.context.none')} />
+      )}
+      {source ? <Typography.Link href={source}>{t('aiWorkspace.context.viewSource')}</Typography.Link> : null}
     </ContextSection>
   );
 }
@@ -84,7 +97,7 @@ function ToolActivity({ tool }: { tool: AgentToolActivity }) {
     <div className={styles.activity}>
       <div className={styles.activitySummary}>
         <code>{tool.toolName}</code>
-        <Tag>{tool.status === 'UNKNOWN' ? t('aiWorkspace.context.statusUnknown') : tool.status}</Tag>
+        <Tag>{toolStatusLabel(tool.status, t)}</Tag>
       </div>
       {tool.errorMessage ? (
         <Typography.Text className={styles.activityError ?? ''} type="danger">
@@ -95,45 +108,45 @@ function ToolActivity({ tool }: { tool: AgentToolActivity }) {
   );
 }
 
-function ContextApprovals({ controller, isAdmin }: { controller: AgentWorkspaceViewModel; isAdmin: boolean }) {
+function ContextApprovals({ controller }: { controller: AgentWorkspaceViewModel }) {
   const { t } = useTranslation();
-  const pending = controller.run.approvals.filter(isPending);
+  const pending = controller.run.approvals.filter(
+    item => isPending(item) || ['EXPIRED', 'UNAVAILABLE'].includes(item.status.toUpperCase())
+  );
   return (
     <ContextSection title={t('aiWorkspace.context.approvals')}>
+      {controller.run.approvalRecoveryUnavailable ? (
+        <Muted value={t('aiWorkspace.approval.recoveryUnavailable')} />
+      ) : null}
       {pending.length ? (
         pending.map(item => (
           <div className={styles.approval} key={item.approvalId}>
             <code>{item.toolName}</code>
-            <ApprovalActions controller={controller} approvalId={item.approvalId} isAdmin={isAdmin} />
+            <AgentApprovalSummaryView summary={item.summary} />
+            {isPending(item) ? (
+              <ApprovalActions
+                key={`${item.approvalId}:${item.summary?.collection?.planHash ?? 'ordinary'}`}
+                controller={controller}
+                collection={item.summary?.collection ?? undefined}
+                requiresCollection={item.toolName === 'monitor.collection_detect'}
+                approvalId={item.approvalId}
+                canDecide={item.canDecide === true}
+              />
+            ) : (
+              <Muted
+                value={t(
+                  item.status.toUpperCase() === 'EXPIRED'
+                    ? 'aiWorkspace.approval.expired'
+                    : 'aiWorkspace.approval.runtimeUnavailable'
+                )}
+              />
+            )}
           </div>
         ))
       ) : (
         <Muted value={t('aiWorkspace.context.noApprovals')} />
       )}
     </ContextSection>
-  );
-}
-
-function ApprovalActions({
-  controller,
-  approvalId,
-  isAdmin
-}: {
-  controller: AgentWorkspaceViewModel;
-  approvalId: string;
-  isAdmin: boolean;
-}) {
-  const { t } = useTranslation();
-  if (!isAdmin) return <Muted value={t('aiWorkspace.approval.adminRequired')} />;
-  return (
-    <div className={styles.approvalActions}>
-      <Button size="small" type="primary" onClick={() => void controller.actions.decideApproval(approvalId, 'approve')}>
-        {t('aiWorkspace.actions.approve')}
-      </Button>
-      <Button size="small" danger onClick={() => void controller.actions.decideApproval(approvalId, 'reject')}>
-        {t('aiWorkspace.actions.reject')}
-      </Button>
-    </div>
   );
 }
 
@@ -153,53 +166,6 @@ function ContextInputs({ controller }: { controller: AgentWorkspaceViewModel }) 
   );
 }
 
-function InputRequest({
-  request,
-  submit
-}: {
-  request: AgentInputRequest;
-  submit: AgentWorkspaceViewModel['actions']['submitInteraction'];
-}) {
-  const { t } = useTranslation();
-  const [values, setValues] = useState<Record<string, string>>({});
-  return (
-    <div className={styles.inputRequest}>
-      <Typography.Text strong>{request.title}</Typography.Text>
-      {request.description ? <Typography.Text type="secondary">{request.description}</Typography.Text> : null}
-      {request.fields.map(field => (
-        <InputField field={field} key={String(field.field)} values={values} setValues={setValues} />
-      ))}
-      <Button size="small" type="primary" onClick={() => void submit(request.interactionId, values)}>
-        {t('aiWorkspace.actions.submit')}
-      </Button>
-    </div>
-  );
-}
-
-function InputField({
-  field,
-  values,
-  setValues
-}: {
-  field: Record<string, unknown>;
-  values: Record<string, string>;
-  setValues: React.Dispatch<React.SetStateAction<Record<string, string>>>;
-}) {
-  const name = typeof field.field === 'string' ? field.field : '';
-  if (!name) return null;
-  return (
-    <label className={styles.inputField}>
-      <span>{typeof field.label === 'string' ? field.label : name}</span>
-      <Input
-        type={field.type === 'password' ? 'password' : 'text'}
-        value={values[name] ?? ''}
-        placeholder={typeof field.placeholder === 'string' ? field.placeholder : undefined}
-        onChange={event => setValues(current => ({ ...current, [name]: event.target.value }))}
-      />
-    </label>
-  );
-}
-
 function ContextSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className={styles.contextSection}>
@@ -214,5 +180,5 @@ function Muted({ value }: { value: string }) {
 }
 
 function isPending(item: { status: string }) {
-  return item.status === 'PENDING' || item.status === 'WAITING_INPUT' || item.status === 'WAITING_APPROVAL';
+  return agentRequestIsPending(item.status);
 }

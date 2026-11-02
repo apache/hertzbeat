@@ -20,51 +20,49 @@ package org.apache.hertzbeat.ai.gateway.channel.webui.dto;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import java.util.List;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+
 import org.apache.hertzbeat.ai.gateway.contract.AgentTargetRef;
 
-/**
- * WebUI chat stream request.
- */
+import java.util.List;
+
+/** WebUI chat stream request. */
 @Data
 @Builder
 @AllArgsConstructor
 @NoArgsConstructor
 public class WebUiChatStreamRequest {
 
-    /**
-     * Stable conversation ID used to locate the Gateway session.
-     */
+    /** Stable conversation ID used to locate the Gateway session. */
     @NotBlank
     @Size(max = 256)
     private String conversationId;
 
-    /**
-     * Stable message ID used to locate the Gateway run on retries.
-     */
+    /** Stable message ID used to locate the Gateway run on retries. */
     @NotBlank
     @Size(max = 128)
     private String messageId;
 
-    /**
-     * User input text.
-     */
+    /** User input text. */
     @NotBlank
-    @Size(max = 8192)
+    @Size(max = org.apache.hertzbeat.ai.gateway.contract.AgentRequestLimits.MAX_MESSAGE_CHARS)
     private String message;
 
-    /**
-     * Optional target reference.
-     */
-    @Valid
-    private AgentTargetRef target;
+    /** Optional target reference. */
+    @Valid private AgentTargetRef target;
 
-    /**
-     * Optional attachment references.
-     */
-    private List<String> attachments;
+    /** Optional attachment references. */
+    @Size(max = 8)
+    private List<@Size(max = 8192) String> attachments;
+
+    @com.fasterxml.jackson.annotation.JsonIgnore
+    @jakarta.validation.constraints.AssertTrue(message = "Message exceeds the bounded UTF-8 budget")
+    public boolean isMessageWithinByteBudget() {
+        return org.apache.hertzbeat.ai.gateway.contract.AgentRequestLimits.validMessageBytes(
+                message);
+    }
 }

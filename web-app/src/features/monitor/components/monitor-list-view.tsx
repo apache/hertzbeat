@@ -27,6 +27,7 @@ import { MonitorImportDialog } from './monitor-import-dialog';
 import { MonitorListManagementActions } from './monitor-list-management-actions';
 import { MonitorListResults } from './monitor-list-results';
 import { MonitorListToolbar } from './monitor-list-toolbar';
+import styles from './monitor-list.module.css';
 
 export type MonitorListViewProps = { state: MonitorListViewState; actions: MonitorListViewActions };
 
@@ -34,29 +35,29 @@ export function MonitorListView({ state, actions }: MonitorListViewProps) {
   const { t } = useTranslation();
   return (
     <OperationalPage>
-      <OperationalPageHeader
-        title={t('monitor.title')}
-        description={t('monitor.description')}
-        actions={
-          <MonitorListManagementActions
-            disabled={state.operating}
-            canWrite={state.capabilities.canWrite}
-            canExport={state.canExport}
-            create={actions.openCreatePicker}
-            openImport={actions.openImport}
-            exportAll={actions.exportAll}
-          />
-        }
-      />
-      <MonitorListToolbar
-        query={state.query}
-        draft={state.draft}
-        apps={state.apps}
-        disabled={state.operating}
-        refreshing={state.refreshing}
-        actions={actions}
-      />
-      <OperationalResultRegion>
+      <div className={styles.stickyToolbar} data-monitor-sticky-toolbar="">
+        <OperationalPageHeader
+          title={t('monitor.title')}
+          description={t('monitor.description')}
+          actions={
+            <MonitorListManagementActions
+              disabled={state.operating}
+              canWrite={state.capabilities.canWrite}
+              canExport={state.canExport}
+              create={actions.openCreatePicker}
+              openImport={actions.openImport}
+              exportAll={actions.exportAll}
+            />
+          }
+        />
+        <MonitorListToolbar
+          query={state.query}
+          draft={state.draft}
+          apps={state.apps}
+          disabled={state.operating}
+          refreshing={state.refreshing}
+          actions={actions}
+        />
         <MonitorBulkActions
           selectedIds={state.selectedIds}
           run={actions.runBulk}
@@ -67,6 +68,8 @@ export function MonitorListView({ state, actions }: MonitorListViewProps) {
           clearSelection={actions.clearSelection}
           disabled={state.operating}
         />
+      </div>
+      <OperationalResultRegion>
         <MonitorListResults
           evidence={state.monitors}
           query={state.query}

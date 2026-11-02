@@ -19,7 +19,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { AgentTranscriptMessage } from './agent-workspace-contract';
 import { initialAgentWorkspaceRun } from './agent-workspace-reducer';
-import { withTranscriptTools } from './agent-workspace-view-model';
+import { isCancelledBeforeApprovalOnly, withTranscriptTools } from './agent-workspace-view-model';
 
 const call: AgentTranscriptMessage = {
   id: 1,
@@ -40,6 +40,14 @@ const result: AgentTranscriptMessage = {
 };
 
 describe('AI workspace recorded tool projection', () => {
+  it('restores explicit persisted status and duration without changing legacy results', () => {
+    const persisted = { ...result, toolStatus: 'FAILED' as const, toolElapsedMs: 17, errorMessage: 'Invalid range' };
+    const projected = withTranscriptTools(initialAgentWorkspaceRun, { status: 'ready', items: [call, persisted] });
+    expect(projected.tools).toEqual([
+      { toolCallId: 'call-1', toolName: 'logs.query', status: 'FAILED', elapsedMs: 17, errorMessage: 'Invalid range' }
+    ]);
+  });
+
   it('joins persisted calls/results without inventing execution status or duration', () => {
     const projected = withTranscriptTools(initialAgentWorkspaceRun, { status: 'ready', items: [call, result] });
     expect(projected.tools).toEqual([{ toolCallId: 'call-1', toolName: 'logs.query', status: 'UNKNOWN' }]);
@@ -101,5 +109,135 @@ describe('AI workspace recorded tool projection', () => {
         items: [legacy, { ...legacy, id: 3 }]
       }).tools.map(tool => tool.toolCallId)
     ).toEqual(['transcript:2:result', 'transcript:3:result']);
+  });
+});
+
+describe('Durable cancellation evidence', () => {
+  it.each(['RUNNING', 'WAITING_APPROVAL', 'UNKNOWN'])(
+    'persisted not-executed proof overrides stale %s activity',
+    status => {
+      const persisted = {
+        ...result,
+        recordedRunUid: 'same-run',
+        toolStatus: 'DENIED' as const,
+        errorMessage: 'CANCELLED_BEFORE_APPROVAL_NOT_EXECUTED'
+      };
+      const live = { toolCallId: 'call-1', toolName: 'logs.query', status };
+      const projection = withTranscriptTools(
+        { ...initialAgentWorkspaceRun, runUid: 'same-run', tools: [live] },
+        { status: 'ready', items: [call, persisted] }
+      );
+      expect(projection.tools).toHaveLength(1);
+      expect(projection.tools[0]?.status).toBe('CANCELLED');
+    }
+  );
+  it('does not overwrite recorded successful execution with stale active activity', () => {
+    const persisted = { ...result, recordedRunUid: 'same-run', toolStatus: 'SUCCEEDED' as const };
+    const projection = withTranscriptTools(
+      {
+        ...initialAgentWorkspaceRun,
+        runUid: 'same-run',
+        tools: [{ toolCallId: 'call-1', toolName: 'logs.query', status: 'RUNNING' }]
+      },
+      { status: 'ready', items: [call, persisted] }
+    );
+    expect(projection.tools[0]?.status).toBe('SUCCEEDED');
+  });
+  it.each([undefined, 'previous-run'])(
+    'legacy or other-run result %s cannot override current active tool ID reuse',
+    recordedRunUid => {
+      const persisted = {
+        ...result,
+        ...(recordedRunUid ? { recordedRunUid } : {}),
+        toolStatus: 'DENIED' as const,
+        errorMessage: 'CANCELLED_BEFORE_APPROVAL_NOT_EXECUTED'
+      };
+      const projection = withTranscriptTools(
+        {
+          ...initialAgentWorkspaceRun,
+          runUid: 'new-run',
+          tools: [{ toolCallId: 'call-1', toolName: 'logs.query', status: 'RUNNING' }]
+        },
+        { status: 'ready', items: [call, persisted] }
+      );
+      expect(projection.tools[0]?.status).toBe('RUNNING');
+    }
+  );
+});
+
+describe('Cancellation summary proof scope', () => {
+  const proof = 'CANCELLED_BEFORE_APPROVAL_NOT_EXECUTED';
+  function run() {
+    return {
+      ...initialAgentWorkspaceRun,
+      runUid: 'current',
+      cancelled: true,
+      tools: [
+        { recordedRunUid: 'current', toolCallId: 'read', toolName: 'alert_inhibit.get', status: 'SUCCEEDED' },
+        {
+          recordedRunUid: 'current',
+          toolCallId: 'cancel',
+          toolName: 'alert_inhibit.update',
+          status: 'CANCELLED',
+          errorMessage: proof
+        }
+      ],
+      executionSummary: {
+        status: 'PARTIAL' as const,
+        totalAttempts: 2,
+        succeededAttempts: 1,
+        failedAttempts: 1,
+        recoveredAttempts: 0,
+        unresolvedAttempts: 1,
+        unfinishedAttempts: 0,
+        truncated: false,
+        failures: [
+          {
+            toolCallId: 'cancel',
+            toolName: 'alert_inhibit.update',
+            status: 'DENIED' as const,
+            errorMessage: proof,
+            recovery: 'UNRESOLVED' as const,
+            laterSuccessToolCallId: null
+          }
+        ]
+      }
+    };
+  }
+  it('recognizes exact current-run approval cancellation while retaining the original ledger', () => {
+    const state = run();
+    expect(isCancelledBeforeApprovalOnly(state)).toBe(true);
+    expect(state.executionSummary.status).toBe('PARTIAL');
+    state.tools.push({
+      recordedRunUid: 'previous',
+      toolCallId: 'older',
+      toolName: 'monitor.create',
+      status: 'SUCCEEDED'
+    });
+    expect(isCancelledBeforeApprovalOnly(state)).toBe(true);
+  });
+  it.each(['monitor.create', 'alert_inhibit.update', 'unfamiliar.tool'])(
+    'does not erase a successful %s operation',
+    name => {
+      const state = run();
+      state.tools[0]!.toolName = name;
+      expect(isCancelledBeforeApprovalOnly(state)).toBe(false);
+    }
+  );
+  it.each(['FAILED', 'UNKNOWN', 'RUNNING', 'DENIED'])('preserves %s and ordinary rejection', status => {
+    const state = run();
+    state.tools[1]!.status = status;
+    expect(isCancelledBeforeApprovalOnly(state)).toBe(false);
+  });
+  it('rejects legacy, cross-run, incomplete, non-cancelled and truncated proof', () => {
+    for (const key of ['legacy', 'cross', 'incomplete', 'active', 'truncated']) {
+      const state = run();
+      if (key === 'legacy') state.tools[1]!.recordedRunUid = '';
+      if (key === 'cross') state.tools[1]!.recordedRunUid = 'other';
+      if (key === 'incomplete') state.executionSummary.totalAttempts = 3;
+      if (key === 'active') state.cancelled = false;
+      if (key === 'truncated') state.executionSummary.truncated = true;
+      expect(isCancelledBeforeApprovalOnly(state)).toBe(false);
+    }
   });
 });

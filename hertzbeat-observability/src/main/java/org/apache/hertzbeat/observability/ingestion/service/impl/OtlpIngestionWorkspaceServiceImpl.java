@@ -55,6 +55,7 @@ import org.apache.hertzbeat.common.observability.dto.metrics.OtlpMetricsInventor
 import org.apache.hertzbeat.common.observability.dto.metrics.OtlpRelatedMetricsDto;
 import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.apache.hertzbeat.common.support.exception.TelemetryStorageUnavailableException;
+import org.apache.hertzbeat.common.support.exception.TelemetryStorageSchemaIncompatibleException;
 import org.apache.hertzbeat.common.observability.model.EntityCanonicalIdentityRegistry;
 import org.apache.hertzbeat.common.observability.dto.trace.TraceListItemDto;
 import org.apache.hertzbeat.common.observability.gateway.ObservabilitySignalIntakeGateway;
@@ -818,6 +819,9 @@ public class OtlpIngestionWorkspaceServiceImpl implements OtlpIngestionWorkspace
                     .toList();
             return new OtlpMetricsInventoryDto(context, "greptime-inventory", resolvedLimit,
                     persistent.names().size() > resolvedLimit, items);
+        }
+        if (MetricInventoryRepository.Result.INVENTORY_SCHEMA_INCOMPATIBLE.equals(persistent.errorMessage())) {
+            throw new TelemetryStorageSchemaIncompatibleException();
         }
         throw new TelemetryStorageUnavailableException();
     }

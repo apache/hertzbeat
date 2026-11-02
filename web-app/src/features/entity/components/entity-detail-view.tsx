@@ -30,6 +30,7 @@ import type { EntitySignalViewState } from '../model/entity-signal-view-model';
 import { entityExploreSignals, type EntityExploreSignal } from '../model/entity-operational-navigation';
 import type { EntityMonitorQuery, EntityNextActionType } from '../model/entity-contract';
 import { entityNextActionRequiresWrite } from '../model/entity-operational-navigation';
+import { EntityInvestigationButton } from './entity-investigation-button';
 import { EntityDetailContext } from './entity-detail-context';
 import { EntityDetailNavigation, EntityDetailSection } from './entity-detail-navigation';
 import { EntityDetailMetadata } from './entity-detail-metadata';
@@ -40,6 +41,7 @@ import { EntityOperationalGuidance } from './entity-operational-guidance';
 import { EntitySignalView } from './entity-signal-view';
 
 type EntityDetailViewActions = {
+  investigate?: () => void;
   refresh: () => void;
   back: () => void;
   edit: () => void;
@@ -146,6 +148,7 @@ type EntityDetailHeaderProps = {
     refreshing: boolean;
     canWrite: boolean;
     canDelete: boolean;
+    signals?: EntitySignalViewState | undefined;
   };
   actions: EntityDetailViewActions;
 };
@@ -176,6 +179,7 @@ function EntityDetailHeader({ detail, state, actions }: EntityDetailHeaderProps)
                 <Button onClick={actions.definition}>{t('entity.definition.action')}</Button>
               </>
             ) : null}
+            <EntityInvestigationButton signals={state.signals} investigate={actions.investigate} />
             <Button onClick={actions.topology}>{t('entity.topology.view')}</Button>
             {exploreSignals.map(signal => (
               <Button key={signal} onClick={() => actions.explore(signal)}>

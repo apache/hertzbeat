@@ -75,6 +75,9 @@ public class ModelProviderCommandService {
         ModelProviderConfig existing = configurationService.getConfiguration(command.providerUid());
         ModelProviderConfig config = copyConfiguration(command.config());
         config.setUid(command.providerUid());
+        if (config.getProtocol() == null) {
+            config.setProtocol(existing.getProtocol());
+        }
         boolean sameProvider = Objects.equals(existing.getCode(), config.getCode())
                 && Objects.equals(existing.getType(), config.getType());
         if (!StringUtils.hasText(config.getApiKey())
@@ -122,7 +125,7 @@ public class ModelProviderCommandService {
                         config.getCode(),
                         config.getBaseUrl(),
                         config.getModel(),
-                        StringUtils.hasText(config.getApiKey())))
+                        StringUtils.hasText(config.getApiKey()), config.getProtocol()))
                 .toList();
         return response(commandId, message,
                 new ModelProviderConfigurationView(state.getActiveProviderUid(), providers));
@@ -147,6 +150,7 @@ public class ModelProviderCommandService {
         copy.setCode(source.getCode());
         copy.setBaseUrl(source.getBaseUrl());
         copy.setModel(source.getModel());
+        copy.setProtocol(source.getProtocol());
         copy.setApiKey(source.getApiKey());
         return copy;
     }

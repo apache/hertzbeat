@@ -84,10 +84,10 @@ keywords: [开源监控系统, 开源中间件监控, DynamicTp线程池监控]
 | core_pool_size           | 无    | 核心线程数                    |
 | maximum_pool_size        | 无    | 最大线程数                    |
 | queue_type               | 无    | 任务队列类型                   |
-| queue_capacity           | MB   | 任务队列容量                   |
+| queue_capacity           | 无    | 任务队列容量                   |
 | queue_size               | 无    | 任务队列当前占用大小               |
 | fair                     | 无    | 队列模式，SynchronousQueue会用到 |
-| queue_remaining_capacity | MB   | 任务队列剩余大小                 |
+| queue_remaining_capacity | 无    | 任务队列剩余大小                 |
 | active_count             | 无    | 活跃线程数                    |
 | task_count               | 无    | 任务总数                     |
 | completed_task_count     | 无    | 已完成任务数                   |

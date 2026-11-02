@@ -17,8 +17,8 @@
 
 package org.apache.hertzbeat.ai.gateway.tool.core;
 
-import java.util.Objects;
-import java.util.function.Supplier;
+import org.apache.hertzbeat.ai.gateway.identity.ActorSupport;
+import org.apache.hertzbeat.ai.gateway.identity.AgentActor;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentApprovalHandling;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEntryType;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeStoppedException;
@@ -26,12 +26,14 @@ import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolRegistry.RegisteredToo
 import org.apache.hertzbeat.ai.gateway.tool.interaction.AgentInteractionInputService;
 import org.apache.hertzbeat.common.entity.agent.AgentToolCall;
 import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
+import org.apache.hertzbeat.common.support.TrustedAuditActorContext;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-/**
- * Policy-first execution orchestrator for Agent tool handlers.
- */
+import java.util.Objects;
+import java.util.function.Supplier;
+
+/** Policy-first execution orchestrator for Agent tool handlers. */
 @Service
 public class AgentToolExecutionOrchestrator {
 
@@ -44,10 +46,33 @@ public class AgentToolExecutionOrchestrator {
     private final AgentInteractionInputService interactionInputService;
     private final AgentTargetToolAuthorizer targetToolAuthorizer;
 
-    public AgentToolExecutionOrchestrator(AgentToolRegistry registry, AgentPolicyService policyService,
-                                           AgentToolCallLedgerService toolCallLedgerService,
-                                           AgentInteractionInputService interactionInputService,
-                                           AgentTargetToolAuthorizer targetToolAuthorizer) {
+    private final org.apache.hertzbeat.ai.gateway.permission.AgentPermissionModeService
+            permissionModes;
+
+    public AgentToolExecutionOrchestrator(
+            AgentToolRegistry registry,
+            AgentPolicyService policyService,
+            AgentToolCallLedgerService toolCallLedgerService,
+            AgentInteractionInputService interactionInputService,
+            AgentTargetToolAuthorizer targetToolAuthorizer) {
+        this(
+                registry,
+                policyService,
+                toolCallLedgerService,
+                interactionInputService,
+                targetToolAuthorizer,
+                null);
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public AgentToolExecutionOrchestrator(
+            AgentToolRegistry registry,
+            AgentPolicyService policyService,
+            AgentToolCallLedgerService toolCallLedgerService,
+            AgentInteractionInputService interactionInputService,
+            AgentTargetToolAuthorizer targetToolAuthorizer,
+            org.apache.hertzbeat.ai.gateway.permission.AgentPermissionModeService permissionModes) {
+        this.permissionModes = permissionModes;
         this.registry = registry;
         this.policyService = policyService;
         this.toolCallLedgerService = toolCallLedgerService;
@@ -65,29 +90,95 @@ public class AgentToolExecutionOrchestrator {
 
     private AgentToolExecutionResult executeScoped(AgentToolExecutionRequest request) {
         PreparedToolExecution rawExecution = prepareRawExecution(request);
-        var targetDenial = targetToolAuthorizer.denialReason(rawExecution.request(), rawExecution.descriptor());
+        var window = request.getRequestedQueryWindow();
+        var arguments =
+                window != null && rawExecution.descriptor().getRisk() == AgentToolRisk.READ
+                        ? window.inherit(
+                                request.getToolName(),
+                                request.getArguments(),
+                                rawExecution.descriptor().getInputSchema())
+                        : request.getArguments();
+        boolean inherited = arguments != request.getArguments();
+        if (inherited) {
+            rawExecution =
+                    new PreparedToolExecution(
+                            request.toBuilder().arguments(arguments).build(),
+                            rawExecution.handler(),
+                            rawExecution.descriptor());
+        }
+        AgentToolExecutionResult result = executePrepared(rawExecution);
+        return inherited
+                ? result.toBuilder()
+                        .effectiveArguments(arguments)
+                        .inheritedQueryWindow(window)
+                        .build()
+                : result;
+    }
+
+    private AgentToolExecutionResult executePrepared(PreparedToolExecution rawExecution) {
+        AgentToolExecutionRequest request = rawExecution.request();
+        var resourceDenial =
+                AgentToolResourceAuthorizer.denialReason(
+                        request.getActor(), rawExecution.descriptor());
+        if (resourceDenial.isPresent()) {
+            AgentPolicyResult denied =
+                    AgentPolicyResult.builder()
+                            .decision(AgentPolicyDecision.DENY)
+                            .risk(rawExecution.descriptor().getRisk())
+                            .reason(resourceDenial.get())
+                            .build();
+            return denied(rawExecution, denied);
+        }
+        var targetDenial =
+                targetToolAuthorizer.denialReason(
+                        rawExecution.request(), rawExecution.descriptor());
         if (targetDenial.isPresent()) {
             return targetDenied(rawExecution, targetDenial.get());
         }
+        if (request.getRequestedQueryWindow() != null) {
+            String windowDenial =
+                    request.getRequestedQueryWindow()
+                            .denial(request.getToolName(), request.getArguments());
+            if (windowDenial != null) {
+                return denied(
+                        rawExecution,
+                        AgentPolicyResult.builder()
+                                .decision(AgentPolicyDecision.DENY)
+                                .risk(rawExecution.descriptor().getRisk())
+                                .reason(windowDenial)
+                                .build());
+            }
+        }
         PreparedToolExecution execution = validateInteractionReference(rawExecution);
-        AgentPolicyResult policy = policyService.decide(execution.request().getActor(), execution.descriptor());
+        AgentPolicyResult policy =
+                policyService.decide(execution.request().getActor(), execution.descriptor());
+        if (permissionModes != null) {
+            var admission =
+                    permissionModes.apply(execution.request(), execution.descriptor(), policy);
+            execution =
+                    new PreparedToolExecution(
+                            admission.request(), execution.handler(), execution.descriptor());
+            policy = admission.policy();
+        }
 
         if (execution.request().getEntryType() == AgentRuntimeEntryType.SCHEDULE_TRIGGER
                 && execution.descriptor().getRisk() != AgentToolRisk.READ) {
-            policy = AgentPolicyResult.builder()
-                    .decision(AgentPolicyDecision.DENY)
-                    .risk(execution.descriptor().getRisk())
-                    .reason("Scheduled Agent runs allow READ tools only")
-                    .build();
+            policy =
+                    AgentPolicyResult.builder()
+                            .decision(AgentPolicyDecision.DENY)
+                            .risk(execution.descriptor().getRisk())
+                            .reason("Scheduled Agent runs allow READ tools only")
+                            .build();
         }
 
         if (policy.requiresApproval()
                 && execution.request().getApprovalHandling() == AgentApprovalHandling.DENY) {
-            policy = AgentPolicyResult.builder()
-                    .decision(AgentPolicyDecision.DENY)
-                    .risk(policy.getRisk())
-                    .reason(NON_INTERACTIVE_APPROVAL_DENIAL_REASON)
-                    .build();
+            policy =
+                    AgentPolicyResult.builder()
+                            .decision(AgentPolicyDecision.DENY)
+                            .risk(policy.getRisk())
+                            .reason(NON_INTERACTIVE_APPROVAL_DENIAL_REASON)
+                            .build();
         }
 
         if (policy.denied()) {
@@ -99,29 +190,68 @@ public class AgentToolExecutionOrchestrator {
         return executeHandler(execution, policy);
     }
 
+    private org.apache.hertzbeat.ai.gateway.conversation.AgentApprovalProposalView proposalViews;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    public void setProposalViews(
+            org.apache.hertzbeat.ai.gateway.conversation.AgentApprovalProposalView views) {
+        this.proposalViews = views;
+    }
+
+    private org.apache.hertzbeat.ai.gateway.conversation.AgentApprovalSummary proposalSummary(
+            org.apache.hertzbeat.common.entity.agent.AgentToolCall row) {
+        return proposalViews == null
+                ? org.apache.hertzbeat.ai.gateway.conversation.AgentApprovalSummary.from(row)
+                : proposalViews.summary(row);
+    }
+
+    private org.apache.hertzbeat.ai.gateway.tool.monitor.AgentInlineCollectionToolService inlineCollections;
+
+    @org.springframework.beans.factory.annotation.Autowired(required = false)
+    public void setInlineCollections(org.apache.hertzbeat.ai.gateway.tool.monitor.AgentInlineCollectionToolService service) {
+        inlineCollections = service;
+    }
+
     private PreparedToolExecution prepareRawExecution(AgentToolExecutionRequest request) {
         String toolName = request.getToolName();
-        RegisteredTool handler = registry.find(toolName)
-            .orElseThrow(() -> new IllegalArgumentException("Agent tool is not registered: " + toolName));
+        RegisteredTool handler =
+                registry.find(toolName)
+                        .orElseThrow(
+                                () ->
+                                        new IllegalArgumentException(
+                                                "Agent tool is not registered: " + toolName));
         return new PreparedToolExecution(request, handler, handler.descriptor());
     }
 
     private PreparedToolExecution validateInteractionReference(PreparedToolExecution execution) {
-        AgentToolExecutionRequest validated = interactionInputService.validateReference(execution.request());
+        AgentToolExecutionRequest validated =
+                interactionInputService.validateReference(execution.request());
         return new PreparedToolExecution(validated, execution.handler(), execution.descriptor());
     }
 
-    private AgentToolExecutionResult handleApproval(PreparedToolExecution execution, AgentPolicyResult policy) {
+    private AgentToolExecutionResult handleApproval(
+            PreparedToolExecution execution, AgentPolicyResult policy) {
         AgentToolExecutionRequest request = execution.request();
-        // Approval ID is the business signal for resuming an existing approval; blank means a fresh approval request.
+        // Approval ID is the business signal for resuming an existing approval; blank means a fresh
+        // approval request.
         if (!StringUtils.hasText(request.getApprovalId())) {
-            AgentToolCall waitingCall = toolCallLedgerService.recordToolWaitingApproval(request,
-                execution.descriptor(), policy);
-            return executionResult(waitingCall);
+            AgentToolCall waitingCall =
+                    toolCallLedgerService.recordToolWaitingApproval(
+                            request, execution.descriptor(), policy);
+            return executionResult(waitingCall).toBuilder()
+                    .approvalSummary(proposalSummary(waitingCall)
+                        .withCollection(inlineCollections == null ? null : inlineCollections.approvalPreview(waitingCall, request)))
+                    .canDecide(
+                            toolCallLedgerService.canDecide(
+                                    request.getActor(), execution.descriptor()))
+                    .build();
         }
 
-        AgentToolCall approvalCall = toolCallLedgerService.validateToolExecutionApproval(request,
-            execution.descriptor());
+        toolCallLedgerService.requireCurrentApprovalActor(
+                request.getActor(), execution.descriptor());
+        AgentToolCall approvalCall =
+                toolCallLedgerService.validateToolExecutionApproval(
+                        request, execution.descriptor());
         if (isWaitingApproval(approvalCall)) {
             return executionResult(approvalCall);
         }
@@ -131,32 +261,41 @@ public class AgentToolExecutionOrchestrator {
         if (!isApprovedApproval(approvalCall)) {
             throw new IllegalStateException("Agent approval is not approved");
         }
-        AgentToolExecutionRequest approvedRequest = request.toBuilder()
-            .approvalId(approvalCall.getApprovalId())
-            .toolCallId(approvalCall.getToolCallId())
-            .approvalStatus(approvalCall.getApprovalStatus())
-            .build();
-        AgentPolicyResult approvedPolicy = AgentPolicyResult.builder()
-            .decision(AgentPolicyDecision.ALLOW)
-            .risk(policy.getRisk())
-            .reason("Approved change execution is allowed")
-            .build();
-        return executeApprovedHandler(new PreparedToolExecution(approvedRequest, execution.handler(), execution.descriptor()),
+        AgentToolExecutionRequest approvedRequest =
+                request.toBuilder()
+                        .approvalId(approvalCall.getApprovalId())
+                        .toolCallId(approvalCall.getToolCallId())
+                        .approvalStatus(approvalCall.getApprovalStatus())
+                        .build();
+        AgentPolicyResult approvedPolicy =
+                AgentPolicyResult.builder()
+                        .decision(AgentPolicyDecision.ALLOW)
+                        .risk(policy.getRisk())
+                        .reason("Approved change execution is allowed")
+                        .build();
+        return executeApprovedHandler(
+                new PreparedToolExecution(
+                        approvedRequest, execution.handler(), execution.descriptor()),
                 approvedPolicy);
     }
 
-    private AgentToolExecutionResult executeHandler(PreparedToolExecution execution, AgentPolicyResult policy) {
-        AgentToolCall toolCall = toolCallLedgerService.recordToolStarted(execution.request(), execution.descriptor(),
-            policy);
-        return mergeAndExecuteHandler(execution, toolCall, AgentApprovalConsumption.Claim.NONE, false);
+    private AgentToolExecutionResult executeHandler(
+            PreparedToolExecution execution, AgentPolicyResult policy) {
+        AgentToolCall toolCall =
+                toolCallLedgerService.recordToolStarted(
+                        execution.request(), execution.descriptor(), policy);
+        return mergeAndExecuteHandler(
+                execution, toolCall, AgentApprovalConsumption.Claim.NONE, false);
     }
 
-    private AgentToolExecutionResult executeApprovedHandler(PreparedToolExecution execution, AgentPolicyResult policy) {
+    private AgentToolExecutionResult executeApprovedHandler(
+            PreparedToolExecution execution, AgentPolicyResult policy) {
         AgentApprovalConsumption.Claim consumption = execution.request().beginApprovalConsumption();
         AgentToolCall toolCall;
         try {
-            toolCall = toolCallLedgerService.recordApprovedToolResumed(execution.request(),
-                    execution.descriptor(), policy);
+            toolCall =
+                    toolCallLedgerService.recordApprovedToolResumed(
+                            execution.request(), execution.descriptor(), policy);
         } catch (RuntimeException | Error failure) {
             consumption.release();
             throw failure;
@@ -164,17 +303,20 @@ public class AgentToolExecutionOrchestrator {
         return mergeAndExecuteHandler(execution, toolCall, consumption, true);
     }
 
-    private AgentToolExecutionResult mergeAndExecuteHandler(PreparedToolExecution execution, AgentToolCall toolCall,
-                                                             AgentApprovalConsumption.Claim consumption,
-                                                             boolean approved) {
+    private AgentToolExecutionResult mergeAndExecuteHandler(
+            PreparedToolExecution execution,
+            AgentToolCall toolCall,
+            AgentApprovalConsumption.Claim consumption,
+            boolean approved) {
         long startedAt = System.currentTimeMillis();
         AgentToolExecutionRequest request;
         try {
             request = interactionInputService.mergeAndTake(execution.request());
         } catch (RuntimeException failure) {
             try {
-                AgentToolCall failedCall = failBeforeHandler(
-                        toolCall, failure.getMessage(), startedAt, approved, failure);
+                AgentToolCall failedCall =
+                        failBeforeHandler(
+                                toolCall, failure.getMessage(), startedAt, approved, failure);
                 return executionResult(failedCall);
             } finally {
                 consumption.release();
@@ -185,33 +327,45 @@ public class AgentToolExecutionOrchestrator {
                 throw error;
             }
             try {
-                failBeforeHandler(toolCall, "Agent tool execution failed.", startedAt, approved, error);
+                failBeforeHandler(
+                        toolCall, "Agent tool execution failed.", startedAt, approved, error);
             } finally {
                 consumption.release();
             }
             throw error;
         }
         if (!consumption.complete()) {
-            AgentRuntimeStoppedException stopped = new AgentRuntimeStoppedException(
-                    "Approval runtime stopped before tool execution.");
+            AgentRuntimeStoppedException stopped =
+                    new AgentRuntimeStoppedException(
+                            "Approval runtime stopped before tool execution.");
             try {
-                failBeforeHandler(toolCall, "Agent tool execution stopped before the handler started.",
-                        startedAt, approved, stopped);
+                failBeforeHandler(
+                        toolCall,
+                        "Agent tool execution stopped before the handler started.",
+                        startedAt,
+                        approved,
+                        stopped);
             } finally {
                 consumption.release();
             }
             throw stopped;
         }
-        return executeRecordedHandler(new PreparedToolExecution(request, execution.handler(), execution.descriptor()),
+        return executeRecordedHandler(
+                new PreparedToolExecution(request, execution.handler(), execution.descriptor()),
                 toolCall);
     }
 
-    private AgentToolCall failBeforeHandler(AgentToolCall toolCall, String errorMessage, long startedAt,
-                                            boolean approved, Throwable primaryFailure) {
+    private AgentToolCall failBeforeHandler(
+            AgentToolCall toolCall,
+            String errorMessage,
+            long startedAt,
+            boolean approved,
+            Throwable primaryFailure) {
         try {
             long elapsedMs = System.currentTimeMillis() - startedAt;
             return approved
-                    ? toolCallLedgerService.failApprovedToolBeforeExecution(toolCall, errorMessage, elapsedMs)
+                    ? toolCallLedgerService.failApprovedToolBeforeExecution(
+                            toolCall, errorMessage, elapsedMs)
                     : toolCallLedgerService.failToolCall(toolCall, errorMessage, elapsedMs);
         } catch (RuntimeException ledgerFailure) {
             addSuppressed(primaryFailure, ledgerFailure);
@@ -239,14 +393,43 @@ public class AgentToolExecutionOrchestrator {
         throw (Error) primaryFailure;
     }
 
-    private AgentToolExecutionResult executeRecordedHandler(PreparedToolExecution execution, AgentToolCall toolCall) {
-        AgentToolExecutionContext context = new AgentToolExecutionContext(execution.request(), toolCall);
+    private AgentToolExecutionResult executeRecordedHandler(
+            PreparedToolExecution execution, AgentToolCall toolCall) {
+        AgentToolExecutionContext context =
+                new AgentToolExecutionContext(execution.request(), toolCall);
         long startedAt = System.currentTimeMillis();
-        AgentToolOutput output;
         try {
+            if (!execution.request().getExecutionGuard().getAsBoolean()) {
+                throw new IllegalStateException(
+                        "Permission grant expired or was revoked before handler execution");
+            }
+        } catch (RuntimeException stopped) {
+            AgentToolCall failedCall =
+                    failBeforeHandler(
+                            toolCall,
+                            "Agent tool stopped before handler execution; no action started",
+                            startedAt,
+                            false,
+                            stopped);
+            return executionResult(failedCall);
+        }
+        if (toolCall.getApprovalId() != null) {
+            try {
+                execution.request().publishEvent(org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEvent.toolStarted(
+                        null, null, org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeToolCall.builder()
+                                .toolCallId(toolCall.getToolCallId()).toolName(toolCall.getToolName())
+                                .arguments(java.util.Map.of()).build(), java.time.Instant.now()));
+            } catch (RuntimeException ignored) {
+                // Observability failure does not authorize or repeat execution.
+            }
+        }
+        AgentToolOutput output;
+        try (var ignored =
+                TrustedAuditActorContext.bind(auditActor(execution.request().getActor()))) {
             output = execution.handler().execute(context);
         } catch (RuntimeException exception) {
-            AgentToolCall failedCall = failAfterHandler(toolCall, exception.getMessage(), startedAt, exception);
+            AgentToolCall failedCall =
+                    failAfterHandler(toolCall, exception.getMessage(), startedAt, exception);
             return executionResult(failedCall);
         } catch (Error error) {
             if (isFatal(error)) {
@@ -255,16 +438,35 @@ public class AgentToolExecutionOrchestrator {
             failAfterHandler(toolCall, "Agent tool execution failed.", startedAt, error);
             throw error;
         }
-        var postExecutionDenial = targetToolAuthorizer.postExecutionDenialReason(
-                execution.request(), execution.descriptor());
+        var postExecutionDenial =
+                targetToolAuthorizer.postExecutionDenialReason(
+                        execution.request(), execution.descriptor());
         if (postExecutionDenial.isPresent()) {
-            AgentToolCall failedCall = persistTerminalOutcome(() -> toolCallLedgerService.failToolCall(toolCall,
-                    postExecutionDenial.get(), System.currentTimeMillis() - startedAt));
+            AgentToolCall failedCall =
+                    persistTerminalOutcome(
+                            () ->
+                                    toolCallLedgerService.failToolCall(
+                                            toolCall,
+                                            postExecutionDenial.get(),
+                                            System.currentTimeMillis() - startedAt));
             return executionResult(failedCall);
         }
-        AgentToolCall savedCall = persistTerminalOutcome(() -> toolCallLedgerService.completeToolCall(toolCall,
-                output, System.currentTimeMillis() - startedAt));
+        AgentToolCall savedCall =
+                persistTerminalOutcome(
+                        () ->
+                                toolCallLedgerService.completeToolCall(
+                                        toolCall, output, System.currentTimeMillis() - startedAt));
         return executionResult(savedCall);
+    }
+
+    private String auditActor(AgentActor actor) {
+        if (!ActorSupport.hasIdentity(actor)) {
+            return null;
+        }
+        if (ActorSupport.TYPE_USER.equals(actor.getType())) {
+            return actor.getId();
+        }
+        return ActorSupport.TYPE_SYSTEM.equals(actor.getType()) ? "system:" + actor.getId() : null;
     }
 
     private AgentToolCall persistTerminalOutcome(Supplier<AgentToolCall> persistence) {
@@ -280,11 +482,13 @@ public class AgentToolExecutionOrchestrator {
         }
     }
 
-    private AgentToolCall failAfterHandler(AgentToolCall toolCall, String errorMessage, long startedAt,
-                                           Throwable primaryFailure) {
+    private AgentToolCall failAfterHandler(
+            AgentToolCall toolCall, String errorMessage, long startedAt, Throwable primaryFailure) {
         try {
             return toolCallLedgerService.failToolCall(
-                    toolCall, errorMessage, System.currentTimeMillis() - startedAt);
+                    toolCall,
+                    diagnosticErrorMessage(errorMessage, primaryFailure),
+                    System.currentTimeMillis() - startedAt);
         } catch (RuntimeException ledgerFailure) {
             addSuppressed(primaryFailure, ledgerFailure);
             throw propagatePrimary(primaryFailure);
@@ -298,13 +502,31 @@ public class AgentToolExecutionOrchestrator {
         }
     }
 
-    private boolean isFatal(Error error) {
-        return error instanceof VirtualMachineError || error instanceof ThreadDeath || error instanceof LinkageError;
+    private String diagnosticErrorMessage(String message, Throwable failure) {
+        if (StringUtils.hasText(message)) {
+            return message;
+        }
+        Throwable cause = failure;
+        for (int depth = 0; depth < 8 && cause.getCause() != null; depth++) {
+            cause = cause.getCause();
+        }
+        // Never copy a nested cause message: it may contain request data or credentials.
+        return "Agent tool execution failed: "
+                + cause.getClass().getSimpleName()
+                + " (no error message)";
     }
 
-    private AgentToolExecutionResult denied(PreparedToolExecution execution, AgentPolicyResult policy) {
-        AgentToolCall deniedCall = toolCallLedgerService.recordToolDenied(execution.request(), execution.descriptor(),
-            policy);
+    private boolean isFatal(Error error) {
+        return error instanceof VirtualMachineError
+                || error instanceof ThreadDeath
+                || error instanceof LinkageError;
+    }
+
+    private AgentToolExecutionResult denied(
+            PreparedToolExecution execution, AgentPolicyResult policy) {
+        AgentToolCall deniedCall =
+                toolCallLedgerService.recordToolDenied(
+                        execution.request(), execution.descriptor(), policy);
         return executionResult(deniedCall);
     }
 
@@ -321,53 +543,68 @@ public class AgentToolExecutionOrchestrator {
                 .build();
     }
 
+    public boolean cancelWaitingApproval(String approvalId, String toolCallId, String runUid) {
+        return toolCallLedgerService.cancelWaitingApproval(approvalId, toolCallId, runUid);
+    }
+
+    public void expireWaitingApproval(String approvalId, String toolCallId, String runUid) {
+        toolCallLedgerService.expireWaitingApproval(approvalId, toolCallId, runUid);
+    }
+
     private AgentToolExecutionResult executionResult(AgentToolCall toolCall) {
         return AgentToolExecutionResult.builder()
-            .toolCallId(toolCall.getToolCallId())
-            .approvalId(toolCall.getApprovalId())
-            .toolName(toolCall.getToolName())
-            .status(AgentToolStatus.valueOf(toolCall.getStatus()))
-            .decision(AgentToolStatus.DENIED.name().equals(toolCall.getStatus())
-                ? AgentPolicyDecision.DENY
-                : AgentPolicyDecision.valueOf(toolCall.getPolicyDecision()))
-            .risk(AgentToolRisk.valueOf(toolCall.getRisk()))
-            .approvalStatus(AgentApprovalStatus.valueOf(toolCall.getApprovalStatus()))
-            .output(toolCall.getResultOutput())
-            .errorMessage(toolCall.getErrorMessage())
-            .build();
+                .toolCallId(toolCall.getToolCallId())
+                .approvalId(toolCall.getApprovalId())
+                .approvalSummary(toolCall.getApprovalId() == null ? null : proposalSummary(toolCall))
+                .approvalExpiresAt(toolCall.getApprovalExpiresAt())
+                .toolName(toolCall.getToolName())
+                .status(AgentToolStatus.valueOf(toolCall.getStatus()))
+                .decision(
+                        AgentToolStatus.DENIED.name().equals(toolCall.getStatus())
+                                ? AgentPolicyDecision.DENY
+                                : AgentPolicyDecision.valueOf(toolCall.getPolicyDecision()))
+                .risk(AgentToolRisk.valueOf(toolCall.getRisk()))
+                .approvalStatus(AgentApprovalStatus.valueOf(toolCall.getApprovalStatus()))
+                .output(toolCall.getResultOutput())
+                .errorMessage(toolCall.getErrorMessage())
+                .build();
     }
 
     private boolean isApprovedApproval(AgentToolCall toolCall) {
         return AgentToolStatus.WAITING_APPROVAL.name().equals(toolCall.getStatus())
-            && AgentApprovalStatus.APPROVED.name().equals(toolCall.getApprovalStatus());
+                && AgentApprovalStatus.APPROVED.name().equals(toolCall.getApprovalStatus());
     }
 
     private boolean isWaitingApproval(AgentToolCall toolCall) {
         return AgentToolStatus.WAITING_APPROVAL.name().equals(toolCall.getStatus())
-            && AgentApprovalStatus.PENDING.name().equals(toolCall.getApprovalStatus());
+                && AgentApprovalStatus.PENDING.name().equals(toolCall.getApprovalStatus());
     }
 
     private boolean isDeniedApproval(AgentToolCall toolCall) {
         return AgentToolStatus.DENIED.name().equals(toolCall.getStatus())
-            || AgentApprovalStatus.REJECTED.name().equals(toolCall.getApprovalStatus())
-            || AgentApprovalStatus.EXPIRED.name().equals(toolCall.getApprovalStatus());
+                || AgentApprovalStatus.REJECTED.name().equals(toolCall.getApprovalStatus())
+                || AgentApprovalStatus.EXPIRED.name().equals(toolCall.getApprovalStatus());
     }
 
     /**
-     * Tool execution context after the public boundary has validated required request and catalog state.
+     * Tool execution context after the public boundary has validated required request and catalog
+     * state.
      */
-    private record PreparedToolExecution(AgentToolExecutionRequest request, RegisteredTool handler,
-                                         AgentToolDescriptor descriptor) {
-    }
+    private record PreparedToolExecution(
+            AgentToolExecutionRequest request,
+            RegisteredTool handler,
+            AgentToolDescriptor descriptor) {}
 
-    private record WorkspaceScope(String workspaceId, String authenticatedWorkspaceId,
-                                  String collectorId) implements AutoCloseable {
+    private record WorkspaceScope(
+            String workspaceId, String authenticatedWorkspaceId, String collectorId)
+            implements AutoCloseable {
 
         private static WorkspaceScope bind(String workspaceId) {
-            WorkspaceScope previous = new WorkspaceScope(
-                    AuthTokenRequestContext.currentWorkspaceId(),
-                    AuthTokenRequestContext.currentAuthenticatedWorkspaceId(),
-                    AuthTokenRequestContext.currentCollectorId());
+            WorkspaceScope previous =
+                    new WorkspaceScope(
+                            AuthTokenRequestContext.currentWorkspaceId(),
+                            AuthTokenRequestContext.currentAuthenticatedWorkspaceId(),
+                            AuthTokenRequestContext.currentCollectorId());
             AuthTokenRequestContext.bindWorkspaceId(workspaceId);
             AuthTokenRequestContext.bindAuthenticatedWorkspaceId(workspaceId);
             AuthTokenRequestContext.bindCollectorId(null);

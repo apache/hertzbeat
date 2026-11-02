@@ -1,0 +1,165 @@
+{
+  "calls": [
+    {
+      "toolCallId": "call_4737289a52fd4f7e929e1aa9",
+      "runUid": "run_695260982385920",
+      "toolName": "logs.group_by_stats",
+      "status": "SUCCEEDED",
+      "arguments": {
+        "q": {
+          "end": 1792218250741,
+          "groupBy": "service.name",
+          "limit": 20,
+          "severityCategory": "ERROR",
+          "start": 1792217350000
+        }
+      },
+      "errorCode": null,
+      "resultOutput": {
+        "code": 0,
+        "data": {
+          "groupBy": "service.name",
+          "groups": []
+        },
+        "msg": null
+      }
+    },
+    {
+      "toolCallId": "call_955fdb48cf274e24a6e02559",
+      "runUid": "run_695260982385920",
+      "toolName": "logs.group_by_stats",
+      "status": "SUCCEEDED",
+      "arguments": {
+        "q": {
+          "end": 1792218250741,
+          "groupBy": "severity",
+          "limit": 20,
+          "start": 1792217350000
+        }
+      },
+      "errorCode": null,
+      "resultOutput": {
+        "code": 0,
+        "data": {
+          "groupBy": "severity",
+          "groups": [
+            {
+              "value": "unknown",
+              "count": 39
+            },
+            {
+              "value": "INFO",
+              "count": 24
+            },
+            {
+              "value": "WARN",
+              "count": 1
+            }
+          ]
+        },
+        "msg": null
+      }
+    },
+    {
+      "toolCallId": "call_4faed07c240e4108bcb45525",
+      "runUid": "run_695260982385920",
+      "toolName": "logs.group_by_stats",
+      "status": "SUCCEEDED",
+      "arguments": {
+        "q": {
+          "end": 1792218250741,
+          "groupBy": "service.name",
+          "limit": 20,
+          "search": "ERROR",
+          "start": 1792217350000
+        }
+      },
+      "errorCode": null,
+      "resultOutput": {
+        "code": 0,
+        "data": {
+          "groupBy": "service.name",
+          "groups": []
+        },
+        "msg": null
+      }
+    },
+    {
+      "toolCallId": "call_48a81a780cd6422aba62c2f6",
+      "runUid": "run_695260982385920",
+      "toolName": "logs.query",
+      "status": "SUCCEEDED",
+      "arguments": {
+        "end": 1792218250741,
+        "severityText": "ERROR",
+        "start": 1792217350000
+      },
+      "errorCode": null,
+      "resultOutput": {
+        "content": [],
+        "pageIndex": 0,
+        "pageSize": 10,
+        "totalElements": 0,
+        "totalPages": 0,
+        "start": 1792217350000,
+        "end": 1792218250741
+      }
+    },
+    {
+      "toolCallId": "call_ec209cac6f3f48ef8d775a5b",
+      "runUid": "run_695260982385920",
+      "toolName": "logs.query",
+      "status": "SUCCEEDED",
+      "arguments": {
+        "end": 1792218250741,
+        "search": "ERROR",
+        "start": 1792217350000
+      },
+      "errorCode": null,
+      "resultOutput": {
+        "content": [],
+        "pageIndex": 0,
+        "pageSize": 10,
+        "totalElements": 0,
+        "totalPages": 0,
+        "start": 1792217350000,
+        "end": 1792218250741
+      }
+    },
+    {
+      "toolCallId": "call_a1a5db1c1fc341238ed50263",
+      "runUid": "run_695260982385920",
+      "toolName": "logs.query",
+      "status": "FAILED",
+      "arguments": {
+        "end": 1792218250741,
+        "severityText": "unknown",
+        "start": 1792217350000
+      },
+      "errorCode": "severityText must be TRACE, DEBUG, INFO, WARN, ERROR, or FATAL",
+      "resultOutput": null
+    },
+    {
+      "toolCallId": "call_5dc2736fe58f489286af3d22",
+      "runUid": "run_695260982385920",
+      "toolName": "logs.query",
+      "status": "SUCCEEDED",
+      "arguments": {
+        "end": 1792218250741,
+        "search": "error",
+        "start": 1792217350000
+      },
+      "errorCode": null,
+      "resultOutput": {
+        "content": [],
+        "pageIndex": 0,
+        "pageSize": 10,
+        "totalElements": 0,
+        "totalPages": 0,
+        "start": 1792217350000,
+        "end": 1792218250741
+      }
+    }
+  ],
+  "projectionNote": "Only previously captured input controls retained; omitted pageSize input not reconstructed. Successful output pageSize10 and count/time fields verified from original browser tool-result DOM. No log bodies."
+}

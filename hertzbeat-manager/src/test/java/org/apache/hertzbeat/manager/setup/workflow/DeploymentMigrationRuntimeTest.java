@@ -29,6 +29,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.lang.management.ManagementFactory;
 import java.sql.Connection;
 import java.time.Duration;
 import java.util.concurrent.CountDownLatch;
@@ -37,11 +38,14 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import org.apache.hertzbeat.manager.setup.api.SetupApiContract.MetadataDatabaseKind;
 import org.apache.hertzbeat.manager.setup.config.MetadataDatabaseSettings;
 import org.apache.hertzbeat.manager.setup.config.SecretValue;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InOrder;
 
 class DeploymentMigrationRuntimeTest {
@@ -174,9 +178,10 @@ class DeploymentMigrationRuntimeTest {
         }
     }
 
-    @Test
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
     @Timeout(10)
-    void closeSealsWorkflowBeforeWaitingForAnInFlightValidationAndClosingCommands()
+    void closeSealsWorkflowBeforeWaitingForAnInFlightValidationAndClosingCommands(boolean virtual)
             throws Exception {
         ManagedDeploymentMigrationCommands commands = mock(ManagedDeploymentMigrationCommands.class);
         MetadataMigrationTargetInspector inspector = mock(MetadataMigrationTargetInspector.class);
@@ -186,7 +191,7 @@ class DeploymentMigrationRuntimeTest {
         CountDownLatch releaseInspection = new CountDownLatch(1);
         when(inspector.inspect(any(), any(), any())).thenAnswer(ignored -> {
             inspectionEntered.countDown();
-            assertThat(releaseInspection.await(5, TimeUnit.SECONDS)).isTrue();
+            releaseInspection.await();
             return org.apache.hertzbeat.manager.setup.api.DeploymentApiContract.TargetInspection.EMPTY;
         });
         DefaultDeploymentWorkflow workflow = new DefaultDeploymentWorkflow(
@@ -197,21 +202,56 @@ class DeploymentMigrationRuntimeTest {
                 workflow, commands, inspector, mock(JdbcMetadataMigrationExecutor.class),
                 mock(TargetJdbcConnectionFactory.class), Duration.ofSeconds(5), System::nanoTime);
 
-        try (var callers = Executors.newVirtualThreadPerTaskExecutor()) {
+        var callers = virtual ? Executors.newVirtualThreadPerTaskExecutor() : Executors.newSingleThreadExecutor();
+        AtomicReference<Throwable> closeFailure = new AtomicReference<>();
+        Thread closing = Thread.ofPlatform().unstarted(() -> {
+            try {
+                runtime.close();
+            } catch (Throwable failure) {
+                closeFailure.set(failure);
+            }
+        });
+        try {
             Future<?> validation = callers.submit(() -> workflow.validate(
                     DefaultDeploymentWorkflowTest.validationRequestFixture()));
             assertThat(inspectionEntered.await(5, TimeUnit.SECONDS)).isTrue();
-            Future<?> closing = callers.submit(runtime::close);
+            closing.start();
+            awaitAdmissionCloseWait(closing, workflow);
             assertThatThrownBy(() -> workflow.migration("operation-a"))
                     .isInstanceOf(org.apache.hertzbeat.manager.setup.api.SetupApiException.class);
             verify(commands, never()).close();
             releaseInspection.countDown();
             validation.get(5, TimeUnit.SECONDS);
-            closing.get(5, TimeUnit.SECONDS);
+            closing.join(5000);
+            assertThat(closing.isAlive()).isFalse();
+            assertThat(closeFailure.get()).isNull();
         } finally {
             releaseInspection.countDown();
+            callers.shutdownNow();
+            closing.join(5000);
+            assertThat(callers.awaitTermination(5, TimeUnit.SECONDS)).isTrue();
+            assertThat(closing.isAlive()).isFalse();
         }
         verify(commands).close();
+    }
+
+    private static void awaitAdmissionCloseWait(Thread thread, DefaultDeploymentWorkflow workflow) {
+        long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(5);
+        var bean = ManagementFactory.getThreadMXBean();
+        while (System.nanoTime() < deadline) {
+            var info = bean.getThreadInfo(thread.threadId(), 20);
+            if (info != null && info.getThreadState() == Thread.State.WAITING && info.getLockInfo() != null
+                    && info.getLockInfo().getIdentityHashCode() == System.identityHashCode(workflow)) {
+                for (StackTraceElement frame : info.getStackTrace()) {
+                    if (frame.getClassName().equals(DefaultDeploymentWorkflow.class.getName())
+                            && frame.getMethodName().equals("closeAdmission")) {
+                        return;
+                    }
+                }
+            }
+            Thread.onSpinWait();
+        }
+        throw new AssertionError("close did not seal admission and wait for validation");
     }
 
     @Test

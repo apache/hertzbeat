@@ -56,7 +56,7 @@ import org.yaml.snakeyaml.Yaml;
  * Upgrade regression for the 2.0.0 migration chain, run once per supported dialect.
  *
  * <p>The database is first taken to the last officially released state (V190) and only
- * then is V200 applied, so the test covers the upgrade path a 1.9.x user actually takes.
+ * then are V200 and V201 applied, so the test covers the upgrade path a 1.9.x user actually takes.
  * Building the schema with Hibernate {@code ddl-auto} first models the hardest version of
  * that upgrade, where the database may already hold tables the migration also creates -
  * every V200 statement therefore has to be safe to run against a pre-populated schema.
@@ -69,7 +69,9 @@ abstract class AbstractMigrationUpgradeTest {
 
     private static final String LAST_RELEASED_VERSION = "190";
 
-    private static final String CURRENT_VERSION = "200";
+    private static final String CURRENT_VERSION = "201";
+
+    private static final List<String> CURRENT_UPGRADE_VERSIONS = List.of("200", CURRENT_VERSION);
 
     private static final List<String> WITHDRAWN_VERSIONS = List.of("181", "182", "183");
 
@@ -132,7 +134,7 @@ abstract class AbstractMigrationUpgradeTest {
     protected abstract List<String> storedRoutines() throws SQLException;
 
     @Test
-    @DisplayName("V200 upgrades a V190 database whose schedule table Hibernate owns")
+    @DisplayName("V200 and V201 upgrade a V190 database whose schedule table Hibernate owns")
     void upgradesDatabaseWhoseScheduleTableHibernateOwns() throws SQLException {
         startFromLastReleasedState();
         seedSchedules();
@@ -143,10 +145,11 @@ abstract class AbstractMigrationUpgradeTest {
                 + " SET enabled = FALSE WHERE creator IS NULL OR TRIM(creator) = ''");
 
         Flyway flyway = flyway();
-        assertPendingVersions(flyway, List.of(CURRENT_VERSION));
+        assertPendingVersions(flyway, CURRENT_UPGRADE_VERSIONS);
 
         MigrateResult result = flyway.migrate();
-        assertEquals(1, result.migrationsExecuted, "V200 must be the only migration left to apply");
+        assertEquals(CURRENT_UPGRADE_VERSIONS.size(), result.migrationsExecuted,
+                "exactly V200 and V201 must remain after the released baseline");
         assertEquals(CURRENT_VERSION, result.targetSchemaVersion);
 
         assertScheduleRowsScopedToOwner();
@@ -166,7 +169,7 @@ abstract class AbstractMigrationUpgradeTest {
     }
 
     @Test
-    @DisplayName("V200 upgrades a V190 database whose schedule table the migration has to create")
+    @DisplayName("V200 and V201 upgrade a V190 database whose schedule table the migration has to create")
     void upgradesDatabaseWhoseScheduleTableTheMigrationCreates() throws SQLException {
         createSchemaWithHibernate();
         // Model the ordering where Flyway sees the table first: the migration, not Hibernate,
@@ -179,7 +182,8 @@ abstract class AbstractMigrationUpgradeTest {
 
         Flyway flyway = flyway();
         MigrateResult result = flyway.migrate();
-        assertEquals(1, result.migrationsExecuted, "V200 must be the only migration left to apply");
+        assertEquals(CURRENT_UPGRADE_VERSIONS.size(), result.migrationsExecuted,
+                "exactly V200 and V201 must remain after the released baseline");
 
         assertBooleanColumn();
         assertEquals(expectedEnlargedTextType(), declaredType(ALERT_DEFINE_TABLE, "expr"));
@@ -314,8 +318,9 @@ abstract class AbstractMigrationUpgradeTest {
             assertTrue(applied.stream().noneMatch(withdrawn::equals),
                     () -> "withdrawn version V" + withdrawn + " must not appear in the history, history is " + applied);
         }
-        assertEquals(CURRENT_VERSION, applied.get(applied.size() - 1),
-                () -> "the chain must end at V" + CURRENT_VERSION + ", history is " + applied);
+        assertEquals(List.of(LAST_RELEASED_VERSION, "200", CURRENT_VERSION),
+                applied.subList(applied.size() - 3, applied.size()),
+                () -> "the chain must end with released V190 followed by V200 and V201: " + applied);
     }
 
     private void seedSchedules() throws SQLException {
