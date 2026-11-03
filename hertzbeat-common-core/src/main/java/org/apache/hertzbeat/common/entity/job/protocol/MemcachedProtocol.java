@@ -44,6 +44,11 @@ public class MemcachedProtocol implements CommonRequestProtocol, Protocol {
      */
     private String port;
 
+    /**
+     * (Optional) connect and read timeout in milliseconds
+     */
+    private String timeout;
+
     @Override
     public boolean isInvalid() {
         return !validateIpDomain(host) || !validPort(port);
