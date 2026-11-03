@@ -1,0 +1,250 @@
+{
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "service-diagnostics-example",
+    "project": "hertzbeat",
+    "tags": [
+      "example"
+    ]
+  },
+  "spec": {
+    "display": {
+      "name": "Service diagnostics example",
+      "description": "Illustrative document only. Replace resource values and the placeholder Trace ID with your own telemetry."
+    },
+    "duration": "30m",
+    "refreshInterval": "0s",
+    "timezone": "UTC",
+    "variables": [
+      {
+        "kind": "TextVariable",
+        "spec": {
+          "name": "serviceName",
+          "value": "checkout-api"
+        }
+      },
+      {
+        "kind": "TextVariable",
+        "spec": {
+          "name": "serviceNamespace",
+          "value": "shop"
+        }
+      },
+      {
+        "kind": "ListVariable",
+        "spec": {
+          "name": "environment",
+          "defaultValue": "production",
+          "allowMultiple": false,
+          "allowAllValue": false,
+          "plugin": {
+            "kind": "StaticListVariable",
+            "spec": {
+              "values": [
+                "production",
+                "staging"
+              ]
+            }
+          }
+        }
+      }
+    ],
+    "panels": {
+      "jvm": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "JVM memory"
+          },
+          "plugin": {
+            "kind": "TimeSeriesChart",
+            "spec": {
+              "visual": {
+                "display": "line"
+              }
+            }
+          },
+          "queries": [
+            {
+              "kind": "TimeSeriesQuery",
+              "spec": {
+                "plugin": {
+                  "kind": "HertzBeatTimeSeriesQuery",
+                  "spec": {
+                    "version": 1,
+                    "query": {
+                      "signal": "metrics",
+                      "queryKind": "time-series",
+                      "context": {
+                        "serviceName": "${serviceName}",
+                        "serviceNamespace": "${serviceNamespace}",
+                        "environment": "${environment}"
+                      },
+                      "metric": {
+                        "name": "jvm_memory_used_bytes",
+                        "aggregation": "sum",
+                        "temporalAggregation": "raw",
+                        "stepSeconds": 60
+                      },
+                      "limit": 32
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "logs": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Service logs"
+          },
+          "plugin": {
+            "kind": "LogsTable",
+            "spec": {
+              "allowWrap": true,
+              "showTime": true
+            }
+          },
+          "queries": [
+            {
+              "kind": "LogQuery",
+              "spec": {
+                "plugin": {
+                  "kind": "HertzBeatLogQuery",
+                  "spec": {
+                    "version": 1,
+                    "query": {
+                      "signal": "logs",
+                      "queryKind": "table",
+                      "context": {
+                        "serviceName": "${serviceName}",
+                        "serviceNamespace": "${serviceNamespace}",
+                        "environment": "${environment}"
+                      },
+                      "limit": 100
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "traces": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Error traces"
+          },
+          "plugin": {
+            "kind": "TraceTable",
+            "spec": {}
+          },
+          "queries": [
+            {
+              "kind": "TraceQuery",
+              "spec": {
+                "plugin": {
+                  "kind": "HertzBeatTraceQuery",
+                  "spec": {
+                    "version": 1,
+                    "query": {
+                      "signal": "traces",
+                      "queryKind": "table",
+                      "context": {
+                        "serviceName": "${serviceName}",
+                        "serviceNamespace": "${serviceNamespace}",
+                        "environment": "${environment}"
+                      },
+                      "errorOnly": true,
+                      "spanScope": "root",
+                      "limit": 100
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      },
+      "trace": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Pinned trace"
+          },
+          "plugin": {
+            "kind": "TracingGanttChart",
+            "spec": {}
+          },
+          "queries": [
+            {
+              "kind": "TraceQuery",
+              "spec": {
+                "plugin": {
+                  "kind": "HertzBeatTraceQuery",
+                  "spec": {
+                    "version": 1,
+                    "query": {
+                      "signal": "traces",
+                      "queryKind": "gantt",
+                      "traceId": "0123456789abcdef0123456789abcdef"
+                    }
+                  }
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "layouts": [
+      {
+        "kind": "Grid",
+        "spec": {
+          "items": [
+            {
+              "x": 0,
+              "y": 0,
+              "width": 12,
+              "height": 8,
+              "content": {
+                "$ref": "#/spec/panels/jvm"
+              }
+            },
+            {
+              "x": 12,
+              "y": 0,
+              "width": 12,
+              "height": 8,
+              "content": {
+                "$ref": "#/spec/panels/logs"
+              }
+            },
+            {
+              "x": 0,
+              "y": 8,
+              "width": 12,
+              "height": 8,
+              "content": {
+                "$ref": "#/spec/panels/traces"
+              }
+            },
+            {
+              "x": 12,
+              "y": 8,
+              "width": 12,
+              "height": 8,
+              "content": {
+                "$ref": "#/spec/panels/trace"
+              }
+            }
+          ]
+        }
+      }
+    ]
+  }
+}
