@@ -1,33 +1,135 @@
 ---
 id: download
-title: Download Apache HertzBeat 1.9.1
+title: Download Apache HertzBeat - Latest Release
 sidebar_label: Download
+description: Download Apache HertzBeat monitoring system - server, collector, source code, and Docker Compose packages with signatures and checksums.
 ---
 
-Release mirrors may still be syncing. Read the [1.9.1 upgrade guide](/docs/start/1.9.1-update) first and use matching manager and collector versions.
+## How to Download HertzBeat?
 
-| Artifact | Download and verification |
-| --- | --- |
-| Source | [apache-hertzbeat-1.9.1-src.tar.gz](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-1.9.1-src.tar.gz) · [ASC](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-1.9.1-src.tar.gz.asc) · [SHA-512](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-1.9.1-src.tar.gz.sha512) |
-| Server | [apache-hertzbeat-1.9.1-bin.tar.gz](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-1.9.1-bin.tar.gz) · [ASC](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-1.9.1-bin.tar.gz.asc) · [SHA-512](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-1.9.1-bin.tar.gz.sha512) |
-| Docker server | [apache-hertzbeat-1.9.1-docker-bin.tar.gz](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-1.9.1-docker-bin.tar.gz) · [ASC](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-1.9.1-docker-bin.tar.gz.asc) · [SHA-512](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-1.9.1-docker-bin.tar.gz.sha512) |
-| Docker Compose | [apache-hertzbeat-1.9.1-docker-compose.tar.gz](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-1.9.1-docker-compose.tar.gz) · [ASC](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-1.9.1-docker-compose.tar.gz.asc) · [SHA-512](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-1.9.1-docker-compose.tar.gz.sha512) |
-| JVM collector | [apache-hertzbeat-collector-1.9.1-bin.tar.gz](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-collector-1.9.1-bin.tar.gz) · [ASC](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-collector-1.9.1-bin.tar.gz.asc) · [SHA-512](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-collector-1.9.1-bin.tar.gz.sha512) |
-| Native collector Linux AMD64 | [apache-hertzbeat-collector-native-1.9.1-linux-amd64-bin.tar.gz](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-collector-native-1.9.1-linux-amd64-bin.tar.gz) · [ASC](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-collector-native-1.9.1-linux-amd64-bin.tar.gz.asc) · [SHA-512](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-collector-native-1.9.1-linux-amd64-bin.tar.gz.sha512) |
-| Native collector Linux ARM64 | [apache-hertzbeat-collector-native-1.9.1-linux-arm64-bin.tar.gz](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-collector-native-1.9.1-linux-arm64-bin.tar.gz) · [ASC](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-collector-native-1.9.1-linux-arm64-bin.tar.gz.asc) · [SHA-512](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-collector-native-1.9.1-linux-arm64-bin.tar.gz.sha512) |
-| Native collector Windows AMD64 | [apache-hertzbeat-collector-native-1.9.1-windows-amd64-bin.zip](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-collector-native-1.9.1-windows-amd64-bin.zip) · [ASC](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-collector-native-1.9.1-windows-amd64-bin.zip.asc) · [SHA-512](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-collector-native-1.9.1-windows-amd64-bin.zip.sha512) |
+Download the latest Apache HertzBeat™ release (v1.9.1) as server binary, collector binary, source code, or Docker Compose package. All releases include GPG signatures and SHA512 checksums for verification.
 
-Verify signatures with [KEYS](https://downloads.apache.org/hertzbeat/KEYS) and check the SHA-512 digests. Previous releases are in the [Apache archive](https://archive.apache.org/dist/hertzbeat/).
+**Latest Version:** v1.9.1 (Released: November 2, 2026)
 
-## Choosing and verifying a package
+Upgrading? Read the [1.9.1 upgrade guide](/docs/start/1.9.1-update). Management access requires the `admin` role; change the initial administrator password.
 
-The server package includes the manager and web interface. Use the JVM collector for a distributed deployment, or choose a native collector for its matching platform. Native collectors do not load external JDBC drivers at runtime; see the [native collector guide](/docs/start/native-collector). The Docker Compose archive provides deployment configuration.
+**Quick Download:**
 
-Download the matching `.asc` and `.sha512` files along with the archive, then verify the signature and checksum. For example, for the source archive:
+- [Server Binary](https://www.apache.org/dyn/closer.lua/hertzbeat/1.9.1/apache-hertzbeat-1.9.1-bin.tar.gz?action=download)
+- [Collector Binary](https://www.apache.org/dyn/closer.lua/hertzbeat/1.9.1/apache-hertzbeat-collector-1.9.1-bin.tar.gz?action=download)
+- [Source Code](https://www.apache.org/dyn/closer.lua/hertzbeat/1.9.1/apache-hertzbeat-1.9.1-src.tar.gz?action=download)
+
+## Download Package Types
+
+| Package Type | Size | Purpose | Platform |
+|-------------|------|---------|----------|
+| **Server Binary** | ~364MB | Main monitoring server | Linux, macOS, Windows |
+| **Docker Server Binary** | ~364MB | Server package for Docker | Docker environments |
+| **Collector Binary** | ~163MB | Distributed collectors | Linux, macOS, Windows |
+| **Native Collector** | ~75–77MB | Distributed collectors, no JVM required | linux-amd64, linux-arm64, windows-amd64 |
+| **Source Code** | ~2.8MB | Build from source | Any with Java 25+ |
+| **Docker Compose** | ~45KB | Full stack deployment | Docker environments |
+
+:::tip Native Collector Recommendation
+If you do not need external JDBC drivers from `ext-lib`, you can choose the native collector package for faster startup and lower memory usage. MySQL, MariaDB, and OceanBase are included in this native-friendly path when `mysql-connector-j` is not provided. TiDB follows the same rule for its SQL query metric set.
+
+Trade-offs: native packages are platform-specific and do not support runtime `ext-lib` JDBC loading. See [Native Collector Guide](start/native-collector).
+:::
+
+:::tip Security Verification
+Verify downloads using GPG signatures and SHA512 checksums. See [Apache Verification Guide](https://www.apache.org/dyn/closer.cgi#verify) and [HertzBeat KEYS](https://downloads.apache.org/hertzbeat/KEYS).
+:::
+
+## Latest Release (Recommended)
+
+:::tip Security Notice
+Previous releases may contain security vulnerabilities. Always use the latest version.
+:::
+
+| Version | Date       | Download                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               | Release                                                         |
+|---------|------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------|
+| v1.9.1 | 2026.11.02 | [apache-hertzbeat-1.9.1-bin.tar.gz](https://www.apache.org/dyn/closer.lua/hertzbeat/1.9.1/apache-hertzbeat-1.9.1-bin.tar.gz?action=download) (Server) ( [signature](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-1.9.1-bin.tar.gz.asc) , [sha512](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-1.9.1-bin.tar.gz.sha512) ) <br/> [apache-hertzbeat-1.9.1-docker-bin.tar.gz](https://www.apache.org/dyn/closer.lua/hertzbeat/1.9.1/apache-hertzbeat-1.9.1-docker-bin.tar.gz?action=download) (Docker Server) ( [signature](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-1.9.1-docker-bin.tar.gz.asc) , [sha512](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-1.9.1-docker-bin.tar.gz.sha512) ) <br/> [apache-hertzbeat-collector-1.9.1-bin.tar.gz](https://www.apache.org/dyn/closer.lua/hertzbeat/1.9.1/apache-hertzbeat-collector-1.9.1-bin.tar.gz?action=download) (Collector) ( [signature](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-collector-1.9.1-bin.tar.gz.asc) , [sha512](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-collector-1.9.1-bin.tar.gz.sha512) ) <br/> [apache-hertzbeat-collector-native-1.9.1-linux-amd64-bin.tar.gz](https://www.apache.org/dyn/closer.lua/hertzbeat/1.9.1/apache-hertzbeat-collector-native-1.9.1-linux-amd64-bin.tar.gz?action=download) (Native Collector linux-amd64) ( [signature](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-collector-native-1.9.1-linux-amd64-bin.tar.gz.asc) , [sha512](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-collector-native-1.9.1-linux-amd64-bin.tar.gz.sha512) ) <br/> [apache-hertzbeat-collector-native-1.9.1-linux-arm64-bin.tar.gz](https://www.apache.org/dyn/closer.lua/hertzbeat/1.9.1/apache-hertzbeat-collector-native-1.9.1-linux-arm64-bin.tar.gz?action=download) (Native Collector linux-arm64) ( [signature](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-collector-native-1.9.1-linux-arm64-bin.tar.gz.asc) , [sha512](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-collector-native-1.9.1-linux-arm64-bin.tar.gz.sha512) ) <br/> [apache-hertzbeat-collector-native-1.9.1-windows-amd64-bin.zip](https://www.apache.org/dyn/closer.lua/hertzbeat/1.9.1/apache-hertzbeat-collector-native-1.9.1-windows-amd64-bin.zip?action=download) (Native Collector windows-amd64) ( [signature](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-collector-native-1.9.1-windows-amd64-bin.zip.asc) , [sha512](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-collector-native-1.9.1-windows-amd64-bin.zip.sha512) ) <br/> [apache-hertzbeat-1.9.1-src.tar.gz](https://www.apache.org/dyn/closer.lua/hertzbeat/1.9.1/apache-hertzbeat-1.9.1-src.tar.gz?action=download) (Source Code) ( [signature](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-1.9.1-src.tar.gz.asc) , [sha512](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-1.9.1-src.tar.gz.sha512) ) <br/> [apache-hertzbeat-1.9.1-docker-compose.tar.gz](https://www.apache.org/dyn/closer.lua/hertzbeat/1.9.1/apache-hertzbeat-1.9.1-docker-compose.tar.gz?action=download) (Docker Compose) ( [signature](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-1.9.1-docker-compose.tar.gz.asc) , [sha512](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-1.9.1-docker-compose.tar.gz.sha512) ) | [note](https://hertzbeat.apache.org/blog/2026/11/02/hertzbeat-v1.9.1/) |
+
+## Release Docker Image
+
+> Apache HertzBeat™ images are available on [Docker Hub](https://hub.docker.com/r/apache/hertzbeat). Check the available tags before selecting an image.
+
+- HertzBeat [https://hub.docker.com/r/apache/hertzbeat](https://hub.docker.com/r/apache/hertzbeat)
+- HertzBeat Collector [https://hub.docker.com/r/apache/hertzbeat-collector](https://hub.docker.com/r/apache/hertzbeat-collector)
+
+## All Archived Releases
+
+For older releases, please check the [archive](https://archive.apache.org/dist/hertzbeat/).
+
+## Download FAQ
+
+### Which package should I download?
+
+**Server Binary** - For most users. Includes the main HertzBeat monitoring server with web UI.
+
+**Collector Binary** - For distributed deployments. Deploy collectors in remote networks to report to the main server.
+Native collector downloads are platform-specific, for example `apache-hertzbeat-collector-native-{version}-linux-amd64-bin.tar.gz` or `apache-hertzbeat-collector-native-{version}-windows-amd64-bin.zip`.
+
+If you are deciding between JVM and native collector packages, start with [Native Collector Guide](start/native-collector).
+
+**Source Code** - For developers who want to build, modify, or contribute to HertzBeat.
+
+**Docker Compose** - For quick all-in-one deployment with database and time-series storage.
+
+### How do I verify the download?
+
+1. Download the GPG signature (.asc) and checksum (.sha512) files
+2. Verify signature: `gpg --verify apache-hertzbeat-*.tar.gz.asc apache-hertzbeat-*.tar.gz`
+3. Verify checksum: `sha512sum -c apache-hertzbeat-*.tar.gz.sha512`
+
+Import Apache HertzBeat KEYS first: `wget https://downloads.apache.org/hertzbeat/KEYS && gpg --import KEYS`
+
+### What are the system requirements?
+
+**Server Binary Requirements:**
+
+- Java 25 or higher
+- 4GB RAM minimum (8GB recommended)
+- 2 CPU cores minimum
+- 20GB disk space
+
+**Collector Binary Requirements:**
+
+- Java 25 or higher
+- 2GB RAM minimum
+- 1 CPU core minimum
+- 5GB disk space
+
+Native collector packages are published per target platform, while the JVM collector package remains cross-platform.
+
+### Can I use Docker instead of binary packages?
+
+Yes. Docker is the recommended installation method:
 
 ```bash
-curl -O https://downloads.apache.org/hertzbeat/KEYS
-gpg --import KEYS
-gpg --verify apache-hertzbeat-1.9.1-src.tar.gz.asc apache-hertzbeat-1.9.1-src.tar.gz
-sha512sum -c apache-hertzbeat-1.9.1-src.tar.gz.sha512
+docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat
 ```
+
+### How do I extract and run the binary?
+
+```bash
+tar -xzf apache-hertzbeat-1.9.1-bin.tar.gz
+cd apache-hertzbeat-1.9.1
+./bin/startup.sh
+```
+
+Access web UI at `http://localhost:1157` with the initial credentials admin/hertzbeat, and change the default password.
+
+### What's the difference between releases?
+
+Each release includes bug fixes, security patches, and new features. The release notes link in the download table details specific changes.
+
+**Always use the latest release** for security and stability.
+
+### Where can I find old versions?
+
+Previous versions are archived at [https://archive.apache.org/dist/hertzbeat/](https://archive.apache.org/dist/hertzbeat/)
+
+### How often are new versions released?
+
+HertzBeat follows a regular release schedule with new versions approximately every 2-3 months. Security patches may be released more frequently.
