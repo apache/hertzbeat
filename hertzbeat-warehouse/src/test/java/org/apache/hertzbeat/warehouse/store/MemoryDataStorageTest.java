@@ -18,9 +18,10 @@
 package org.apache.hertzbeat.warehouse.store;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import java.util.List;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
@@ -28,95 +29,142 @@ import org.apache.hertzbeat.warehouse.store.realtime.memory.MemoryDataStorage;
 import org.apache.hertzbeat.warehouse.store.realtime.memory.MemoryProperties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 /**
  * Test case for {@link MemoryDataStorage}
  */
-
 class MemoryDataStorageTest {
 
     @Mock
     private MemoryProperties memoryProperties;
 
-    @InjectMocks
     private MemoryDataStorage memoryDataStorage;
 
     @BeforeEach
     void setUp() {
-
         MockitoAnnotations.openMocks(this);
-
         when(memoryProperties.initSize()).thenReturn(null);
         memoryDataStorage = new MemoryDataStorage(memoryProperties);
     }
 
     @Test
     void testGetCurrentMetricsDataByMetric() {
-
         Long monitorId = 1L;
         String metric = "cpuUsage";
-        CollectRep.MetricsData metricsData = mock(CollectRep.MetricsData.class);
+        try (CollectRep.MetricsData metricsData = CollectRep.MetricsData.newBuilder()
+                .setId(monitorId)
+                .setMetrics(metric)
+                .setCode(CollectRep.Code.SUCCESS)
+                .addField(CollectRep.Field.newBuilder().setName("usage").setType(0).build())
+                .addValueRow(CollectRep.ValueRow.newBuilder().addColumn("42").build())
+                .build()) {
+            memoryDataStorage.saveData(metricsData);
+        }
 
-        memoryDataStorage.saveData(metricsData);
-
-        CollectRep.MetricsData result = memoryDataStorage.getCurrentMetricsData(monitorId, metric);
-
-        assertNull(result);
+        try (CollectRep.MetricsData result = memoryDataStorage.getCurrentMetricsData(monitorId, metric)) {
+            assertNotNull(result);
+            assertEquals(metric, result.getMetrics());
+            assertEquals("42", result.getValues().getFirst().getColumns(0));
+        }
     }
 
     @Test
     void testGetCurrentMetricsData() {
-
         Long monitorId = 1L;
-        CollectRep.MetricsData metricsData1 = mock(CollectRep.MetricsData.class);
-        CollectRep.MetricsData metricsData2 = mock(CollectRep.MetricsData.class);
-
-        when(metricsData1.getId()).thenReturn(monitorId);
-        when(metricsData1.getMetrics()).thenReturn("cpuUsage");
-        when(metricsData1.getCode()).thenReturn(CollectRep.Code.SUCCESS);
-
-        when(metricsData2.getId()).thenReturn(monitorId);
-        when(metricsData2.getMetrics()).thenReturn("memoryUsage");
-        when(metricsData2.getCode()).thenReturn(CollectRep.Code.SUCCESS);
-
-        memoryDataStorage.saveData(metricsData1);
-        memoryDataStorage.saveData(metricsData2);
+        try (CollectRep.MetricsData metricsData1 = successData(monitorId, "cpuUsage", "10");
+                CollectRep.MetricsData metricsData2 = successData(monitorId, "memoryUsage", "20")) {
+            memoryDataStorage.saveData(metricsData1);
+            memoryDataStorage.saveData(metricsData2);
+        }
 
         List<CollectRep.MetricsData> result = memoryDataStorage.getCurrentMetricsData(monitorId);
-
-        assertEquals(2, result.size());
-        assertTrue(result.contains(metricsData1));
-        assertTrue(result.contains(metricsData2));
+        try {
+            assertEquals(2, result.size());
+            assertTrue(result.stream().anyMatch(data -> "cpuUsage".equals(data.getMetrics())));
+            assertTrue(result.stream().anyMatch(data -> "memoryUsage".equals(data.getMetrics())));
+        } finally {
+            result.forEach(CollectRep.MetricsData::close);
+        }
     }
 
     @Test
     void testSaveDataFailure() {
+        try (CollectRep.MetricsData metricsData = CollectRep.MetricsData.newBuilder()
+                .setId(1L)
+                .setMetrics("cpuUsage")
+                .setCode(CollectRep.Code.FAIL)
+                .build()) {
+            memoryDataStorage.saveData(metricsData);
+        }
 
-        CollectRep.MetricsData metricsData = mock(CollectRep.MetricsData.class);
-        when(metricsData.getCode()).thenReturn(CollectRep.Code.FAIL);
-
-        memoryDataStorage.saveData(metricsData);
-
-        List<CollectRep.MetricsData> result = memoryDataStorage.getCurrentMetricsData(metricsData.getId());
+        List<CollectRep.MetricsData> result = memoryDataStorage.getCurrentMetricsData(1L);
         assertTrue(result.isEmpty());
     }
 
     @Test
+    void retainedCopySurvivesInputClose() {
+        Long monitorId = 7L;
+        String metric = "cpu";
+        CollectRep.MetricsData input = successData(monitorId, metric, "55.5");
+        memoryDataStorage.saveData(input);
+        try (CollectRep.MetricsData retained = memoryDataStorage.getCurrentMetricsData(monitorId, metric)) {
+            assertNotNull(retained);
+            assertNotSame(input, retained);
+            input.close();
+
+            try (CollectRep.MetricsData afterClose = memoryDataStorage.getCurrentMetricsData(monitorId, metric)) {
+                assertNotNull(afterClose);
+                assertEquals("55.5", afterClose.getValues().getFirst().getColumns(0));
+                assertEquals(1, afterClose.getFieldsCount());
+            }
+        }
+    }
+
+    @Test
+    void replaceUpdatesCurrentWhileReaderSnapshotStaysValid() {
+        Long monitorId = 9L;
+        String metric = "cpu";
+        CollectRep.MetricsData heldSnapshot;
+        try (CollectRep.MetricsData first = successData(monitorId, metric, "1");
+                CollectRep.MetricsData second = successData(monitorId, metric, "2")) {
+            memoryDataStorage.saveData(first);
+            heldSnapshot = memoryDataStorage.getCurrentMetricsData(monitorId, metric);
+            assertNotNull(heldSnapshot);
+            memoryDataStorage.saveData(second);
+        }
+
+        try (heldSnapshot) {
+            assertEquals(1, heldSnapshot.getFieldsCount());
+            assertEquals("1", heldSnapshot.getValues().getFirst().getColumns(0));
+        }
+
+        try (CollectRep.MetricsData retained = memoryDataStorage.getCurrentMetricsData(monitorId, metric)) {
+            assertNotNull(retained);
+            assertEquals("2", retained.getValues().getFirst().getColumns(0));
+        }
+        assertNull(memoryDataStorage.getCurrentMetricsData(monitorId, "missing"));
+    }
+
+    @Test
     void testDestroy() {
-
-        CollectRep.MetricsData metricsData = mock(CollectRep.MetricsData.class);
-        when(metricsData.getId()).thenReturn(1L);
-        when(metricsData.getMetrics()).thenReturn("cpuUsage");
-        when(metricsData.getCode()).thenReturn(CollectRep.Code.SUCCESS);
-
-        memoryDataStorage.saveData(metricsData);
+        try (CollectRep.MetricsData metricsData = successData(1L, "cpuUsage", "3")) {
+            memoryDataStorage.saveData(metricsData);
+        }
         memoryDataStorage.destroy();
 
         List<CollectRep.MetricsData> result = memoryDataStorage.getCurrentMetricsData(1L);
         assertTrue(result.isEmpty());
     }
 
+    private static CollectRep.MetricsData successData(long monitorId, String metric, String value) {
+        return CollectRep.MetricsData.newBuilder()
+                .setId(monitorId)
+                .setMetrics(metric)
+                .setCode(CollectRep.Code.SUCCESS)
+                .addField(CollectRep.Field.newBuilder().setName("usage").setType(0).build())
+                .addValueRow(CollectRep.ValueRow.newBuilder().addColumn(value).build())
+                .build();
+    }
 }
