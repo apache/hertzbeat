@@ -86,7 +86,7 @@ function SelectedHistoryHeader({
 }: Pick<MonitorMetricWorkbenchController, 'state' | 'actions'> & {
   chart: MonitorHistoryChart;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const current = selectedCurrentValue(state, chart.metric.field);
   return (
     <header className={styles.selectedHistoryHeader}>
@@ -97,7 +97,7 @@ function SelectedHistoryHeader({
           {t('monitorMetrics.currentValue')}: {current.value}
           {chart.metric.unit ? ` ${chart.metric.unit}` : ''}
         </span>
-        <time>{formatMetricTime(current.time)}</time>
+        <time>{formatMetricTime(current.time, i18n.resolvedLanguage)}</time>
       </div>
       <SelectedHistoryControls chart={chart} actions={actions} investigationSignals={state.investigationSignals} />
     </header>
@@ -137,8 +137,8 @@ function useHistoryDockResize(
 }
 
 function SelectedHistoryStatistics({ chart }: { chart: MonitorHistoryChart }) {
-  const { t } = useTranslation();
-  const statistics = historyStatistics(chart);
+  const { t, i18n } = useTranslation();
+  const statistics = historyStatistics(chart, i18n.resolvedLanguage);
   if (!statistics) return null;
   const items = [
     [t('monitorMetrics.minimum'), statistics.minimum],
