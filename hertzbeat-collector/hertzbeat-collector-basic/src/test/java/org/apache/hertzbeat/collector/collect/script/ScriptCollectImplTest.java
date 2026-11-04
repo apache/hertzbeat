@@ -19,6 +19,7 @@ package org.apache.hertzbeat.collector.collect.script;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -30,6 +31,8 @@ import org.apache.hertzbeat.common.entity.job.protocol.ScriptProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.condition.EnabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 
 /**
  * Test case for {@link ScriptCollectImpl}
@@ -225,5 +228,96 @@ public class ScriptCollectImplTest {
     @Test
     void supportProtocol() {
         assertEquals(DispatchConstants.PROTOCOL_SCRIPT, scriptCollect.supportProtocol());
+    }
+
+    @Test
+    void normalizePowerShellStderrKeepsErrorsAndDropsProgress() {
+        // -EncodedCommand turns progress/information records into CLIXML; only the
+        // error entries should survive so failure messages stay readable
+        String clixml = "#< CLIXML\n<Objs Version=\"1.1.0.1\" "
+                + "xmlns=\"http://schemas.microsoft.com/powershell/2004/04\">"
+                + "<Obj S=\"progress\" RefId=\"0\"><ToString>Preparing modules for first use.</ToString></Obj>"
+                + "<S S=\"Error\">Get-Item : Cannot find path_x000D__x000A_At line:1 char:1</S>"
+                + "<Obj S=\"information\" RefId=\"1\"><ToString>metric table</ToString></Obj></Objs>";
+        assertEquals("Get-Item : Cannot find path\nAt line:1 char:1",
+                ScriptCollectImpl.normalizePowerShellStderr(clixml));
+    }
+
+    @Test
+    void normalizePowerShellStderrLeavesPlainTextUntouched() {
+        String plain = "Get-Item : Cannot find path";
+        assertEquals(plain, ScriptCollectImpl.normalizePowerShellStderr(plain));
+    }
+
+    @Test
+    @EnabledOnOs(OS.WINDOWS)
+    void collectPowershellWithQuotes() {
+        // quoting-heavy PowerShell command as in #3907: with -Command the inner quotes
+        // were stripped by the Windows command-line parser and the command failed with
+        // empty output; -EncodedCommand must deliver the script verbatim
+        assertDoesNotThrow(() -> {
+            ScriptProtocol scriptProtocol = ScriptProtocol.builder()
+                    .charset("utf-8")
+                    .parseType("oneRow")
+                    .scriptTool("powershell")
+                    .scriptCommand("Write-Output \"hertzbeat powershell quote test\"")
+                    .build();
+            Metrics metrics = new Metrics();
+            metrics.setScript(scriptProtocol);
+            metrics.setAliasFields(List.of("message"));
+
+            builder = CollectRep.MetricsData.newBuilder();
+            scriptCollect.collect(builder, metrics);
+            assertEquals(CollectRep.Code.SUCCESS, builder.getCode());
+            assertEquals(1, builder.getValuesCount());
+            assertEquals("hertzbeat powershell quote test", builder.getValues(0).getColumns(0));
+        });
+    }
+
+    @Test
+    @EnabledOnOs(OS.WINDOWS)
+    void collectPowershellPipelineWithBacktickEscape() {
+        // reproduces the #3907 shape: double-quoted string with a backtick escape and a
+        // pipeline, which -Command mangled into "cannot recognize cmdlet" errors
+        assertDoesNotThrow(() -> {
+            ScriptProtocol scriptProtocol = ScriptProtocol.builder()
+                    .charset("utf-8")
+                    .parseType("oneRow")
+                    .scriptTool("powershell")
+                    .scriptCommand("\"line1`nline2\" | Out-String")
+                    .build();
+            Metrics metrics = new Metrics();
+            metrics.setScript(scriptProtocol);
+            metrics.setAliasFields(List.of("first_line", "second_line"));
+
+            builder = CollectRep.MetricsData.newBuilder();
+            scriptCollect.collect(builder, metrics);
+            assertEquals(CollectRep.Code.SUCCESS, builder.getCode());
+            assertEquals(1, builder.getValuesCount());
+            assertEquals("line1", builder.getValues(0).getColumns(0));
+            assertEquals("line2", builder.getValues(0).getColumns(1));
+        });
+    }
+
+    @Test
+    @EnabledOnOs(OS.WINDOWS)
+    void failingPowerShellCommandReportsReadableError() {
+        // a failing command writes its error as CLIXML through -EncodedCommand; the
+        // collector must surface the PowerShell text, not the XML envelope
+        ScriptProtocol scriptProtocol = ScriptProtocol.builder()
+                .charset("utf-8")
+                .parseType("oneRow")
+                .scriptTool("powershell")
+                .scriptCommand("Get-Item 'hertzbeat-definitely-missing-path' -ErrorAction Stop")
+                .build();
+        Metrics metrics = new Metrics();
+        metrics.setScript(scriptProtocol);
+        metrics.setAliasFields(List.of("path"));
+
+        builder = CollectRep.MetricsData.newBuilder();
+        scriptCollect.collect(builder, metrics);
+        assertEquals(CollectRep.Code.FAIL, builder.getCode());
+        assertFalse(builder.getMsg().contains("#< CLIXML"));
+        assertFalse(builder.getMsg().contains("<Objs"));
     }
 }
