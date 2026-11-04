@@ -70,4 +70,32 @@ class MetricsCollectTest {
         assertEquals("pod-b-pending", rows.get(1).getColumns(0));
         assertEquals(CommonConstants.NULL_VALUE, rows.get(1).getColumns(1));
     }
+
+    @Test
+    void calculateFieldsKeepsDecimalCpuUsage() {
+        Metrics metrics = Metrics.builder()
+                .name("cpu")
+                .priority((byte) 1)
+                .fields(List.of(
+                        Metrics.Field.builder().field("usage").type(CommonConstants.TYPE_NUMBER).unit("%").build()))
+                .aliasFields(List.of("idle"))
+                .calculates(List.of("usage=100-idle"))
+                .build();
+
+        Timeout timeout = mock(Timeout.class);
+        WheelTimerTask timerTask = mock(WheelTimerTask.class);
+        when(timeout.task()).thenReturn(timerTask);
+        when(timerTask.getJob()).thenReturn(Job.builder().build());
+        MetricsCollect metricsCollect = new MetricsCollect(metrics, timeout, null, "test", List.of());
+
+        CollectRep.MetricsData.Builder collectData = CollectRep.MetricsData.newBuilder();
+        collectData.addValueRow(CollectRep.ValueRow.newBuilder()
+                .addColumn("98.47").build());
+
+        metricsCollect.calculateFields(metrics, collectData);
+
+        List<CollectRep.ValueRow> rows = collectData.getValuesList();
+        assertEquals(1, rows.size());
+        assertEquals(1.53, Double.parseDouble(rows.get(0).getColumns(0)), 0.001);
+    }
 }
