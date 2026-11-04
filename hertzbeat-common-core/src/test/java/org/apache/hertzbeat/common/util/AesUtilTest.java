@@ -137,4 +137,21 @@ class AesUtilTest {
         // old data can decode with default secret key
         assertEquals(originalText, decryptedText);
     }
+
+    @Test
+    void testIsCiphertextWithDefaultKeyEncodedDataUnderCustomKey() {
+        // Data encoded with the default secret key must still be recognized as
+        // ciphertext while a custom key is configured, mirroring aesDecode's
+        // default-key fallback (see testDefaultKeyCompatibility).
+        String originalText = "This is a secret message";
+        String encryptedText = aesEncode(originalText, AesUtil.DEFAULT_ENCODE_RULES);
+        assertTrue(isCiphertext(encryptedText, "newkey1234567890"));
+        assertTrue(isCiphertext(encryptedText, "6543210987654321"));
+
+        // Data encoded with one custom key must not be recognized when queried
+        // with a different non-default key (neither the configured nor the
+        // default key can decode it).
+        String otherEncoded = aesEncode(originalText, "newkey1234567890");
+        assertFalse(isCiphertext(otherEncoded, "6543210987654321"));
+    }
 }
