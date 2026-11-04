@@ -826,11 +826,9 @@ class MonitorServiceTest {
         Boolean isModify = true;
         Monitor existMonitor = Monitor.builder().name("memory").instance("host").id(2L).build();
         when(monitorDao.findMonitorByNameEquals(monitor.getName())).thenReturn(Optional.of(existMonitor));
-        try {
-            monitorService.validate(dto, isModify);
-        } catch (IllegalArgumentException e) {
-            assertEquals("Monitoring name already exists!", e.getMessage());
-        }
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> monitorService.validate(dto, isModify));
+        assertEquals("Monitoring name already exists!", e.getMessage());
     }
 
     @Test
@@ -884,11 +882,9 @@ class MonitorServiceTest {
         ParamDefineInfo pd = newParamDefine(field, null, true);
         paramDefines.add(pd);
         when(appService.getAppParamDefines(monitor.getApp())).thenReturn(paramDefines);
-        try {
-            monitorService.validate(dto, isModify);
-        } catch (IllegalArgumentException e) {
-            assertEquals("Params field " + field + " is required.", e.getMessage());
-        }
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> monitorService.validate(dto, isModify));
+        assertEquals("Params field " + field + " is required.", e.getMessage());
     }
 
     /**
@@ -917,12 +913,10 @@ class MonitorServiceTest {
         when(appService.getAppParamDefines(monitor.getApp())).thenReturn(paramDefines);
         doThrow(new IllegalArgumentException("Params field " + field + " type "
                 + paramDefine.getType() + " is invalid.")).when(paramValidatorManager).validate(any(), any());
-        try {
-            monitorService.validate(dto, isModify);
-        } catch (IllegalArgumentException e) {
-            assertEquals("Params field " + field + " type "
-                    + paramDefine.getType() + " is invalid.", e.getMessage());
-        }
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> monitorService.validate(dto, isModify));
+        assertEquals("Params field " + field + " type "
+                + paramDefine.getType() + " is invalid.", e.getMessage());
     }
 
     /**
@@ -953,12 +947,10 @@ class MonitorServiceTest {
         doThrow(new IllegalArgumentException("Params field " + field + " type "
                 + paramDefine.getType() + " over range " + paramDefine.getRange())).when(paramValidatorManager)
                 .validate(any(), any());
-        try {
-            monitorService.validate(dto, isModify);
-        } catch (IllegalArgumentException e) {
-            assertEquals("Params field " + field + " type "
-                    + paramDefine.getType() + " over range " + paramDefine.getRange(), e.getMessage());
-        }
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> monitorService.validate(dto, isModify));
+        assertEquals("Params field " + field + " type "
+                + paramDefine.getType() + " over range " + paramDefine.getRange(), e.getMessage());
     }
 
     /**
@@ -988,12 +980,10 @@ class MonitorServiceTest {
         when(appService.getAppParamDefines(monitor.getApp())).thenReturn(paramDefines);
         doThrow(new IllegalArgumentException("Params field " + field + " type "
                 + paramDefine.getType() + " over limit " + limit)).when(paramValidatorManager).validate(any(), any());
-        try {
-            monitorService.validate(dto, isModify);
-        } catch (IllegalArgumentException e) {
-            assertEquals("Params field " + field + " type "
-                    + paramDefine.getType() + " over limit " + limit, e.getMessage());
-        }
+        IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                () -> monitorService.validate(dto, isModify));
+        assertEquals("Params field " + field + " type "
+                + paramDefine.getType() + " over limit " + limit, e.getMessage());
     }
 
     /**
@@ -1033,12 +1023,12 @@ class MonitorServiceTest {
                     "Params field " + field + " value " + value + " is invalid host value."))
                     .when(paramValidatorManager).validate(any(), any());
         }
-        try {
-            monitorService.validate(dto, isModify);
-        } catch (IllegalArgumentException e) {
-            if (checkException) {
-                assertEquals("Params field " + field + " value " + value + " is invalid host value.", e.getMessage());
-            }
+        if (checkException) {
+            IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                    () -> monitorService.validate(dto, isModify));
+            assertEquals("Params field " + field + " value " + value + " is invalid host value.", e.getMessage());
+        } else {
+            assertDoesNotThrow(() -> monitorService.validate(dto, isModify));
         }
     }
 
@@ -1079,13 +1069,13 @@ class MonitorServiceTest {
             doThrow(new IllegalArgumentException("Params field " + field + " value "
                     + value + " is invalid boolean value.")).when(paramValidatorManager).validate(any(), any());
         }
-        try {
-            monitorService.validate(dto, isModify);
-        } catch (IllegalArgumentException e) {
-            if (checkException) {
-                assertEquals("Params field " + field + " value "
-                        + value + " is invalid boolean value.", e.getMessage());
-            }
+        if (checkException) {
+            IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                    () -> monitorService.validate(dto, isModify));
+            assertEquals("Params field " + field + " value "
+                    + value + " is invalid boolean value.", e.getMessage());
+        } else {
+            assertDoesNotThrow(() -> monitorService.validate(dto, isModify));
         }
     }
 
@@ -1131,13 +1121,13 @@ class MonitorServiceTest {
                     + param.getParamValue() + " is invalid option value")).when(paramValidatorManager)
                     .validate(any(), any());
         }
-        try {
-            monitorService.validate(dto, isModify);
-        } catch (IllegalArgumentException e) {
-            if (checkException) {
-                assertEquals("Params field " + field + " value "
-                        + param.getParamValue() + " is invalid option value", e.getMessage());
-            }
+        if (checkException) {
+            IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                    () -> monitorService.validate(dto, isModify));
+            assertEquals("Params field " + field + " value "
+                    + param.getParamValue() + " is invalid option value", e.getMessage());
+        } else {
+            assertDoesNotThrow(() -> monitorService.validate(dto, isModify));
         }
     }
 
@@ -1182,12 +1172,12 @@ class MonitorServiceTest {
             doThrow(new IllegalArgumentException("ParamDefine type " + paramDefine.getType() + " is invalid."))
                     .when(paramValidatorManager).validate(any(), any());
         }
-        try {
-            monitorService.validate(dto, isModify);
-        } catch (IllegalArgumentException e) {
-            if (checkException) {
-                assertEquals("ParamDefine type " + paramDefine.getType() + " is invalid.", e.getMessage());
-            }
+        if (checkException) {
+            IllegalArgumentException e = assertThrows(IllegalArgumentException.class,
+                    () -> monitorService.validate(dto, isModify));
+            assertEquals("ParamDefine type " + paramDefine.getType() + " is invalid.", e.getMessage());
+        } else {
+            assertDoesNotThrow(() -> monitorService.validate(dto, isModify));
         }
     }
 
@@ -1284,22 +1274,18 @@ class MonitorServiceTest {
                 .id(monitorId).build();
         dto.setMonitor(monitor);
         when(monitorDao.findById(monitorId)).thenReturn(Optional.empty());
-        try {
-            monitorService.modifyMonitor(dto.getMonitor(), dto.getParams(), null, null);
-        } catch (IllegalArgumentException e) {
-            assertEquals("The Monitor " + monitorId + " not exists", e.getMessage());
-        }
+        IllegalArgumentException notExists = assertThrows(IllegalArgumentException.class,
+                () -> monitorService.modifyMonitor(dto.getMonitor(), dto.getParams(), null, null));
+        assertEquals("The Monitor " + monitorId + " not exists", notExists.getMessage());
         reset();
         /*
          * The [monitoring type] of monitor cannot be modified.
          */
         Monitor existErrorMonitor = Monitor.builder().app("app2").name("memory").instance("host").id(monitorId).build();
         when(monitorDao.findById(monitorId)).thenReturn(Optional.of(existErrorMonitor));
-        try {
-            monitorService.modifyMonitor(dto.getMonitor(), dto.getParams(), null, null);
-        } catch (IllegalArgumentException e) {
-            assertEquals("Can not modify monitor's app type", e.getMessage());
-        }
+        IllegalArgumentException appTypeChanged = assertThrows(IllegalArgumentException.class,
+                () -> monitorService.modifyMonitor(dto.getMonitor(), dto.getParams(), null, null));
+        assertEquals("Can not modify monitor's app type", appTypeChanged.getMessage());
         reset();
         Monitor existOkMonitor = Monitor.builder().jobId(1L).intervals(10).app("app").name("memory").instance("host")
                 .id(monitorId).build();
