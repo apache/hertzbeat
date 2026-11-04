@@ -166,6 +166,13 @@ public class MetricsDataServiceImpl implements MetricsDataService {
     public MetricsHistoryData getMetricHistoryData(String instance, String app, String metrics, String metric,
                                                    String history, Boolean interval, Long start, Long end,
                                                    String step) {
+        return getMetricHistoryData(null, instance, app, metrics, metric, history, interval, start, end, step);
+    }
+
+    @Override
+    public MetricsHistoryData getMetricHistoryData(Long monitorId, String instance, String app, String metrics,
+                                                   String metric, String history, Boolean interval, Long start,
+                                                   Long end, String step) {
         if (history == null) {
             history = DEFAULT_HISTORY;
         }
@@ -183,14 +190,20 @@ public class MetricsDataServiceImpl implements MetricsDataService {
         String effectiveStep = normalizeStep(step);
         Map<String, List<Value>> instanceValuesMap;
         if (interval == null || !interval) {
-            if (effectiveStart == null && effectiveEnd == null && effectiveStep == null) {
+            if (monitorId != null) {
+                instanceValuesMap = historyDataReader.getHistoryMetricData(monitorId, instance, app, metrics, metric,
+                        history, effectiveStart, effectiveEnd, effectiveStep);
+            } else if (effectiveStart == null && effectiveEnd == null && effectiveStep == null) {
                 instanceValuesMap = historyDataReader.getHistoryMetricData(instance, app, metrics, metric, history);
             } else {
                 instanceValuesMap = historyDataReader.getHistoryMetricData(instance, app, metrics, metric, history,
                         effectiveStart, effectiveEnd, effectiveStep);
             }
         } else {
-            if (effectiveStart == null && effectiveEnd == null && effectiveStep == null) {
+            if (monitorId != null) {
+                instanceValuesMap = historyDataReader.getHistoryIntervalMetricData(monitorId, instance, app, metrics,
+                        metric, history, effectiveStart, effectiveEnd, effectiveStep);
+            } else if (effectiveStart == null && effectiveEnd == null && effectiveStep == null) {
                 instanceValuesMap = historyDataReader.getHistoryIntervalMetricData(instance, app, metrics, metric,
                         history);
             } else {
