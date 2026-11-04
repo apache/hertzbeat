@@ -241,6 +241,17 @@ public final class AesUtil {
             try {
                 byte[] byteDecode = getBytes(text, decryptKey);
                 return byteDecode != null;
+            } catch (BadPaddingException e) {
+                // Mirror aesDecode: data encoded with the default secret key must still be
+                // recognized while a custom key is configured.
+                if (!DEFAULT_ENCODE_RULES.equals(decryptKey)) {
+                    try {
+                        return getBytes(text, DEFAULT_ENCODE_RULES) != null;
+                    } catch (Exception fallbackError) {
+                        log.warn("isCiphertext method error: {}", fallbackError.getMessage());
+                    }
+                }
+                return false;
             } catch (Exception e) {
                 log.warn("isCiphertext method error: {}", e.getMessage());
                 return false;
