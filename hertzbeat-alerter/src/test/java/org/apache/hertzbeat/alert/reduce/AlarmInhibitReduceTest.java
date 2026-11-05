@@ -465,6 +465,113 @@ class AlarmInhibitReduceTest {
         assertEquals(1, invocations.get());
     }
 
+    @Test
+    void testInhibitWithMultiValuePipeSeparatedTargetLabels() {
+        AlertInhibit rule = AlertInhibit.builder()
+                .id(100L)
+                .name("multi_val_pipe_rule")
+                .enable(true)
+                .sourceLabels(createLabels("severity", "critical"))
+                .targetLabels(createLabels("severity", "warning|info"))
+                .equalLabels(Collections.singletonList("instance"))
+                .build();
+        alarmInhibitReduce.refreshInhibitRules(List.of(rule));
+
+        GroupAlert source = createGroupAlert("firing",
+                createLabels("severity", "critical", "instance", "host1"),
+                List.of(createSingleAlert("firing", "fp-source",
+                        createLabels("severity", "critical", "instance", "host1"))));
+        alarmInhibitReduce.inhibitAlarm(source);
+        verify(alarmSilenceReduce).silenceAlarm(source);
+
+        GroupAlert targetWarning = createGroupAlert("firing",
+                createLabels("severity", "warning", "instance", "host1"),
+                new ArrayList<>(List.of(createSingleAlert("firing", "fp-target-w",
+                        createLabels("severity", "warning", "instance", "host1")))));
+        alarmInhibitReduce.inhibitAlarm(targetWarning);
+        assertTrue(targetWarning.getAlerts().isEmpty());
+        verify(alarmSilenceReduce, never()).silenceAlarm(targetWarning);
+
+        GroupAlert targetInfo = createGroupAlert("firing",
+                createLabels("severity", "info", "instance", "host1"),
+                new ArrayList<>(List.of(createSingleAlert("firing", "fp-target-i",
+                        createLabels("severity", "info", "instance", "host1")))));
+        alarmInhibitReduce.inhibitAlarm(targetInfo);
+        assertTrue(targetInfo.getAlerts().isEmpty());
+        verify(alarmSilenceReduce, never()).silenceAlarm(targetInfo);
+
+        GroupAlert targetNotice = createGroupAlert("firing",
+                createLabels("severity", "notice", "instance", "host1"),
+                new ArrayList<>(List.of(createSingleAlert("firing", "fp-target-n",
+                        createLabels("severity", "notice", "instance", "host1")))));
+        alarmInhibitReduce.inhibitAlarm(targetNotice);
+        assertEquals(1, targetNotice.getAlerts().size());
+        verify(alarmSilenceReduce).silenceAlarm(targetNotice);
+    }
+
+    @Test
+    void testInhibitWithMultiValueCommaSeparatedTargetLabels() {
+        AlertInhibit rule = AlertInhibit.builder()
+                .id(101L)
+                .name("multi_val_comma_rule")
+                .enable(true)
+                .sourceLabels(createLabels("severity", "critical"))
+                .targetLabels(createLabels("severity", "warning, info"))
+                .equalLabels(Collections.singletonList("instance"))
+                .build();
+        alarmInhibitReduce.refreshInhibitRules(List.of(rule));
+
+        GroupAlert source = createGroupAlert("firing",
+                createLabels("severity", "critical", "instance", "host2"),
+                List.of(createSingleAlert("firing", "fp-src-2",
+                        createLabels("severity", "critical", "instance", "host2"))));
+        alarmInhibitReduce.inhibitAlarm(source);
+        verify(alarmSilenceReduce).silenceAlarm(source);
+
+        GroupAlert target = createGroupAlert("firing",
+                createLabels("severity", "info", "instance", "host2"),
+                new ArrayList<>(List.of(createSingleAlert("firing", "fp-tgt-2",
+                        createLabels("severity", "info", "instance", "host2")))));
+        alarmInhibitReduce.inhibitAlarm(target);
+        assertTrue(target.getAlerts().isEmpty());
+        verify(alarmSilenceReduce, never()).silenceAlarm(target);
+    }
+
+    @Test
+    void testInhibitWithRegexTargetLabels() {
+        AlertInhibit rule = AlertInhibit.builder()
+                .id(102L)
+                .name("regex_rule")
+                .enable(true)
+                .sourceLabels(createLabels("severity", "critical"))
+                .targetLabels(createLabels("instance", "web-0[1-9]"))
+                .build();
+        alarmInhibitReduce.refreshInhibitRules(List.of(rule));
+
+        GroupAlert source = createGroupAlert("firing",
+                createLabels("severity", "critical"),
+                List.of(createSingleAlert("firing", "fp-src-regex",
+                        createLabels("severity", "critical"))));
+        alarmInhibitReduce.inhibitAlarm(source);
+        verify(alarmSilenceReduce).silenceAlarm(source);
+
+        GroupAlert matchingTarget = createGroupAlert("firing",
+                createLabels("instance", "web-03"),
+                new ArrayList<>(List.of(createSingleAlert("firing", "fp-tgt-regex-match",
+                        createLabels("instance", "web-03")))));
+        alarmInhibitReduce.inhibitAlarm(matchingTarget);
+        assertTrue(matchingTarget.getAlerts().isEmpty());
+        verify(alarmSilenceReduce, never()).silenceAlarm(matchingTarget);
+
+        GroupAlert nonMatchingTarget = createGroupAlert("firing",
+                createLabels("instance", "db-01"),
+                new ArrayList<>(List.of(createSingleAlert("firing", "fp-tgt-regex-nonmatch",
+                        createLabels("instance", "db-01")))));
+        alarmInhibitReduce.inhibitAlarm(nonMatchingTarget);
+        assertEquals(1, nonMatchingTarget.getAlerts().size());
+        verify(alarmSilenceReduce).silenceAlarm(nonMatchingTarget);
+    }
+
     private GroupAlert createGroupAlert(String status, Map<String, String> labels, List<SingleAlert> alerts) {
         return createGroupAlert(AuthTokenScopes.DEFAULT_WORKSPACE_ID, status, labels, alerts);
     }
@@ -475,7 +582,7 @@ class AlarmInhibitReduceTest {
                 .workspaceId(workspaceId)
                 .status(status)
                 .commonLabels(labels)
-                .alerts(alerts)
+                .alerts(alerts == null ? new ArrayList<>() : new ArrayList<>(alerts))
                 .build();
     }
 
