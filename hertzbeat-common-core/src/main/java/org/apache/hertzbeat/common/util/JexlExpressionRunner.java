@@ -39,9 +39,9 @@ import tools.jackson.core.type.TypeReference;
 public class JexlExpressionRunner {
 
     private static final String LOADER_NAME = "jexl-class-loader";
-    private static final JexlEngine jexlEngine;
+    private static final JexlEngine jexlEngine = createJexlBuilder().create();
 
-    static {
+    static JexlBuilder createJexlBuilder() {
         Map<String, Object> functions = Maps.newLinkedHashMap();
         // set the root namespace function
         functions.put(null, new JexlCommonFunction());
@@ -55,9 +55,8 @@ public class JexlExpressionRunner {
         JexlFeatures features = new JexlFeatures();
         features.annotation(false).loops(false).pragma(false)
                 .methodCall(false).lambda(false).newInstance(false).register(false);
-        jexlEngine = new JexlBuilder().charset(StandardCharsets.UTF_8).cache(256).loader(classLoader)
-                .features(features).strict(true).silent(false).stackOverflow(40).namespaces(functions)
-                .create();
+        return new JexlBuilder().charset(StandardCharsets.UTF_8).cache(256).cacheThreshold(1024).loader(classLoader)
+                .features(features).strict(true).silent(false).stackOverflow(40).namespaces(functions);
     }
 
     public static Object evaluate(String expression, Map<String, Object> context) {

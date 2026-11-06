@@ -27,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.jexl3.JexlBuilder;
 import org.apache.commons.jexl3.JexlExpression;
 import org.junit.jupiter.api.Test;
 
@@ -56,6 +57,13 @@ public class JexlExpressionRunnerTest {
         JexlExpression expObj = JexlExpressionRunner.compile(expression);
         assertNotNull(expObj);
         assertEquals(3, JexlExpressionRunner.evaluate(expObj, context));
+    }
+
+    @Test
+    void configuresCacheThresholdForLongExpressions() {
+        JexlBuilder builder = JexlExpressionRunner.createJexlBuilder();
+
+        assertEquals(1024, builder.cacheThreshold());
     }
 
     @Test
