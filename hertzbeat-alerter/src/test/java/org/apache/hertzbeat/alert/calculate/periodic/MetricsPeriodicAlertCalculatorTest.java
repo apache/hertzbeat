@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.alert.calculate.periodic;
 
 import org.apache.hertzbeat.alert.calculate.AlarmCacheManager;
+import org.apache.hertzbeat.alert.dao.SingleAlertDao;
 import org.apache.hertzbeat.alert.reduce.AlarmCommonReduce;
 import org.apache.hertzbeat.alert.service.DataSourceService;
 import org.apache.hertzbeat.common.constants.CommonConstants;
@@ -40,11 +41,15 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -104,6 +109,61 @@ class MetricsPeriodicAlertCalculatorTest {
         SingleAlert alert = alertCaptor.getValue();
         assertAll(() -> assertEquals(CommonConstants.ALERT_STATUS_FIRING, alert.getStatus()),
                 () -> assertEquals("High CPU usage (95.0%)", alert.getContent()));
+    }
+
+    @Test
+    void testFiringAlertNotRecreatedOrResentOnSubsequentMatches() throws Exception {
+        AlarmCacheManager cacheManager = spy(new AlarmCacheManager(mock(SingleAlertDao.class)));
+        MetricsPeriodicAlertCalculator calculator =
+                new MetricsPeriodicAlertCalculator(dataSourceService, alarmCommonReduce, cacheManager);
+        when(dataSourceService.calculate(anyString(), anyString()))
+                .thenAnswer(invocation -> List.of(matchedResult()));
+
+        calculator.calculate(rule);
+        SingleAlert firstFiring = cacheManager.getFiringAlerts(rule.getId()).values().iterator().next();
+        long firstStartAt = firstFiring.getStartAt();
+
+        Thread.sleep(5);
+        calculator.calculate(rule);
+        calculator.calculate(rule);
+
+        SingleAlert currentFiring = cacheManager.getFiringAlerts(rule.getId()).values().iterator().next();
+        assertSame(firstFiring, currentFiring);
+        assertEquals(firstStartAt, currentFiring.getStartAt());
+        assertTrue(currentFiring.getActiveAt() > firstStartAt);
+        verify(cacheManager, times(1)).putFiring(eq(rule.getId()), anyString(), any());
+        verify(alarmCommonReduce, times(1)).reduceAndSendAlarm(any());
+    }
+
+    @Test
+    void testFiringAlertDoesNotReturnToPendingWhenTimesGreaterThanOne() {
+        rule.setTimes(2);
+        AlarmCacheManager cacheManager = spy(new AlarmCacheManager(mock(SingleAlertDao.class)));
+        MetricsPeriodicAlertCalculator calculator =
+                new MetricsPeriodicAlertCalculator(dataSourceService, alarmCommonReduce, cacheManager);
+        when(dataSourceService.calculate(anyString(), anyString()))
+                .thenAnswer(invocation -> List.of(matchedResult()));
+
+        calculator.calculate(rule);
+        verify(alarmCommonReduce, never()).reduceAndSendAlarm(any());
+        calculator.calculate(rule);
+        verify(alarmCommonReduce, times(1)).reduceAndSendAlarm(any());
+
+        for (int i = 0; i < 4; i++) {
+            calculator.calculate(rule);
+        }
+        assertTrue(cacheManager.getPendingAlerts(rule.getId()).isEmpty());
+        assertEquals(1, cacheManager.getFiringAlerts(rule.getId()).size());
+        verify(cacheManager, times(1)).putPending(eq(rule.getId()), anyString(), any());
+        verify(alarmCommonReduce, times(1)).reduceAndSendAlarm(any());
+    }
+
+    private static Map<String, Object> matchedResult() {
+        Map<String, Object> result = new HashMap<>();
+        result.put("__value__", 95.0);
+        result.put("__timestamp__", System.currentTimeMillis());
+        result.put("instance", "node-1");
+        return result;
     }
 
     @Test
