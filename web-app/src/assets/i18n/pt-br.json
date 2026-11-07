@@ -1768,6 +1768,7 @@
     "storageDegraded": "O armazenamento histórico está degradado. Os gráficos disponíveis podem estar incompletos.",
     "storageUnknown": "A disponibilidade do armazenamento histórico é desconhecida.",
     "saveImage": "Salvar imagem do gráfico",
+    "saveImageError": "Não foi possível salvar a imagem do gráfico. Tente novamente.",
     "favorites": "Favoritos",
     "favoriteEmpty": "Nenhuma métrica favorita foi salva.",
     "favoriteSelect": "Selecione uma métrica favorita para consultar os dados.",
