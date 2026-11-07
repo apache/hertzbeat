@@ -66,7 +66,7 @@ export function MonitorRealtimeTable({
           onSelectMetric={onSelectMetric}
         />
       ) : (
-        <MatrixRealtimeTable rows={rows} pending={pending} group={group} labels={labels} />
+        <MatrixRealtimeTable key={group} rows={rows} pending={pending} group={group} labels={labels} />
       )}
     </div>
   );

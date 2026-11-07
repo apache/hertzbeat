@@ -17,9 +17,12 @@
 
 package org.apache.hertzbeat.ai.gateway.runtime.provider;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Locale;
+import java.util.Objects;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeModelRequest;
+import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeProperties;
 import org.apache.hertzbeat.ai.gateway.runtime.HertzBeatModel;
 import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
 import org.springframework.ai.chat.prompt.ChatOptions;
@@ -37,19 +40,33 @@ import org.springframework.util.StringUtils;
 @ConditionalOnClass(OpenAiChatModel.class)
 public class OpenAiCompatibleAgentModelProvider implements AgentModelProvider {
 
-    private final io.micrometer.observation.ObservationRegistry observationRegistry;
+    public static final String TYPE = "openai-compatible";
 
-    public OpenAiCompatibleAgentModelProvider() {
-        this.observationRegistry = io.micrometer.observation.ObservationRegistry.NOOP;
-    }
+    private final io.micrometer.observation.ObservationRegistry observationRegistry;
+    private final AgentRuntimeProperties runtimeProperties;
 
     @org.springframework.beans.factory.annotation.Autowired
     public OpenAiCompatibleAgentModelProvider(
+            AgentRuntimeProperties runtimeProperties,
             org.springframework.beans.factory.ObjectProvider<io.micrometer.observation.ObservationRegistry> registry) {
-        this.observationRegistry = registry.getIfAvailable(() -> io.micrometer.observation.ObservationRegistry.NOOP);
+        this(runtimeProperties, registry.getIfAvailable(() -> io.micrometer.observation.ObservationRegistry.NOOP));
     }
 
-    public static final String TYPE = "openai-compatible";
+    public OpenAiCompatibleAgentModelProvider(
+            AgentRuntimeProperties runtimeProperties,
+            io.micrometer.observation.ObservationRegistry registry) {
+        this.runtimeProperties = Objects.requireNonNull(runtimeProperties, "runtimeProperties must not be null");
+        this.observationRegistry = Objects.requireNonNullElse(
+                registry, io.micrometer.observation.ObservationRegistry.NOOP);
+    }
+
+    public OpenAiCompatibleAgentModelProvider(AgentRuntimeProperties runtimeProperties) {
+        this(runtimeProperties, io.micrometer.observation.ObservationRegistry.NOOP);
+    }
+
+    private Duration streamIdleTimeout() {
+        return runtimeProperties.getModelStreamIdleTimeout();
+    }
 
     private static final String DEFAULT_OPENAI_BASE_URL = "https://api.openai.com/v1";
     private static final String DEFAULT_OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1";
@@ -98,8 +115,11 @@ public class OpenAiCompatibleAgentModelProvider implements AgentModelProvider {
                 .baseUrl(config.getBaseUrl())
                 .apiKey(config.getApiKey())
                 .model(config.getModel())
+                // Provider-internal retries hide failures from the runtime loop; retries and their
+                // user-visible MODEL_RETRY progress are owned by AgentRuntimeLoop instead.
+                .maxRetries(0)
                 .build();
-        OpenAiStreamBridge chatModel = new OpenAiStreamBridge(defaultOptions, observationRegistry);
+        OpenAiStreamBridge chatModel = new OpenAiStreamBridge(defaultOptions, streamIdleTimeout(), observationRegistry);
         return new HertzBeatModel(chatModel,
                 (request, toolCallbacks) -> requestOptions(config, request, toolCallbacks), AgentModelBinding.of(config));
     }
@@ -124,7 +144,9 @@ public class OpenAiCompatibleAgentModelProvider implements AgentModelProvider {
             return builder.build();
         }
         OpenAiChatOptions.Builder builder = OpenAiChatOptions.builder()
-                .model(config.getModel());
+                .model(config.getModel())
+                // Per-request options must not resurrect the SDK default retry policy (3 hidden attempts).
+                .maxRetries(0);
         if (request.getTemperature() != null) {
             builder.temperature(request.getTemperature());
         }

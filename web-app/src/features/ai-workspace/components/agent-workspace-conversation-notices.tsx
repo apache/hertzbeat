@@ -16,11 +16,15 @@
  */
 
 import { Button } from 'antd';
+import { useEffect, useState } from 'react';
 import { executionIdentity } from './agent-workspace-format';
 import { useTranslation } from 'react-i18next';
+import type { AgentModelRetry } from '../model/agent-workspace-retry';
 import type { AgentWorkspaceViewModel } from '../model/agent-workspace-view-model';
-import styles from './agent-workspace-conversation.module.css';
+import noticeStyles from './agent-workspace-conversation-notices.module.css';
 import executionStyles from './agent-workspace-execution.module.css';
+
+const retryCountdownIntervalMs = 250;
 
 export function ConversationNotices({ controller }: { controller: AgentWorkspaceViewModel }) {
   const { t } = useTranslation();
@@ -28,6 +32,7 @@ export function ConversationNotices({ controller }: { controller: AgentWorkspace
   return (
     <>
       {sessionLoadIncomplete ? <ConversationFailure message={t('aiWorkspace.sessionLoadIncomplete')} /> : null}
+      {retryRow(controller)}
       {showRunFailure(controller) ? (
         <ConversationFailure
           key={`failure:${executionIdentity(controller)}`}
@@ -74,6 +79,42 @@ function showPausedObservation(controller: AgentWorkspaceViewModel) {
   return !controller.invalidTarget && controller.run.status === 'running' && controller.run.observationExpired === true;
 }
 
+function retryRow(controller: AgentWorkspaceViewModel) {
+  const modelRetry = controller.run.modelRetry;
+  const active = !controller.invalidTarget && controller.run.status === 'running' && Boolean(modelRetry);
+  if (!active || !modelRetry) return null;
+  // Remount per attempt so the countdown restarts from the new delay without a stale frame.
+  return <ConversationRetrying key={modelRetry.attempt} modelRetry={modelRetry} />;
+}
+
+function ConversationRetrying({ modelRetry }: { modelRetry: AgentModelRetry }) {
+  const { t } = useTranslation();
+  const [remainingMs, setRemainingMs] = useState(modelRetry.delayMs ?? 0);
+  useEffect(() => {
+    if (modelRetry.delayMs === undefined) return;
+    // Count down from the moment this wait started; a fresh event object restarts the epoch.
+    const delay = modelRetry.delayMs;
+    const startedAt = Date.now();
+    const timer = window.setInterval(() => {
+      setRemainingMs(Math.max(0, delay - (Date.now() - startedAt)));
+    }, retryCountdownIntervalMs);
+    return () => window.clearInterval(timer);
+  }, [modelRetry]);
+  const reason = modelRetry.errorMessage || t('aiWorkspace.modelRetryUnknownReason');
+  const attempt = modelRetry.attempt ?? 1;
+  const maxAttempts = modelRetry.maxAttempts ?? 1;
+  const delaySeconds = Math.ceil(remainingMs / 1000);
+  return (
+    <div className={noticeStyles.failure} role="status" data-tone="progress">
+      <span>
+        {delaySeconds <= 0
+          ? t('aiWorkspace.modelRetryingNoDelay', { reason, attempt, maxAttempts })
+          : t('aiWorkspace.modelRetrying', { reason, delay: delaySeconds, attempt, maxAttempts })}
+      </span>
+    </div>
+  );
+}
+
 function runFailureMessage(controller: AgentWorkspaceViewModel, t: ReturnType<typeof useTranslation>['t']) {
   if (controller.run.recoveryRequired) return t('aiWorkspace.recoveryRequired');
   if (controller.run.targetFailure === 'mismatch') return t('aiWorkspace.targetMismatch');
@@ -115,7 +156,7 @@ function ConversationFailure({
 }) {
   const { t } = useTranslation();
   return (
-    <div className={styles.failure} role="alert">
+    <div className={noticeStyles.failure} role="alert">
       <div>
         <span>{message || t('aiWorkspace.failure')}</span>
         {technical ? (
@@ -143,7 +184,7 @@ function ConversationPaused({
 }) {
   const { t } = useTranslation();
   return (
-    <div className={styles.failure} role="status">
+    <div className={noticeStyles.failure} role="status">
       <span>{t('aiWorkspace.activeObservationPaused')}</span>
       {recoveryAvailable ? (
         <Button size="small" onClick={() => void recover()}>

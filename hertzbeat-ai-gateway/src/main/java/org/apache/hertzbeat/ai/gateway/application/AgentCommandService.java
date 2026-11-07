@@ -175,94 +175,51 @@ public class AgentCommandService {
         AtomicBoolean completed = new AtomicBoolean();
         AssistantCompletionTracker assistantCompletion = new AssistantCompletionTracker();
         AgentGatewayLifecycleRelay relay = new AgentGatewayLifecycleRelay(request.getRun().getRunUid());
-        Flux<GatewayEvent> lifecycle =
-                Flux.defer(() -> runtimeService.streamInvoke(request))
-                        .map(
-                                event -> {
-                                    GatewayEvent gatewayEvent =
-                                            runtimeEventProjector.project(
-                                                    event,
-                                                    conversationId,
-                                                    request.getSession().getSessionUid(),
-                                                    request.getRun().getRunUid());
-                                    assistantCompletion.observe(event);
-                                    try {
-                                        completeInvocationOnTerminalEvent(
-                                                request.getRun(),
-                                                event,
-                                                completed,
-                                                assistantCompletion,
-                                                reliableFinalResult);
-                                    } catch (Error error) {
-                                        if (isFatalJvmError(error)) {
-                                            completed.set(true);
-                                            relay.fail(error);
-                                        }
-                                        throw error;
-                                    }
-                                    return gatewayEvent;
-                                })
-                        .transformDeferred(
-                                events -> {
-                                    AgentGatewayMessageBuffer messages =
-                                            new AgentGatewayMessageBuffer();
-                                    return events.concatMapIterable(messages::accept)
-                                            .doFinally(ignored -> messages.clear());
-                                })
-                        .onErrorResume(
-                                exception -> {
-                                    if (exception instanceof Error error
-                                            && isFatalJvmError(error)) {
-                                        completed.set(true);
-                                        return Flux.error(error);
-                                    }
-                                    if (exception
-                                            instanceof
-                                            RecoveryRequiredPersistenceException recoveryFailure) {
-                                        return Flux.just(
-                                                recoveryRequiredErrorEvent(
-                                                        command,
-                                                        request,
-                                                        conversationId,
-                                                        recoveryFailure.operatorMessage()));
-                                    }
-                                    log.debug(
-                                            "Agent Gateway runtime failed for run {}",
-                                            request.getRun().getRunUid(),
-                                            exception);
-                                    failInvocationIfIncomplete(
-                                            request.getRun(),
-                                            completed,
-                                            "Agent Gateway runtime failed.");
-                                    return Flux.just(
-                                            errorEvent(
-                                                    command,
-                                                    request,
-                                                    conversationId,
-                                                    "Agent Gateway runtime failed."));
-                                })
-                        .concatWith(
-                                Flux.defer(
-                                        () -> {
-                                            if (completed.get()) {
-                                                return Flux.empty();
-                                            }
-                                            String message =
-                                                    "Agent Gateway runtime stream completed without"
-                                                            + " a terminal event.";
-                                            failInvocationIfIncomplete(
-                                                    request.getRun(), completed, message);
-                                            return Flux.just(
-                                                    errorEvent(
-                                                            command,
-                                                            request,
-                                                            conversationId,
-                                                            message));
-                                        }))
-                        .doFinally(
-                                signalType ->
-                                        completeInvocationIfStreamFinishedWithoutTerminal(
-                                                request.getRun(), signalType, completed));
+        Flux<GatewayEvent> lifecycle = Flux.defer(() -> runtimeService.streamInvoke(request))
+                .map(event -> {
+                    GatewayEvent gatewayEvent = runtimeEventProjector.project(event, conversationId,
+                            request.getSession().getSessionUid(), request.getRun().getRunUid());
+                    assistantCompletion.observe(event);
+                    try {
+                        completeInvocationOnTerminalEvent(request.getRun(), event, completed,
+                                assistantCompletion, reliableFinalResult);
+                    } catch (Error error) {
+                        if (isFatalJvmError(error)) {
+                            completed.set(true);
+                            relay.fail(error);
+                        }
+                        throw error;
+                    }
+                    return gatewayEvent;
+                })
+                .transformDeferred(events -> {
+                    AgentGatewayMessageBuffer messages = new AgentGatewayMessageBuffer();
+                    return events.concatMapIterable(messages::accept).doFinally(ignored -> messages.clear());
+                })
+                .onErrorResume(exception -> {
+                    if (exception instanceof Error error && isFatalJvmError(error)) {
+                        completed.set(true);
+                        return Flux.error(error);
+                    }
+                    if (exception instanceof RecoveryRequiredPersistenceException recoveryFailure) {
+                        return Flux.just(recoveryRequiredErrorEvent(
+                                command, request, conversationId, recoveryFailure.operatorMessage()));
+                    }
+                    log.warn("Agent Gateway runtime failed for run {}", request.getRun().getRunUid(), exception);
+                    failInvocationIfIncomplete(request.getRun(), completed, "Agent Gateway runtime failed.");
+                    return Flux.just(errorEvent(command, request, conversationId,
+                            "Agent Gateway runtime failed."));
+                })
+                .concatWith(Flux.defer(() -> {
+                    if (completed.get()) {
+                        return Flux.empty();
+                    }
+                    String message = "Agent Gateway runtime stream completed without a terminal event.";
+                    failInvocationIfIncomplete(request.getRun(), completed, message);
+                    return Flux.just(errorEvent(command, request, conversationId, message));
+                }))
+                .doFinally(signalType -> completeInvocationIfStreamFinishedWithoutTerminal(request.getRun(),
+                        signalType, completed));
         return relay.connect(lifecycle);
     }
 

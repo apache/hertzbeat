@@ -33,6 +33,7 @@ import org.apache.hertzbeat.ai.gateway.application.GatewayEvent.InputRequestedPa
 import org.apache.hertzbeat.ai.gateway.application.GatewayEvent.InputCompletedPayload;
 import org.apache.hertzbeat.ai.gateway.application.GatewayEvent.MessageDeltaPayload;
 import org.apache.hertzbeat.ai.gateway.application.GatewayEvent.MessageStartedPayload;
+import org.apache.hertzbeat.ai.gateway.application.GatewayEvent.ModelRetryPayload;
 import org.apache.hertzbeat.ai.gateway.application.GatewayEvent.RunCompletedPayload;
 import org.apache.hertzbeat.ai.gateway.application.GatewayEvent.RunStartedPayload;
 import org.apache.hertzbeat.ai.gateway.application.GatewayEvent.ToolCompletedPayload;
@@ -68,6 +69,14 @@ public class GatewayRuntimeEventProjector {
             case RUN_COMPLETED -> gatewayEvent(event, GatewayEventType.RUN_COMPLETED, conversationId, sessionUid,
                     runUid, RunCompletedPayload.builder()
                             .traceId(event.getTraceId())
+                            .build());
+            case MODEL_RETRY -> gatewayEvent(event, GatewayEventType.MODEL_RETRY, conversationId, sessionUid, runUid,
+                    ModelRetryPayload.builder()
+                            .traceId(event.getTraceId())
+                            .attempt(event.getRetryAttempt())
+                            .maxAttempts(event.getRetryMaxAttempts())
+                            .delayMs(event.getRetryDelayMs())
+                            .errorMessage(GatewayText.redactSecrets(event.getErrorMessage()))
                             .build());
             case ERROR -> gatewayEvent(event, GatewayEventType.ERROR, conversationId, sessionUid, runUid,
                     errorPayload(event, event.getErrorMessage()));
@@ -232,7 +241,8 @@ public class GatewayRuntimeEventProjector {
             return eventRunUid + ":event:" + event.getEventSequence();
         }
         String stableId = Stream.of(event.getRequestId(), event.getApprovalId(), event.getItemId(),
-                        event.getToolCallId(), event.getTraceId())
+                        event.getToolCallId(), event.getRetryAttempt() == null ? null : "attempt-"
+                                + event.getRetryAttempt(), event.getTraceId())
                 .filter(StringUtils::hasText)
                 .findFirst()
                 .orElse("event");

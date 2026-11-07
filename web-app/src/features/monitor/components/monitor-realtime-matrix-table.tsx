@@ -16,10 +16,11 @@
  */
 
 import { Table, Tag, type TableColumnsType } from 'antd';
-import type { ReactNode } from 'react';
+import { useState, type ReactNode } from 'react';
 
 import type { monitorRealtimeRows } from '../model/monitor-detail-model';
 import { monitorFieldLabel, type MonitorMetricLabels } from '../model/monitor-metric-labels';
+import { monitorRealtimeDefaultPageSize, monitorRealtimePageSizes } from '../model/monitor-realtime-pagination';
 import styles from './monitor-realtime-table.module.css';
 
 type RealtimeRow = ReturnType<typeof monitorRealtimeRows>[number];
@@ -37,14 +38,32 @@ export function MatrixRealtimeTable({
   labels?: MonitorMetricLabels | undefined;
 }) {
   const { columns, data } = realtimeMatrix(rows, group, labels);
+  const [pagination, setPagination] = useState({ current: 1, pageSize: monitorRealtimeDefaultPageSize });
+  const current = Math.max(1, Math.min(pagination.current, Math.ceil(data.length / pagination.pageSize)));
+  // Store the correction so a later refresh cannot revive an out-of-range page.
+  if (current !== pagination.current) setPagination({ ...pagination, current });
   return (
     <Table
+      className={styles.matrixTable!}
       rowKey="key"
       size="small"
       loading={pending}
       dataSource={data}
       columns={columns}
-      pagination={false}
+      pagination={
+        data.length <= monitorRealtimeDefaultPageSize
+          ? false
+          : {
+              current,
+              pageSize: pagination.pageSize,
+              pageSizeOptions: monitorRealtimePageSizes,
+              showSizeChanger: true,
+              size: 'small',
+              disabled: pending,
+              onChange: (page, pageSize) =>
+                setPagination({ current: pageSize === pagination.pageSize ? page : 1, pageSize })
+            }
+      }
       scroll={{ x: 'max-content' }}
     />
   );

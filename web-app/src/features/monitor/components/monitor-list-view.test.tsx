@@ -31,6 +31,15 @@ describe('MonitorListView evidence states', () => {
   });
   afterEach(cleanup);
 
+  it('keeps management, filters, and selected-row actions in the monitor-only sticky band', () => {
+    renderView({ selectedIds: [7], monitors: { kind: 'empty' } });
+    const band = requireDomElement(document.querySelector('[data-monitor-sticky-toolbar]'), 'Sticky monitor band');
+    expect(band).toContainElement(screen.getByRole('button', { name: i18n.t('monitor.editor.newTitle') }));
+    expect(band).toContainElement(screen.getByRole('search'));
+    expect(band).toContainElement(screen.getByRole('button', { name: i18n.t('monitorActions.clearSelection') }));
+    expect(band).not.toContainElement(document.querySelector('[data-hb-operational-result-region]'));
+  });
+
   it('owns management actions in the header and keeps query actions in one filter band', () => {
     const openCreatePicker = vi.fn();
     const openImport = vi.fn();

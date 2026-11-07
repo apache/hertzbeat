@@ -257,7 +257,8 @@ public class AgentRuntimeService {
                     traceId, AgentToolCompletionIndeterminateException.MESSAGE, Instant.now(clock)));
             completeStream(sink);
         } catch (RuntimeException exception) {
-            log.debug("Agent Gateway runtime stream invocation failed", exception);
+            log.warn("Agent Gateway runtime stream invocation failed for run {}", request.getRun().getRunUid(),
+                    exception);
             publishTerminalEvent(publisher, context, AgentRuntimeEventType.ERROR,
                     "Agent Gateway runtime failed: " + exception.getMessage());
             completeStream(sink);
@@ -266,7 +267,8 @@ public class AgentRuntimeService {
                 signalFatalFailure(sink, error);
                 throw error;
             }
-            log.debug("Agent Gateway runtime stream invocation failed with a non-fatal error");
+            log.warn("Agent Gateway runtime stream invocation failed with a non-fatal error for run {}",
+                    request.getRun().getRunUid());
             publishTerminalEvent(publisher, context, AgentRuntimeEventType.ERROR,
                     "Agent Gateway runtime failed.");
             completeStream(sink);

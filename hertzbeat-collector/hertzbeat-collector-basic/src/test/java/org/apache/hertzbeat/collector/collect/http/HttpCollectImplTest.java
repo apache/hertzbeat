@@ -241,6 +241,56 @@ class HttpCollectImplTest {
     }
 
     @Test
+    void parseResponseByJsonPathFiltersNonPoolObjectsForDynamicTp() throws Exception {
+        // payload from issue #1007: the trailing memory object has no poolName
+        String jsonResponse = "[{\"poolName\":\"ccDtpExecutor\",\"corePoolSize\":6,\"maximumPoolSize\":8,"
+                + "\"queueType\":\"VariableLinkedBlockingQueue\",\"queueCapacity\":200,\"queueSize\":0,"
+                + "\"fair\":false,\"queueRemainingCapacity\":200,\"activeCount\":0,\"taskCount\":24,"
+                + "\"completedTaskCount\":24,\"largestPoolSize\":6,\"poolSize\":6,\"waitTaskCount\":0,"
+                + "\"rejectCount\":0,\"rejectHandlerName\":\"CallerRunsPolicy\",\"dynamic\":true,"
+                + "\"runTimeoutCount\":0,\"queueTimeoutCount\":0},"
+                + "{\"maxMemory\":\"7.07 GB\",\"totalMemory\":\"1.19 GB\",\"freeMemory\":\"909.54 MB\","
+                + "\"usableMemory\":\"6.77 GB\"}]";
+        byte[] responseBytes = jsonResponse.getBytes(StandardCharsets.UTF_8);
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        server.createContext("/actuator/dynamic-tp", exchange -> {
+            exchange.getResponseHeaders().add("Content-Type", "application/json");
+            exchange.sendResponseHeaders(200, responseBytes.length);
+            exchange.getResponseBody().write(responseBytes);
+            exchange.close();
+        });
+        server.start();
+
+        try {
+            List<String> aliasFields = Lists.newArrayList("poolName", "queueCapacity", "queueSize",
+                    "queueRemainingCapacity", "activeCount", "taskCount", "completedTaskCount",
+                    "largestPoolSize", "poolSize", "waitTaskCount", "rejectCount", "runTimeoutCount",
+                    "queueTimeoutCount");
+            for (String[] scriptAndRows : new String[][]{{"$[?(@.poolName)]", "1"}, {"$.*", "2"}}) {
+                HttpProtocol http = HttpProtocol.builder()
+                        .method("GET")
+                        .host("127.0.0.1")
+                        .port(String.valueOf(server.getAddress().getPort()))
+                        .url("/actuator/dynamic-tp")
+                        .parseType(DispatchConstants.PARSE_JSON_PATH)
+                        .parseScript(scriptAndRows[0])
+                        .build();
+                Metrics metrics = Metrics.builder().http(http).aliasFields(aliasFields).build();
+                CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+
+                httpCollectImpl.collect(builder, metrics);
+
+                // '$.*' (old template script) also yields a row for the memory object
+                assertEquals(Integer.parseInt(scriptAndRows[1]), builder.getValuesCount(), scriptAndRows[0]);
+                assertEquals("ccDtpExecutor", builder.getValues(0).getColumns(0));
+                assertEquals("200", builder.getValues(0).getColumns(1));
+            }
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
     void parseResponseByXmlPathFallsBackToUtf8ForUnsupportedXmlEncoding() throws Exception {
         String xmlResponse = """
                 <?xml version="1.0" encoding="UNKNOWN-CHARSET"?>

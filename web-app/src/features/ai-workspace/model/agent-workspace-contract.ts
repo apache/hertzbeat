@@ -169,6 +169,7 @@ export const agentGatewayEventTypes = [
   'INPUT_COMPLETED',
   'APPROVAL_REQUESTED',
   'APPROVAL_COMPLETED',
+  'MODEL_RETRY',
   'RUN_STATUS',
   'RUN_COMPLETED',
   'ERROR'

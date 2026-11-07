@@ -17,6 +17,7 @@
 
 import type { AgentApproval, AgentInputRequest, AgentToolActivity, AgentWorkspaceRunState } from './agent-run-state';
 import type { AgentGatewayEvent } from './agent-workspace-contract';
+import { clearModelRetry } from './agent-workspace-retry';
 import type { AgentRunMessage } from './agent-run-message';
 import type { AgentMessagePart } from './agent-message-parts';
 import { isAgentApprovalSummary } from './agent-approval-summary';
@@ -66,7 +67,7 @@ export function reduceMessageEvent(
   const id = event.itemId ?? event.eventId;
   switch (event.type) {
     case 'MESSAGE_STARTED':
-      return { ...state, messages: upsertMessage(state.messages, id, '') };
+      return { ...clearModelRetry(state), messages: upsertMessage(state.messages, id, '') };
     case 'MESSAGE_DELTA':
       return { ...state, messages: appendMessage(state.messages, id, stringField(event.payload, 'delta')) };
     case 'MESSAGE_COMPLETED':

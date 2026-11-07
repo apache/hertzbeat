@@ -15,9 +15,9 @@
  * limitations under the License.
  */
 
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { AgentWorkspaceMessage } from './agent-workspace-message';
 import { AgentExecutionSummary } from './agent-execution-summary';
-import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
@@ -812,6 +812,69 @@ describe('AgentWorkspaceView', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Check same run' }));
     expect(controller.actions.recover).toHaveBeenCalledOnce();
     expect(screen.queryByRole('button', { name: 'Start new run' })).not.toBeInTheDocument();
+  });
+
+  it('shows retry progress with the provider failure reason while the run stays active', () => {
+    const controller = fixture();
+    controller.run.status = 'running';
+    controller.run.modelRetry = {
+      attempt: 1,
+      maxAttempts: 5,
+      delayMs: 2000,
+      errorMessage: 'HTTP 429: free usage limit reached'
+    };
+
+    render(
+      <I18nextProvider i18n={i18n}>
+        <AgentWorkspaceView
+          controller={controller}
+          isAdmin={false}
+          onOpenProviders={vi.fn()}
+          onOpenSchedules={vi.fn()}
+        />
+      </I18nextProvider>
+    );
+
+    const status = screen.getByText(/Model request failed: HTTP 429/);
+    expect(status).toHaveTextContent('Retrying in 2s');
+    expect(status).toHaveTextContent('1/5');
+  });
+
+  it('counts down the retry delay and switches to the retrying state at zero', () => {
+    vi.useFakeTimers();
+    try {
+      const controller = fixture();
+      controller.run.status = 'running';
+      controller.run.modelRetry = {
+        attempt: 2,
+        maxAttempts: 5,
+        delayMs: 2000,
+        errorMessage: 'HTTP 503'
+      };
+
+      render(
+        <I18nextProvider i18n={i18n}>
+          <AgentWorkspaceView
+            controller={controller}
+            isAdmin={false}
+            onOpenProviders={vi.fn()}
+            onOpenSchedules={vi.fn()}
+          />
+        </I18nextProvider>
+      );
+
+      expect(screen.getByText(/Model request failed: HTTP 503/)).toHaveTextContent('Retrying in 2s');
+      act(() => {
+        vi.advanceTimersByTime(1100);
+      });
+      expect(screen.getByText(/Model request failed: HTTP 503/)).toHaveTextContent('Retrying in 1s');
+      act(() => {
+        vi.advanceTimersByTime(1000);
+      });
+      expect(screen.getByText(/Model request failed: HTTP 503/)).toHaveTextContent('Retrying (2/5)');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('renders an indeterminate completion as a localized manual-check state without retry', () => {

@@ -23,6 +23,8 @@ dist:
 
 # Keep the fixed SDK log API aligned with its exporters and logging bridge.
 replaces:
+  # Fix GO-2026-6865 in the runtime's transitive compression dependency.
+  - github.com/klauspost/compress => github.com/klauspost/compress v1.20.2
   - golang.org/x/text => golang.org/x/text v0.42.0
   - google.golang.org/grpc => google.golang.org/grpc v1.83.2
   - golang.org/x/net => golang.org/x/net v0.60.0

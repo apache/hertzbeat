@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.ai.gateway.runtime.provider;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -42,13 +43,28 @@ final class OpenAiStreamBridge implements StreamingChatModel {
     private final OpenAiChatModel model;
 
     OpenAiStreamBridge(OpenAiChatOptions defaults) {
-        this(defaults, io.micrometer.observation.ObservationRegistry.NOOP);
+        this(defaults, null, io.micrometer.observation.ObservationRegistry.NOOP);
     }
 
-    OpenAiStreamBridge(OpenAiChatOptions defaults, io.micrometer.observation.ObservationRegistry registry) {
+    OpenAiStreamBridge(OpenAiChatOptions defaults, Duration streamIdleTimeout) {
+        this(defaults, streamIdleTimeout, io.micrometer.observation.ObservationRegistry.NOOP);
+    }
+
+    OpenAiStreamBridge(
+            OpenAiChatOptions defaults,
+            Duration streamIdleTimeout,
+            io.micrometer.observation.ObservationRegistry registry) {
         model = OpenAiChatModel.builder().options(withScopeHeader(defaults, null))
                 .observationRegistry(registry)
-                .httpClientBuilderCustomizer(builder -> builder.interceptor(this::intercept)).build();
+                .httpClientBuilderCustomizer(builder -> {
+                    // The HTTP-client read timeout bounds the silence between two stream bytes: an idle-stream
+                    // watchdog for providers that accept the request but never deliver a first token. The SDK
+                    // default falls back to the 10-minute request timeout; unset components keep SDK defaults.
+                    if (streamIdleTimeout != null && !streamIdleTimeout.isZero() && !streamIdleTimeout.isNegative()) {
+                        builder.timeout(com.openai.core.Timeout.builder().read(streamIdleTimeout).build());
+                    }
+                    builder.interceptor(this::intercept);
+                }).build();
     }
 
     @Override

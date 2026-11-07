@@ -453,6 +453,17 @@
   min-width: 0;
 }
 
+/* Keep the monitor command band anchored to the document scrollport. Other
+ * workspaces retain their existing horizontal overflow ownership. */
+.content:has([data-monitor-sticky-toolbar]) {
+  overflow-x: clip;
+  overflow-y: visible;
+}
+
+.content:has([data-monitor-sticky-toolbar]) [data-hb-operational-result-region] {
+  overflow-x: auto;
+}
+
 .content:has([data-hb-operational-page][data-inset='compact']),
 .content:has([data-explore-investigation='true']) {
   padding: 0 16px 16px;

@@ -17,6 +17,7 @@
 
 import { apiStreamFetch } from '@/core/http/http-client';
 import type { AgentChatRequest, AgentGatewayEvent } from '../model/agent-workspace-contract';
+import { agentGatewayEventTypes } from '../model/agent-workspace-contract';
 import { agentGatewayEventSchema, agentSourceTargetSchema } from './agent-gateway-schema';
 import { projectAgentSourceTarget } from './agent-source-target-projection';
 import { readAgentStreamChunk } from './agent-stream-deadline';
@@ -172,7 +173,10 @@ function publishFrame(frame: string, onEvent: (event: AgentGatewayEvent) => void
   } catch {
     throw new AgentGatewayRequestError('contract');
   }
-  const event = parse(agentGatewayEventSchema, value);
+  const event = parse(agentGatewayEventSchema, value) as AgentGatewayEvent;
+  // Forward compatibility: a newer backend may emit event types this UI does not know; skip them
+  // instead of failing the whole stream. Structural violations above still surface as contract errors.
+  if (!agentGatewayEventTypes.includes(event.type)) return false;
   onEvent(event);
   return event.type === 'RUN_COMPLETED';
 }

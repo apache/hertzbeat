@@ -131,15 +131,6 @@
   color: var(--hb-text-secondary);
   font-size: 11px;
 }
-.failure {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--hb-space-3);
-  padding: var(--hb-space-3);
-  border-left: 3px solid var(--hb-status-unavailable);
-  background: var(--hb-bg-raised);
-}
 
 .toolSummary {
   padding: var(--hb-space-1) 0;

@@ -50,6 +50,7 @@ class AgentRuntimePropertiesTest {
                     assertEquals(3, properties.getMaxEquivalentReadCalls());
                     assertEquals(6, properties.getMaxNoProgressReadCalls());
                     assertEquals(Duration.ofSeconds(360), properties.getModelRequestTimeout());
+                    assertEquals(Duration.ofSeconds(120), properties.getModelStreamIdleTimeout());
                     assertEquals(Duration.ofSeconds(180), properties.getToolTimeout());
                     assertEquals(32000, properties.getContext().getMaxTokens());
                     assertEquals(0.9D, properties.getContext().getCompaction().getThresholdRatio());
@@ -58,8 +59,10 @@ class AgentRuntimePropertiesTest {
                     assertEquals(
                             4000, properties.getContext().getCompaction().getSummaryTokenBudget());
                     assertEquals(28800, properties.getContext().compactionThresholdTokens());
-                    assertEquals(2, properties.getRetry().getMaxModelRetries());
-                    assertEquals(Duration.ofMillis(500), properties.getRetry().getInitialBackoff());
+                    assertEquals(5, properties.getRetry().getMaxModelRetries());
+                    assertEquals(Duration.ofSeconds(2), properties.getRetry().getInitialBackoff());
+                    assertEquals(2.0D, properties.getRetry().getBackoffMultiplier());
+                    assertEquals(Duration.ofSeconds(16), properties.getRetry().getMaxBackoff());
                     assertEquals(1024, properties.getStream().getMaxBufferedEvents());
                 });
     }
