@@ -482,4 +482,74 @@ class OnlineParserTest {
         assertNotNull(metricFamilyMap);
         assertEquals(2, metricFamilyMap.size());
     }
+
+    @Test
+    void testParseMetricsAcceptsTabAsTokenSeparator() throws Exception {
+        final String metrics = "up\t1\n"
+                + "http_requests_total{method=\"get\"}\t2\n"
+                + "with_ts \t3\t1700000000000\t\n"
+                + "labels_tab{a\t=\t\"x\",\tb=\"y\"} 4\n";
+
+        final Map<String, MetricFamily> metricFamilyMap = parse(metrics);
+
+        assertNotNull(metricFamilyMap);
+        assertEquals(1.0, metricFamilyMap.get("up").getMetricList().get(0).getValue());
+        assertEquals(2.0, metricFamilyMap.get("http_requests_total").getMetricList().get(0).getValue());
+        assertEquals(3.0, metricFamilyMap.get("with_ts").getMetricList().get(0).getValue());
+        MetricFamily.Metric labelsTab = metricFamilyMap.get("labels_tab").getMetricList().get(0);
+        assertEquals(4.0, labelsTab.getValue());
+        assertEquals("a", labelsTab.getLabels().get(0).getName());
+        assertEquals("x", labelsTab.getLabels().get(0).getValue());
+        assertEquals("b", labelsTab.getLabels().get(1).getName());
+    }
+
+    @Test
+    void testParseMetricsPreservesLabelValueEscapes() throws Exception {
+        final String metrics = "up{newline=\"first\\nsecond\",path=\"C:\\\\data\",quote=\"say \\\"hi\\\"\",unknown=\"\\t\\d\"}\t1\n";
+
+        final Map<String, MetricFamily> metricFamilyMap = parse(metrics);
+
+        assertNotNull(metricFamilyMap);
+        MetricFamily.Metric metric = metricFamilyMap.get("up").getMetricList().get(0);
+        assertEquals(1.0, metric.getValue());
+        assertEquals("first\nsecond", metric.getLabels().get(0).getValue());
+        assertEquals("C:\\data", metric.getLabels().get(1).getValue());
+        assertEquals("say \"hi\"", metric.getLabels().get(2).getValue());
+        assertEquals("\\t\\d", metric.getLabels().get(3).getValue());
+    }
+
+    @Test
+    void testParseMetricsIgnoresBackslashesInCommentLines() throws Exception {
+        final String metrics = "# HELP regex_total Matches \\d+ digits.\n"
+                + "# TYPE regex_total counter\n"
+                + "# a plain comment with a path C:\\data\\dir and a trailing backslash \\\n"
+                + "# HELP multiline_total first line\\nsecond line\n"
+                + "regex_total 1\n"
+                + "multiline_total 2\n";
+
+        final Map<String, MetricFamily> metricFamilyMap = parse(metrics);
+
+        assertNotNull(metricFamilyMap);
+        assertEquals(Set.of("regex_total", "multiline_total"), metricFamilyMap.keySet());
+        assertEquals(1.0, metricFamilyMap.get("regex_total").getMetricList().get(0).getValue());
+        assertEquals(2.0, metricFamilyMap.get("multiline_total").getMetricList().get(0).getValue());
+    }
+
+    @Test
+    void testParseMetricsByNameSkipsOtherLinesWithoutEscapeValidation() throws Exception {
+        final String metrics = "# HELP up Target is up\\nor not\n"
+                + "other{path=\"C:\\data\"} 1\n"
+                + "up\t1\n";
+
+        final Map<String, MetricFamily> metricFamilyMap = OnlineParser.parseMetrics(
+                new ByteArrayInputStream(metrics.getBytes(StandardCharsets.UTF_8)), "up");
+
+        assertNotNull(metricFamilyMap);
+        assertEquals(Set.of("up"), metricFamilyMap.keySet());
+        assertEquals(1.0, metricFamilyMap.get("up").getMetricList().get(0).getValue());
+    }
+
+    private static Map<String, MetricFamily> parse(String metrics) throws Exception {
+        return OnlineParser.parseMetrics(new ByteArrayInputStream(metrics.getBytes(StandardCharsets.UTF_8)));
+    }
 }
