@@ -126,11 +126,17 @@ public class MetricsPeriodicAlertCalculator {
                                            Map<String, Object> fieldValueMap, AlertDefine define) {
         Long defineId = define.getId();
         String fingerprint = AlertUtil.calculateFingerprint(fingerPrints);
+        // Already firing: only refresh activeAt, do not re-create or re-send the alert
+        SingleAlert firingAlert = alarmCacheManager.getFiring(defineId, fingerprint);
+        if (firingAlert != null) {
+            firingAlert.setActiveAt(currentTimeMilli);
+            return;
+        }
         SingleAlert existingAlert = alarmCacheManager.getPending(defineId, fingerprint);
         Map<String, String> labels = new HashMap<>(8);
         fieldValueMap.putAll(define.getLabels());
         labels.putAll(fingerPrints);
-        int requiredTimes = define.getTimes() == null ? 1 : define.getTimes();
+        int requiredTimes = define.getTimes() == null ? 1 : Math.max(1, define.getTimes());
         if (existingAlert == null) {
             // First time triggering alert, create new alert and set to pending status
             SingleAlert newAlert = SingleAlert.builder()
