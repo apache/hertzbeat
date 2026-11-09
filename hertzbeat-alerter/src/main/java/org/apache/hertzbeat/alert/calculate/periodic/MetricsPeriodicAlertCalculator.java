@@ -134,7 +134,10 @@ public class MetricsPeriodicAlertCalculator {
         }
         SingleAlert existingAlert = alarmCacheManager.getPending(defineId, fingerprint);
         Map<String, String> labels = new HashMap<>(8);
-        fieldValueMap.putAll(define.getLabels());
+        if (define.getLabels() != null) {
+            fieldValueMap.putAll(define.getLabels());
+            labels.putAll(define.getLabels());
+        }
         labels.putAll(fingerPrints);
         int requiredTimes = define.getTimes() == null ? 1 : Math.max(1, define.getTimes());
         if (existingAlert == null) {

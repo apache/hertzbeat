@@ -389,11 +389,16 @@ public class MetricsRealTimeAlertCalculator {
             return;
         }
         SingleAlert existingAlert = alarmCacheManager.getPending(defineId, fingerprint);
-        fieldValueMap.putAll(define.getLabels());
+        if (define.getLabels() != null) {
+            fieldValueMap.putAll(define.getLabels());
+        }
         int requiredTimes = define.getTimes() == null ? 1 : Math.max(1, define.getTimes());
         if (existingAlert == null) {
             // First time triggering alert, create new alert and set to pending status
             Map<String, String> alertLabels = new HashMap<>(8);
+            if (define.getLabels() != null) {
+                alertLabels.putAll(define.getLabels());
+            }
             alertLabels.putAll(fingerPrints);
             Map<String, String> alertAnnotations = new HashMap<>(8);
             if (annotations != null) {
