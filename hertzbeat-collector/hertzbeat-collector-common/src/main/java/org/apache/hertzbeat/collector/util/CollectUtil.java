@@ -383,9 +383,10 @@ public final class CollectUtil {
             }
         } else if (jsonElement.isJsonArray()) {
             JsonArray jsonArray = jsonElement.getAsJsonArray();
-            int index = 0;
-            while (index < jsonArray.size()) {
-                JsonElement element = jsonArray.get(index);
+            // Build the replaced elements into a new array, so that expanding an array param
+            // keeps the original order and does not skip the elements after it
+            JsonArray replacedArray = new JsonArray(jsonArray.size());
+            for (JsonElement element : jsonArray) {
                 if (element.isJsonPrimitive()) {
                     // Check if there are special characters Replace
                     String value = element.getAsString();
@@ -416,21 +417,24 @@ public final class CollectUtil {
                             }
                         }
                         if (arrayValues != null) {
-                            jsonArray.remove(index);
-                            index--;
                             for (String arrayValue : arrayValues) {
-                                jsonArray.add(arrayValue);
-                                index++;
+                                replacedArray.add(arrayValue);
                             }
                         } else {
-                            jsonArray.set(index, value == null ? JsonNull.INSTANCE : new JsonPrimitive(value));
+                            replacedArray.add(value == null ? JsonNull.INSTANCE : new JsonPrimitive(value));
                         }
+                    } else {
+                        replacedArray.add(element);
                     }
                 } else {
-                    jsonArray.set(index, replaceSmilingPlaceholder(element, configmap));
+                    replacedArray.add(replaceSmilingPlaceholder(element, configmap));
                 }
-                index++;
             }
+            // Write back in place to keep the original reference semantics for callers
+            while (!jsonArray.isEmpty()) {
+                jsonArray.remove(jsonArray.size() - 1);
+            }
+            jsonArray.addAll(replacedArray);
         }
         return jsonElement;
     }
