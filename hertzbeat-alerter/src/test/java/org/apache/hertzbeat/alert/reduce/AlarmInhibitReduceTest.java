@@ -173,6 +173,33 @@ class AlarmInhibitReduceTest {
     }
 
     @Test
+    void whenSourceAlertResolved_shouldStopInhibitingTargetAlert() {
+        AlertInhibit rule = AlertInhibit.builder()
+                .id(1L)
+                .enable(true)
+                .sourceLabels(createLabels("severity", "critical"))
+                .targetLabels(createLabels("severity", "warning"))
+                .equalLabels(Collections.singletonList("instance"))
+                .build();
+        alarmInhibitReduce.refreshInhibitRules(Collections.singletonList(rule));
+
+        Map<String, String> sourceLabels = createLabels("severity", "critical", "instance", "host1");
+        alarmInhibitReduce.inhibitAlarm(createGroupAlert("firing", sourceLabels,
+            Stream.of(createSingleAlert("firing", "fp1", sourceLabels)).collect(Collectors.toList())));
+        GroupAlert resolvedSource = createGroupAlert("resolved", sourceLabels,
+            Stream.of(createSingleAlert("resolved", "fp1", sourceLabels)).collect(Collectors.toList()));
+        alarmInhibitReduce.inhibitAlarm(resolvedSource);
+
+        Map<String, String> targetLabels = createLabels("severity", "warning", "instance", "host1");
+        GroupAlert targetGroupAlert = createGroupAlert("firing", targetLabels,
+            Stream.of(createSingleAlert("firing", "fp2", targetLabels)).collect(Collectors.toList()));
+        alarmInhibitReduce.inhibitAlarm(targetGroupAlert);
+
+        verify(alarmSilenceReduce).silenceAlarm(resolvedSource);
+        verify(alarmSilenceReduce).silenceAlarm(targetGroupAlert);
+    }
+
+    @Test
     void sourceAlertNeverInhibitsAnotherWorkspace() {
         AlertInhibit rule = AlertInhibit.builder()
                 .id(1L)

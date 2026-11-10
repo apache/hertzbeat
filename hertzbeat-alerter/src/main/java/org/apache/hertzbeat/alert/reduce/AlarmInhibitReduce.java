@@ -215,6 +215,11 @@ public class AlarmInhibitReduce implements DisposableBean {
 
             // Process each individual alert
             for (var alert : groupAlert.getAlerts()) {
+                if (alert != null && CommonConstants.ALERT_STATUS_RESOLVED.equals(alert.getStatus())) {
+                    // A resolved source alert must stop inhibiting immediately rather than lingering until TTL expiry
+                    evictSourceAlert(groupAlert.getWorkspaceId(), alert);
+                    continue;
+                }
                 for (AlertInhibit rule : inhibitRules.values()) {
                     if (isSourceAlert(alert, rule)) {
                         cacheSourceAlert(groupAlert.getWorkspaceId(), alert, rule);
@@ -344,6 +349,25 @@ public class AlarmInhibitReduce implements DisposableBean {
         );
         ruleCache.put(alert.getFingerprint(), entry);
         cleanupExpiredEntries(ruleCache);
+    }
+
+    /**
+     * Remove a resolved alert from the source cache of every rule in its workspace.
+     * Eviction is keyed by fingerprint only, so it still applies if the rule's source labels changed meanwhile.
+     * @param workspaceId Workspace of the alert
+     * @param alert Resolved alert
+     */
+    private void evictSourceAlert(String workspaceId, SingleAlert alert) {
+        String fingerprint = alert.getFingerprint();
+        if (fingerprint == null) {
+            return;
+        }
+        String workspace = requireWorkspace(workspaceId);
+        sourceAlertCache.forEach((key, ruleCache) -> {
+            if (workspace.equals(key.workspaceId())) {
+                ruleCache.remove(fingerprint);
+            }
+        });
     }
 
     /**
