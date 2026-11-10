@@ -1,0 +1,45 @@
+diff --git a/lib/client/renderToHtml.js b/lib/client/renderToHtml.js
+index 68460847961d505e78ea6c7ee43cdbf2b9a2d220..bb648d3a9906145d3bba725209cff1d6a8405da9 100644
+--- a/lib/client/renderToHtml.js
++++ b/lib/client/renderToHtml.js
+@@ -4,22 +4,27 @@
+  * This source code is licensed under the MIT license found in the
+  * LICENSE file in the root directory of this source tree.
+  */
+-import { renderToPipeableStream } from 'react-dom/server';
+-import { PassThrough } from 'node:stream';
++import { renderToReadableStream } from 'react-dom/server.browser';
+ import { text } from 'node:stream/consumers';
+-// See also https://github.com/facebook/react/issues/31134
+-// See also https://github.com/facebook/docusaurus/issues/9985#issuecomment-2396367797
++// React 18's Node stream can insert NUL bytes: https://github.com/facebook/react/issues/31134
+ export async function renderToHtml(app) {
+-    return new Promise((resolve, reject) => {
+-        const passThrough = new PassThrough();
+-        const { pipe } = renderToPipeableStream(app, {
++    const controller = new AbortController();
++    let failed = false;
++    let rejectOnError;
++    const errorPromise = new Promise((_, reject) => { rejectOnError = reject; });
++    const renderPromise = (async () => {
++        const stream = await renderToReadableStream(app, {
++            signal: controller.signal,
+             onError(error) {
+-                reject(error);
+-            },
+-            onAllReady() {
+-                pipe(passThrough);
+-                text(passThrough).then(resolve, reject);
++                if (!failed) {
++                    failed = true;
++                    rejectOnError(error);
++                    queueMicrotask(() => controller.abort());
++                }
+             },
+         });
+-    });
++        await stream.allReady;
++        return text(stream);
++    })();
++    return Promise.race([renderPromise, errorPromise]);
+ }
