@@ -209,15 +209,21 @@ public class AlarmInhibitReduce implements DisposableBean {
             return false;
         }
         try {
+            // A resolved source alert must stop inhibiting immediately rather than lingering until TTL expiry.
+            // Evict before the empty-rules shortcut so stale entries cannot come back if rules are re-enabled later.
+            for (var alert : groupAlert.getAlerts()) {
+                if (alert != null && CommonConstants.ALERT_STATUS_RESOLVED.equals(alert.getStatus())) {
+                    evictSourceAlert(groupAlert.getWorkspaceId(), alert);
+                }
+            }
+
             if (inhibitRules.isEmpty()) {
                 return alarmSilenceReduce.silenceAlarm(groupAlert);
             }
 
-            // Process each individual alert
+            // Cache firing source alerts
             for (var alert : groupAlert.getAlerts()) {
-                if (alert != null && CommonConstants.ALERT_STATUS_RESOLVED.equals(alert.getStatus())) {
-                    // A resolved source alert must stop inhibiting immediately rather than lingering until TTL expiry
-                    evictSourceAlert(groupAlert.getWorkspaceId(), alert);
+                if (alert == null || CommonConstants.ALERT_STATUS_RESOLVED.equals(alert.getStatus())) {
                     continue;
                 }
                 for (AlertInhibit rule : inhibitRules.values()) {
