@@ -214,7 +214,7 @@ public class PeriodicAlertRuleScheduler {
         }
     }
 
-    private boolean isPeriodicRule(String type) {
+    public static boolean isPeriodicRule(String type) {
         return METRIC_ALERT_THRESHOLD_TYPE_PERIODIC.equals(type)
                 || LOG_ALERT_THRESHOLD_TYPE_PERIODIC.equals(type)
                 || TRACE_ALERT_THRESHOLD_TYPE_PERIODIC.equals(type);
