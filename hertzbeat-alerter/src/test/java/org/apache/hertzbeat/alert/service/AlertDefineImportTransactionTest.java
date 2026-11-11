@@ -116,6 +116,21 @@ class AlertDefineImportTransactionTest {
     }
 
     @Test
+    void committedEditSchedulesTheNewPeriod() {
+        AlertDefine rule = dao.saveAndFlush(AlertDefine.builder().name("edited")
+                .type("periodic_metric").period(60).enable(true).build());
+        Long id = rule.getId();
+        new TransactionTemplate(transactionManager).executeWithoutResult(status -> {
+            rule.setPeriod(30);
+            service.modifyAlertDefine(rule);
+            verifyNoInteractions(scheduler);
+        });
+
+        assertEquals(30, dao.findById(id).orElseThrow().getPeriod());
+        verify(scheduler).updateSchedule(argThat(saved -> id.equals(saved.getId()) && saved.getPeriod() == 30));
+    }
+
+    @Test
     void rolledBackChangesLeaveExistingSchedulesAlone() {
         AlertDefine first = dao.saveAndFlush(AlertDefine.builder().name("original").type("periodic_metric").period(60).build());
         AlertDefine second = dao.saveAndFlush(AlertDefine.builder().name("second").build());
