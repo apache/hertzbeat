@@ -175,4 +175,89 @@ class KafkaProtocolTest {
                 .build();
         assertFalse(protocol.isInvalid());
     }
+
+    @Test
+    void isInvalidValidScramSha256Authentication() {
+        KafkaProtocol protocol = KafkaProtocol.builder()
+                .host("192.168.1.1")
+                .port("9092")
+                .securityProtocol("SASL_PLAINTEXT")
+                .saslMechanism("SCRAM-SHA-256")
+                .username("monitor")
+                .password("secret")
+                .build();
+        assertFalse(protocol.isInvalid());
+        assertTrue(protocol.hasSaslAuthentication());
+    }
+
+    @Test
+    void isInvalidValidScramSha512Authentication() {
+        KafkaProtocol protocol = KafkaProtocol.builder()
+                .host("192.168.1.1")
+                .port("9093")
+                .securityProtocol("SASL_SSL")
+                .saslMechanism("SCRAM-SHA-512")
+                .username("monitor")
+                .password("secret")
+                .build();
+        assertFalse(protocol.isInvalid());
+        assertTrue(protocol.hasSaslAuthentication());
+    }
+
+    @Test
+    void isInvalidMissingScramCredentials() {
+        KafkaProtocol protocol = KafkaProtocol.builder()
+                .host("192.168.1.1")
+                .port("9092")
+                .securityProtocol("SASL_PLAINTEXT")
+                .saslMechanism("SCRAM-SHA-256")
+                .build();
+        assertTrue(protocol.isInvalid());
+    }
+
+    @Test
+    void isInvalidUnsupportedSaslMechanism() {
+        KafkaProtocol protocol = KafkaProtocol.builder()
+                .host("192.168.1.1")
+                .port("9092")
+                .securityProtocol("SASL_PLAINTEXT")
+                .saslMechanism("PLAIN")
+                .username("monitor")
+                .password("secret")
+                .build();
+        assertTrue(protocol.isInvalid());
+    }
+
+    @Test
+    void isInvalidUnsupportedSecurityProtocol() {
+        KafkaProtocol protocol = KafkaProtocol.builder()
+                .host("192.168.1.1")
+                .port("9092")
+                .securityProtocol("SSL")
+                .build();
+        assertTrue(protocol.isInvalid());
+    }
+
+    @Test
+    void isInvalidCredentialsWithoutSasl() {
+        KafkaProtocol protocol = KafkaProtocol.builder()
+                .host("192.168.1.1")
+                .port("9092")
+                .securityProtocol("PLAINTEXT")
+                .username("monitor")
+                .password("secret")
+                .build();
+        assertTrue(protocol.isInvalid());
+    }
+
+    @Test
+    void toStringDoesNotExposePassword() {
+        KafkaProtocol protocol = KafkaProtocol.builder()
+                .host("192.168.1.1")
+                .port("9092")
+                .password("secret")
+                .build();
+        assertTrue(protocol.toString().contains("KafkaProtocol"));
+        assertFalse(protocol.toString().contains("secret"));
+    }
 }
