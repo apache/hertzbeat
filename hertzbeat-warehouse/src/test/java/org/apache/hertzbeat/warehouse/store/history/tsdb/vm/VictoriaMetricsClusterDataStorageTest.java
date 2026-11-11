@@ -22,8 +22,11 @@ import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.net.URI;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.CountDownLatch;
@@ -35,6 +38,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.hertzbeat.common.timer.TimerTask;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -217,6 +221,61 @@ class VictoriaMetricsClusterDataStorageTest {
             }
             storage.destroy();
             producer.shutdownNow();
+        }
+    }
+
+    @Test
+    void historyMetricDataQueriesByMonitorIdWhenProvided() {
+        mockHealthCheck();
+        when(restTemplate.exchange(any(URI.class), eq(HttpMethod.GET), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(ResponseEntity.ok(""));
+        VictoriaMetricsClusterDataStorage storage = createStorage(10, 1);
+        try {
+            storage.getHistoryMetricData(599733946907392L, "hdp-hadoop2:10003", "linux", "summary",
+                    "responseTime", "6h", null, null, null);
+            storage.getHistoryMetricData(null, "hdp-hadoop2:10003", "linux", "summary",
+                    "responseTime", "6h", null, null, null);
+
+            ArgumentCaptor<URI> uriCaptor = ArgumentCaptor.forClass(URI.class);
+            verify(restTemplate, times(2)).exchange(uriCaptor.capture(), eq(HttpMethod.GET),
+                    any(HttpEntity.class), eq(String.class));
+            String monitorIdQuery = uriCaptor.getAllValues().get(0).getQuery();
+            assertThat(monitorIdQuery).contains("__monitor_id__=\"599733946907392\"");
+            assertThat(monitorIdQuery).doesNotContain("instance=");
+            String instanceQuery = uriCaptor.getAllValues().get(1).getQuery();
+            assertThat(instanceQuery).contains("instance=\"hdp-hadoop2:10003\"");
+            assertThat(instanceQuery).doesNotContain("__monitor_id__");
+        } finally {
+            storage.destroy();
+        }
+    }
+
+    @Test
+    void historyIntervalMetricDataQueriesByMonitorIdWhenProvided() {
+        mockHealthCheck();
+        when(restTemplate.exchange(any(URI.class), eq(HttpMethod.GET), any(HttpEntity.class),
+                eq(PromQlQueryContent.class))).thenReturn(ResponseEntity.ok(new PromQlQueryContent()));
+        VictoriaMetricsClusterDataStorage storage = createStorage(10, 1);
+        try {
+            storage.getHistoryIntervalMetricData(599733946907392L, "hdp-hadoop2:10003", "linux", "summary",
+                    "responseTime", "6h", null, null, null);
+            storage.getHistoryIntervalMetricData(null, "hdp-hadoop2:10003", "linux", "summary",
+                    "responseTime", "6h", null, null, null);
+
+            ArgumentCaptor<URI> uriCaptor = ArgumentCaptor.forClass(URI.class);
+            verify(restTemplate, times(8)).exchange(uriCaptor.capture(), eq(HttpMethod.GET),
+                    any(HttpEntity.class), eq(PromQlQueryContent.class));
+            List<URI> uris = uriCaptor.getAllValues();
+            for (URI uri : uris.subList(0, 4)) {
+                assertThat(uri.getQuery()).contains("__monitor_id__=\"599733946907392\"");
+                assertThat(uri.getQuery()).doesNotContain("instance=");
+            }
+            for (URI uri : uris.subList(4, 8)) {
+                assertThat(uri.getQuery()).contains("instance=\"hdp-hadoop2:10003\"");
+                assertThat(uri.getQuery()).doesNotContain("__monitor_id__");
+            }
+        } finally {
+            storage.destroy();
         }
     }
 
