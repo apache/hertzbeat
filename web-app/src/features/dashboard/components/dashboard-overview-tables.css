@@ -1,0 +1,125 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.empty {
+  margin: 0;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--hb-text-secondary);
+}
+.historySection {
+  min-width: 0;
+  padding-block: var(--hb-space-1);
+}
+.historyHeading {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--hb-space-3);
+  margin-bottom: var(--hb-space-2);
+}
+.historyHeading h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--hb-space-2);
+  margin: 0;
+  font-size: 14px;
+  line-height: 22px;
+  font-weight: 500;
+}
+.historyHeading h3 :global(.anticon) {
+  color: var(--hb-text-secondary);
+  font-size: 14px;
+}
+.historyHeading > a {
+  margin-inline-start: auto;
+  font-size: 12px;
+  color: var(--start-link);
+}
+.historyHeading p {
+  margin: 0;
+  font-size: 13px;
+  color: var(--hb-text-secondary);
+}
+.emptyHistory .historyHeading {
+  margin-bottom: 0;
+}
+.continueList {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--hb-space-4);
+}
+.continueRow {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: var(--hb-space-3);
+  padding: var(--hb-space-2);
+  border-radius: 4px;
+  color: var(--hb-text-primary);
+}
+.continueRow:hover {
+  background: var(--hb-bg-hover);
+}
+.continueRow:active {
+  background: var(--hb-bg-selected);
+}
+.queryIcon {
+  color: var(--hb-text-secondary);
+  font-size: 16px;
+  flex: none;
+}
+.queryCopy {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  flex: 1;
+}
+.queryCopy strong {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-size: 13px;
+  line-height: 20px;
+  font-weight: 500;
+}
+.queryCopy small {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--hb-text-secondary);
+}
+.queryFavorite {
+  color: var(--start-accent);
+  font-size: 12px;
+  flex: none;
+}
+.historySection a:focus-visible {
+  outline: 2px solid var(--hb-focus-ring);
+  outline-offset: 2px;
+}
+@media (max-width: 800px) {
+  .continueList {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--hb-space-1);
+  }
+}
+@media (max-width: 540px) {
+  .historyHeading p {
+    order: 3;
+    flex-basis: 100%;
+  }
+}

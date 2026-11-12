@@ -13,5 +13,12 @@
     "strict": true,
     "types": ["node"]
   },
-  "include": ["vite.config.ts", "playwright.config.ts", "tests/browser/**/*.ts", "eslint.config.mjs"]
+  "include": [
+    "vite.config.ts",
+    "playwright.config.ts",
+    "tests/browser/**/*.ts",
+    "eslint.config.mjs",
+    "scripts/locale-catalog-plugin.ts",
+    "playwright.ai.config.ts"
+  ]
 }

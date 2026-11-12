@@ -24,7 +24,7 @@ vi.mock('@/core/http/api-message', async importOriginal => ({
 }));
 
 import { MonitorContractError } from '../model/monitor-contract';
-import { loadMonitorAppGuidance } from './monitor-app-guidance-api';
+import { loadMonitorAppGuidance, loadMonitorI18nResources, monitorI18nResourcesPath } from './monitor-app-guidance-api';
 
 describe('monitor application guidance API', () => {
   beforeEach(() => http.apiMessageGet.mockReset());
@@ -60,4 +60,22 @@ describe('monitor application guidance API', () => {
     await expect(loadMonitorAppGuidance(app, 'en-US')).rejects.toBeInstanceOf(MonitorContractError);
     expect(http.apiMessageGet).not.toHaveBeenCalled();
   });
+
+  it('loads flat metric resources through the existing message boundary and forwards cancellation', async () => {
+    expect(monitorI18nResourcesPath('en-US')).toBe('/api/i18n/en-US');
+    expect(monitorI18nResourcesPath('zh-CN')).toBe('/api/i18n/zh-CN');
+    const signal = new AbortController().signal;
+    const resources = { 'monitor.app.website.metrics.summary.metric.responseTime': 'Response Time' };
+    http.apiMessageGet.mockResolvedValue(resources);
+    await expect(loadMonitorI18nResources('en-US', signal)).resolves.toEqual(resources);
+    expect(http.apiMessageGet).toHaveBeenCalledWith('/api/i18n/en-US', { signal });
+  });
+
+  it.each([null, [], { 'monitor.app.website.metrics.summary': 7 }])(
+    'rejects malformed translation resources %#',
+    async value => {
+      http.apiMessageGet.mockResolvedValue(value);
+      await expect(loadMonitorI18nResources('en-US')).rejects.toBeInstanceOf(MonitorContractError);
+    }
+  );
 });

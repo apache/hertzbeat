@@ -45,16 +45,20 @@ import org.apache.hertzbeat.common.util.JsonUtil;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 /**
  * Verifies UUID lifecycle and payloads actually sent by the HTTP collector.
@@ -68,6 +72,7 @@ class DynamicUuidCollectionTest {
     private CommonDispatcher dispatcher;
     private Job job;
     private Timeout timeout;
+    private TimerDispatch timerDispatch;
 
     @BeforeEach
     void setUp() throws Exception {
@@ -88,7 +93,8 @@ class DynamicUuidCollectionTest {
         }).when(queue).addJob(any(MetricsCollect.class));
         CollectJobService jobService = mock(CollectJobService.class);
         when(jobService.getCollectorIdentity()).thenReturn("uuid-test");
-        dispatcher = new CommonDispatcher(queue, mock(TimerDispatch.class), mock(CommonDataQueue.class),
+        timerDispatch = mock(TimerDispatch.class);
+        dispatcher = new CommonDispatcher(queue, timerDispatch, mock(CommonDataQueue.class),
                 mock(WorkerPool.class), jobService, List.of()) {
             @Override
             public void start() {
@@ -140,6 +146,86 @@ class DynamicUuidCollectionTest {
     }
 
     @Test
+    void temporaryHttpMetricsCompleteUsingTheirPreparedUuidObjects() {
+        job.setCyclic(false);
+        job.getMetrics().get(1).getHttp().setPayload(PAYLOAD);
+        collectCycle();
+        assertEquals(2, requestBodies.size());
+        assertEquals(requestId(requestBodies.get(0)), requestId(requestBodies.get(1)));
+        verify(timerDispatch, times(1)).responseSyncJobData(job.getId(), job.getResponseDataTemp());
+    }
+
+    @Test
+    void timeoutClaimsPreparedUuidObjectAndRejectsItsLateResultAfterRestart() {
+        job.getMetrics().get(1).getHttp().setPayload(PAYLOAD);
+        dispatcher.dispatchMetricsTask(timeout);
+        Metrics oldExecution = tasks.getFirst().getMetrics();
+        assertNotSame(job.getMetrics().getFirst(), oldExecution);
+        Map<String, CommonDispatcher.MetricsTime> pending = pendingMetrics();
+        assertSame(oldExecution, pending.get("1-auth").getMetrics());
+        pending.get("1-auth").setStartTime(System.currentTimeMillis() - 300_000L);
+        ReflectionTestUtils.invokeMethod(dispatcher, "monitorCollectTaskTimeout");
+        verify(timerDispatch, times(1)).cyclicJob((WheelTimerTask) timeout.task());
+        assertEquals(0, pending.size());
+
+        job.getMetrics().forEach(metric -> metric.setCollectTime(0L));
+        dispatcher.dispatchMetricsTask(timeout);
+        Metrics nextExecution = tasks.get(1).getMetrics();
+        assertNotSame(oldExecution, nextExecution);
+        assertNotEquals(requestId(oldExecution.getHttp().getPayload()), requestId(nextExecution.getHttp().getPayload()));
+        try (CollectRep.MetricsData response = CollectRep.MetricsData.newBuilder().setMetrics("auth")
+                .setPriority(0).setCode(CollectRep.Code.SUCCESS).build()) {
+            dispatcher.dispatchCollectData(timeout, oldExecution, response);
+            assertSame(nextExecution, pending.get("1-auth").getMetrics());
+            assertEquals(2, tasks.size(), "Late result must not advance the new cycle");
+            dispatcher.dispatchCollectData(timeout, nextExecution, response);
+            assertEquals(3, tasks.size(), "Current result must advance to the next priority");
+            assertSame(tasks.get(2).getMetrics(), pending.get("1-data").getMetrics());
+        }
+        verify(timerDispatch, times(1)).cyclicJob((WheelTimerTask) timeout.task());
+    }
+
+    @Test
+    void preparedUuidSubtaskTimesOutOnceAndRejectsLateResultsInTheNextCycle() {
+        Metrics oldSubtask = null;
+        for (int cycle = 0; cycle < 2; cycle++) {
+            job.getMetrics().forEach(metric -> metric.setCollectTime(0L));
+            int offset = tasks.size();
+            dispatcher.dispatchMetricsTask(timeout);
+            try (CollectRep.MetricsData response = CollectRep.MetricsData.newBuilder().setMetrics("auth")
+                    .setPriority(0).setCode(CollectRep.Code.SUCCESS)
+                    .addField(CollectRep.Field.newBuilder().setName("token").setType(CommonConstants.TYPE_STRING).build())
+                    .addValueRow(CollectRep.ValueRow.newBuilder().addColumn("access-token").build()).build()) {
+                dispatcher.dispatchCollectData(timeout, tasks.get(offset).getMetrics(), response);
+            }
+            Metrics execution = tasks.get(offset + 1).getMetrics();
+            assertEquals(1, execution.getSubTaskNum().get());
+            CommonDispatcher.MetricsTime pending = pendingMetrics().get("1-data-sub-0");
+            assertSame(execution, pending.getMetrics());
+            if (oldSubtask != null) {
+                try (CollectRep.MetricsData response = CollectRep.MetricsData.newBuilder().setMetrics("data")
+                        .setPriority(1).setCode(CollectRep.Code.SUCCESS).build()) {
+                    dispatcher.dispatchCollectData(timeout, oldSubtask, response);
+                    assertSame(pending, pendingMetrics().get("1-data-sub-0"));
+                    assertEquals(1, execution.getSubTaskNum().get());
+                    assertEquals(0, oldSubtask.getSubTaskNum().get());
+                }
+            }
+            pending.setStartTime(System.currentTimeMillis() - 300_000L);
+            ReflectionTestUtils.invokeMethod(dispatcher, "monitorCollectTaskTimeout");
+            assertEquals(0, execution.getSubTaskNum().get());
+            assertEquals(0, pendingMetrics().size());
+            verify(timerDispatch, times(cycle + 1)).cyclicJob((WheelTimerTask) timeout.task());
+            oldSubtask = execution;
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private Map<String, CommonDispatcher.MetricsTime> pendingMetrics() {
+        return (Map<String, CommonDispatcher.MetricsTime>) ReflectionTestUtils.getField(dispatcher, "metricsTimeoutMonitorMap");
+    }
+
+    @Test
     void payloadCopyPreservesSubtaskCountersAndOriginalTemplate() {
         Metrics source = metric("subtask", (byte) 1, PAYLOAD);
         AtomicInteger counter = new AtomicInteger(2);
@@ -184,6 +270,7 @@ class DynamicUuidCollectionTest {
         int offset = tasks.size();
         dispatcher.dispatchMetricsTask(timeout);
         Metrics first = tasks.get(offset).getMetrics();
+        assertSame(first, pendingMetrics().get("1-auth").getMetrics());
         sendHttp(first);
         CollectRep.MetricsData authResponse = CollectRep.MetricsData.newBuilder().setMetrics("auth")
                 .setPriority(0).setCode(CollectRep.Code.SUCCESS)
@@ -195,6 +282,8 @@ class DynamicUuidCollectionTest {
             authResponse.close();
         }
         Metrics later = tasks.get(offset + 1).getMetrics();
+        String key = later.isHasSubTask() ? "1-data-sub-" + later.getSubTaskId() : "1-data";
+        assertSame(later, pendingMetrics().get(key).getMetrics());
         sendHttp(later);
         CollectRep.MetricsData laterResponse = CollectRep.MetricsData.newBuilder().setMetrics("data")
                 .setPriority(1).setCode(CollectRep.Code.SUCCESS).build();

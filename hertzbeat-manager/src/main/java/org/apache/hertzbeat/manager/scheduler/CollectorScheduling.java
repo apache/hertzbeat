@@ -30,6 +30,15 @@ public interface CollectorScheduling {
      * @param collectorInfo collector information
      */
     void collectorGoOnline(String identity, CollectorInfo collectorInfo);
+
+    /**
+     * Register a collector, optionally restoring its pinned jobs. Startup restores all jobs separately.
+     * @param identity collector identity name
+     * @param collectorInfo collector information
+     * @param restorePinnedJobs whether to restore pinned jobs
+     */
+    void collectorGoOnline(String identity, CollectorInfo collectorInfo, boolean restorePinnedJobs);
+
     
     /**
      * register collector go offline

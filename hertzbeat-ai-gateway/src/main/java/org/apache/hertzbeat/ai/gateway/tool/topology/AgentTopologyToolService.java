@@ -25,6 +25,7 @@ import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
 import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.manager.pojo.dto.EntityTopologyGraphInfo;
 import org.apache.hertzbeat.manager.service.entity.EntityTopologyQueryService;
+import org.apache.hertzbeat.warehouse.query.admission.ObservabilityQueryAdmissionService;
 import org.springframework.ai.tool.annotation.Tool;
 import org.springframework.ai.tool.annotation.ToolParam;
 import org.springframework.stereotype.Service;
@@ -38,8 +39,11 @@ public class AgentTopologyToolService {
 
     private final EntityTopologyQueryService topologyQueryService;
 
-    public AgentTopologyToolService(EntityTopologyQueryService topologyQueryService) {
+    private final ObservabilityQueryAdmissionService admission;
+
+    public AgentTopologyToolService(EntityTopologyQueryService topologyQueryService, ObservabilityQueryAdmissionService admission) {
         this.topologyQueryService = topologyQueryService;
+        this.admission = admission;
     }
 
     @Tool(name = "topology.query",
@@ -67,9 +71,9 @@ public class AgentTopologyToolService {
         int resolvedDepth = AgentToolContextSupport.bound(depth == null ? 1 : depth, 1, 2);
         int resolvedPageIndex = AgentToolContextSupport.bound(pageIndex == null ? 0 : pageIndex, 0, 10_000);
         int resolvedPageSize = AgentToolContextSupport.bound(pageSize == null ? 50 : pageSize, 1, 100);
-        return topologyQueryService.buildFocusedTopology(normalizedWorkspaceId, entityId, resolvedDepth,
+        return admission.execute("topology", () -> topologyQueryService.buildFocusedTopology(normalizedWorkspaceId, entityId, resolvedDepth,
                 environment, sourceKind,
-                start, end, relationType, hideInternal, resolvedPageIndex, resolvedPageSize);
+                start, end, relationType, hideInternal, resolvedPageIndex, resolvedPageSize));
     }
 
     private void validateRange(Long start, Long end) {

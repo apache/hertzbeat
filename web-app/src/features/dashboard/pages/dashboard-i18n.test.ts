@@ -36,6 +36,20 @@ describe('Dashboard locale contract', () => {
     expect(expected).toContain('unresolvedAlerts');
   });
 
+  it('places all scope availability labels in the dashboard namespace', () => {
+    const keys = [
+      'serviceLoading',
+      'serviceUnavailable',
+      'serviceEmpty',
+      'environmentLoading',
+      'environmentUnavailable',
+      'environmentEmpty'
+    ] as const;
+    for (const locale of [en, ja, pt, zhCn, zhTw]) {
+      for (const key of keys) expect(locale.dashboard.v2[key].trim()).not.toBe('');
+    }
+  });
+
   it('localizes the Start navigation and telemetry terminology in every locale', () => {
     expect(en.menu.dashboard).toBe('Start');
     expect(en.instrumentation.menu).toBe('Telemetry setup');

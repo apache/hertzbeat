@@ -25,12 +25,16 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
+import java.lang.reflect.Field;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -40,10 +44,49 @@ class CommonHttpClientVirtualThreadTest {
 
     private final PoolingHttpClientConnectionManager originalConnectionManager = CommonHttpClient.getConnectionManager();
 
+    private CountDownLatch releaseTimer;
+    private Future<?> timerFence;
+
+    @BeforeEach
+    void fenceAutomaticTimerAndDrainCleanup() throws Exception {
+        Field field = CommonHttpClient.class.getDeclaredField("scheduledExecutor");
+        field.setAccessible(true);
+        ScheduledExecutorService timer = (ScheduledExecutorService) field.get(null);
+        CountDownLatch timerFenced = new CountDownLatch(1);
+        releaseTimer = new CountDownLatch(1);
+        timerFence = timer.submit(() -> {
+            timerFenced.countDown();
+            try {
+                releaseTimer.await();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
+        try {
+            assertTrue(timerFenced.await(5, TimeUnit.SECONDS));
+            assertTrue(CommonHttpClient.awaitConnectionPoolCleanupIdleForTest(5, TimeUnit.SECONDS));
+        } catch (Throwable failure) {
+            releaseTimer.countDown();
+            throw failure;
+        }
+    }
+
     @AfterEach
-    void tearDown() {
-        CommonHttpClient.setBeforeCleanupHookForTest(null);
-        CommonHttpClient.setConnectionManagerForTest(originalConnectionManager);
+    void tearDown() throws Exception {
+        boolean idle;
+        try {
+            idle = CommonHttpClient.awaitConnectionPoolCleanupIdleForTest(5, TimeUnit.SECONDS);
+        } finally {
+            CommonHttpClient.setBeforeCleanupHookForTest(null);
+            CommonHttpClient.setConnectionManagerForTest(originalConnectionManager);
+            if (releaseTimer != null) {
+                releaseTimer.countDown();
+            }
+            if (timerFence != null) {
+                timerFence.get(5, TimeUnit.SECONDS);
+            }
+        }
+        assertTrue(idle);
     }
 
     @Test
@@ -60,6 +103,7 @@ class CommonHttpClientVirtualThreadTest {
         CommonHttpClient.dispatchConnectionPoolCleanup();
 
         assertTrue(latch.await(5, TimeUnit.SECONDS));
+        assertTrue(CommonHttpClient.awaitConnectionPoolCleanupIdleForTest(5, TimeUnit.SECONDS));
         assertTrue(virtualThread.get());
     }
 
@@ -80,7 +124,7 @@ class CommonHttpClientVirtualThreadTest {
             try {
                 if (currentInvocation == 1) {
                     firstStarted.countDown();
-                    releaseFirst.await(5, TimeUnit.SECONDS);
+                    releaseFirst.await();
                 } else if (currentInvocation == 2) {
                     secondStarted.countDown();
                 }
@@ -91,14 +135,16 @@ class CommonHttpClientVirtualThreadTest {
             }
         });
 
-        CommonHttpClient.dispatchConnectionPoolCleanup();
-        assertTrue(firstStarted.await(5, TimeUnit.SECONDS));
+        try {
+            CommonHttpClient.dispatchConnectionPoolCleanup();
+            assertTrue(firstStarted.await(5, TimeUnit.SECONDS));
 
-        CommonHttpClient.dispatchConnectionPoolCleanup();
-        assertFalse(secondStarted.await(200, TimeUnit.MILLISECONDS));
-        assertFalse(CommonHttpClient.awaitConnectionPoolCleanupIdleForTest(200, TimeUnit.MILLISECONDS));
-
-        releaseFirst.countDown();
+            CommonHttpClient.dispatchConnectionPoolCleanup();
+            assertFalse(secondStarted.await(200, TimeUnit.MILLISECONDS));
+            assertFalse(CommonHttpClient.awaitConnectionPoolCleanupIdleForTest(200, TimeUnit.MILLISECONDS));
+        } finally {
+            releaseFirst.countDown();
+        }
         assertTrue(secondStarted.await(5, TimeUnit.SECONDS));
         assertTrue(CommonHttpClient.awaitConnectionPoolCleanupIdleForTest(5, TimeUnit.SECONDS));
         assertEquals(1, maxConcurrent.get());
@@ -123,6 +169,7 @@ class CommonHttpClientVirtualThreadTest {
 
         assertTrue(expiredConnectionsClosed.await(5, TimeUnit.SECONDS));
         assertTrue(idleConnectionsClosed.await(5, TimeUnit.SECONDS));
+        assertTrue(CommonHttpClient.awaitConnectionPoolCleanupIdleForTest(5, TimeUnit.SECONDS));
         verify(manager, times(1)).closeExpiredConnections();
         verify(manager, times(1)).closeIdleConnections(40, TimeUnit.SECONDS);
     }

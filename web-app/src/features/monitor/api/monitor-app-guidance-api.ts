@@ -25,6 +25,15 @@ import { MonitorContractError } from '../model/monitor-contract';
 const applicationIdentity = /^[a-z0-9][a-z0-9_-]*$/;
 const resourceSchema = z.record(z.string(), z.string());
 
+export const monitorI18nResourcesPath = (locale: SupportedLocale) => `/api/i18n/${encodeURIComponent(locale)}`;
+
+export async function loadMonitorI18nResources(locale: SupportedLocale, signal?: AbortSignal) {
+  const value = await apiMessageGet(monitorI18nResourcesPath(locale), signal ? { signal } : undefined);
+  const parsed = resourceSchema.safeParse(value);
+  if (!parsed.success) throw new MonitorContractError();
+  return parsed.data;
+}
+
 export type MonitorAppGuidance = {
   help: string | null;
   helpUrl: string | null;
@@ -37,13 +46,11 @@ export async function loadMonitorAppGuidance(
 ): Promise<MonitorAppGuidance> {
   const identity = app.trim().toLowerCase();
   if (!applicationIdentity.test(identity)) throw new MonitorContractError();
-  const value = await apiMessageGet(`/api/i18n/${encodeURIComponent(locale)}`, signal ? { signal } : undefined);
-  const parsed = resourceSchema.safeParse(value);
-  if (!parsed.success) throw new MonitorContractError();
+  const resources = await loadMonitorI18nResources(locale, signal);
   const prefix = `monitor.app.${identity}`;
   return {
-    help: nonEmpty(parsed.data[`${prefix}.help`]),
-    helpUrl: safeHttpUrl(parsed.data[`${prefix}.helpLink`])
+    help: nonEmpty(resources[`${prefix}.help`]),
+    helpUrl: safeHttpUrl(resources[`${prefix}.helpLink`])
   };
 }
 

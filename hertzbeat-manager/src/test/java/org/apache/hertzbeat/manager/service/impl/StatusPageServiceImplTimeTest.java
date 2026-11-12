@@ -21,6 +21,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.ArgumentMatchers.any;
 
 import java.lang.reflect.Field;
 import java.time.Duration;
@@ -29,6 +32,8 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
+import java.util.TimeZone;
 
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.manager.StatusPageComponent;
@@ -139,6 +144,44 @@ class StatusPageServiceImplTimeTest {
 
         List<ComponentStatus> result = service.queryComponentsStatus(30);
         assertEquals(30, result.get(0).getHistory().size());
+    }
+
+    @Test
+    void queriesPreserveStoredSummariesAndNeverWriteHistory() {
+        TimeZone original = TimeZone.getDefault();
+        try {
+            TimeZone.setDefault(TimeZone.getTimeZone("America/New_York"));
+            long today = LocalDate.now().atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli();
+            StatusPageHistory summary = StatusPageHistory.builder().componentId(1L).timestamp(today - 2000)
+                    .state(CommonConstants.STATUS_PAGE_COMPONENT_STATE_ABNORMAL)
+                    .normal(600).abnormal(300).unknowing(300).uptime(0.5).build();
+            StatusPageHistory lastMillisecond = history(Instant.ofEpochMilli(today - 1),
+                    CommonConstants.STATUS_PAGE_COMPONENT_STATE_NORMAL);
+            StatusPageHistory midnight = history(Instant.ofEpochMilli(today),
+                    CommonConstants.STATUS_PAGE_COMPONENT_STATE_UNKNOWN);
+            List<StatusPageHistory> stored = List.of(summary, lastMillisecond, midnight);
+            when(componentDao.findById(1L)).thenReturn(Optional.of(component));
+            when(historyDao.findStatusPageHistoriesByComponentIdAndTimestampBetween(anyLong(), anyLong(), anyLong()))
+                    .thenAnswer(invocation -> {
+                        long start = invocation.getArgument(1);
+                        long end = invocation.getArgument(2);
+                        return stored.stream().filter(h -> h.getTimestamp() >= start && h.getTimestamp() <= end).toList();
+                    });
+            for (ComponentStatus result : List.of(service.queryComponentsStatus(2).get(0), service.queryComponentStatus(1L, 2))) {
+                StatusPageHistory yesterday = result.getHistory().get(1);
+                assertEquals(900, yesterday.getNormal());
+                assertEquals(300, yesterday.getAbnormal());
+                assertEquals(300, yesterday.getUnknowing());
+                assertEquals(0.6, yesterday.getUptime());
+                assertEquals(300, result.getHistory().get(0).getUnknowing());
+            }
+            assertEquals(600, summary.getNormal());
+            assertEquals(null, lastMillisecond.getNormal());
+            verify(historyDao, never()).save(any());
+            verify(historyDao, never()).deleteAll(any());
+        } finally {
+            TimeZone.setDefault(original);
+        }
     }
 
     private StatusPageHistory history(Instant time, int state) {

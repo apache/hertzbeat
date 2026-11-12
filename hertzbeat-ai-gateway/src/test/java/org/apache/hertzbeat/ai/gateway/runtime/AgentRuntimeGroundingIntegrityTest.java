@@ -161,7 +161,7 @@ class AgentRuntimeGroundingIntegrityTest {
                                         AgentToolBridge bridge) {
         List<AgentRuntimeEvent> events = new ArrayList<>();
         try (AgentRuntimeControl control = AgentRuntimeControl.forContext(context, CLOCK)) {
-            new AgentRuntimeLoop(new AgentRuntimeProperties(), modelClient, bridge, CLOCK)
+            new AgentRuntimeLoop(new AgentRuntimeProperties(), AgentTaskCompletionTestClient.observation(modelClient, "platform"), bridge, CLOCK)
                     .run(context, control, events::add, message -> 1L);
         }
         return events;

@@ -7,24 +7,27 @@ description: Apache HertzBeat 监控系统下载 - 服务器、采集器、源�
 
 ## 如何下载 HertzBeat？
 
-下载最新 Apache HertzBeat™ 发布版（v1.9.0）的服务器二进制、采集器二进制、源码或 Docker Compose 包。所有发布版都包含 GPG 签名和 SHA512 校验和用于验证。
+下载最新 Apache HertzBeat™ 发布版（v1.9.1）的服务器二进制、采集器二进制、源码或 Docker Compose 包。所有发布版都包含 GPG 签名和 SHA512 校验和用于验证。
 
-**最新版本：** v1.9.0（发布日期：2026年9月17日）
+**最新版本：** v1.9.1（发布日期：2026年11月2日）
+
+升级前请阅读 [1.9.1 升级指南](/docs/start/1.9.1-update)。管理访问需要 `admin` 角色，请修改初始管理员密码。
 
 **快速下载：**
 
-- [服务器二进制](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-1.9.0-bin.tar.gz)
-- [采集器二进制](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-collector-1.9.0-bin.tar.gz)
-- [源码](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-1.9.0-src.tar.gz)
+- [服务器二进制](https://www.apache.org/dyn/closer.lua/hertzbeat/1.9.1/apache-hertzbeat-1.9.1-bin.tar.gz?action=download)
+- [采集器二进制](https://www.apache.org/dyn/closer.lua/hertzbeat/1.9.1/apache-hertzbeat-collector-1.9.1-bin.tar.gz?action=download)
+- [源码](https://www.apache.org/dyn/closer.lua/hertzbeat/1.9.1/apache-hertzbeat-1.9.1-src.tar.gz?action=download)
 
 ## 下载包类型
 
 | 包类型 | 大小 | 用途 | 平台 |
 |--------|------|------|------|
 | **服务器二进制** | ~364MB | 主监控服务器 | Linux、macOS、Windows |
+| **Docker 服务器二进制** | ~364MB | 用于 Docker 的服务器包 | Docker 环境 |
 | **采集器二进制** | ~163MB | 分布式采集器 | Linux、macOS、Windows |
-| **Native 采集器** | ~77MB | 分布式采集器，无需 JVM | linux-amd64、linux-arm64、windows-amd64 |
-| **源码** | ~3MB | 从源码构建 | 任何支持 Java 25+ 的平台 |
+| **Native 采集器** | ~75–77MB | 分布式采集器，无需 JVM | linux-amd64、linux-arm64、windows-amd64 |
+| **源码** | ~2.8MB | 从源码构建 | 任何支持 Java 25+ 的平台 |
 | **Docker Compose** | ~45KB | 全栈部署 | Docker 环境 |
 
 :::tip Native 采集器推荐
@@ -45,11 +48,11 @@ description: Apache HertzBeat 监控系统下载 - 服务器、采集器、源�
 
 | 版本     | 日期         | 下载                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                     | Release                                                         |
 |--------|------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------|
-| v1.9.0 | 2026.09.17 | [apache-hertzbeat-1.9.0-bin.tar.gz](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-1.9.0-bin.tar.gz) (Server) ( [signature](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-1.9.0-bin.tar.gz.asc) , [sha512](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-1.9.0-bin.tar.gz.sha512) ) <br/> [apache-hertzbeat-collector-1.9.0-bin.tar.gz](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-collector-1.9.0-bin.tar.gz) (Collector) ( [signature](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-collector-1.9.0-bin.tar.gz.asc) , [sha512](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-collector-1.9.0-bin.tar.gz.sha512) ) <br/> [apache-hertzbeat-collector-native-1.9.0-linux-amd64-bin.tar.gz](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-collector-native-1.9.0-linux-amd64-bin.tar.gz) (Native Collector linux-amd64) ( [signature](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-collector-native-1.9.0-linux-amd64-bin.tar.gz.asc) , [sha512](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-collector-native-1.9.0-linux-amd64-bin.tar.gz.sha512) ) <br/> [apache-hertzbeat-collector-native-1.9.0-linux-arm64-bin.tar.gz](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-collector-native-1.9.0-linux-arm64-bin.tar.gz) (Native Collector linux-arm64) ( [signature](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-collector-native-1.9.0-linux-arm64-bin.tar.gz.asc) , [sha512](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-collector-native-1.9.0-linux-arm64-bin.tar.gz.sha512) ) <br/> [apache-hertzbeat-collector-native-1.9.0-windows-amd64-bin.zip](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-collector-native-1.9.0-windows-amd64-bin.zip) (Native Collector windows-amd64) ( [signature](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-collector-native-1.9.0-windows-amd64-bin.zip.asc) , [sha512](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-collector-native-1.9.0-windows-amd64-bin.zip.sha512) ) <br/> [apache-hertzbeat-1.9.0-src.tar.gz](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-1.9.0-src.tar.gz) (Source Code) ( [signature](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-1.9.0-src.tar.gz.asc) , [sha512](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-1.9.0-src.tar.gz.sha512) ) <br/> [apache-hertzbeat-1.9.0-docker-compose.tar.gz](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-1.9.0-docker-compose.tar.gz) (Docker Compose) ( [signature](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-1.9.0-docker-compose.tar.gz.asc) , [sha512](https://dlcdn.apache.org/hertzbeat/1.9.0/apache-hertzbeat-1.9.0-docker-compose.tar.gz.sha512) ) | [note](https://github.com/apache/hertzbeat/releases/tag/v1.9.0) |
+| v1.9.1 | 2026.11.02 | [apache-hertzbeat-1.9.1-bin.tar.gz](https://www.apache.org/dyn/closer.lua/hertzbeat/1.9.1/apache-hertzbeat-1.9.1-bin.tar.gz?action=download) (Server) ( [signature](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-1.9.1-bin.tar.gz.asc) , [sha512](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-1.9.1-bin.tar.gz.sha512) ) <br/> [apache-hertzbeat-1.9.1-docker-bin.tar.gz](https://www.apache.org/dyn/closer.lua/hertzbeat/1.9.1/apache-hertzbeat-1.9.1-docker-bin.tar.gz?action=download) (Docker Server) ( [signature](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-1.9.1-docker-bin.tar.gz.asc) , [sha512](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-1.9.1-docker-bin.tar.gz.sha512) ) <br/> [apache-hertzbeat-collector-1.9.1-bin.tar.gz](https://www.apache.org/dyn/closer.lua/hertzbeat/1.9.1/apache-hertzbeat-collector-1.9.1-bin.tar.gz?action=download) (Collector) ( [signature](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-collector-1.9.1-bin.tar.gz.asc) , [sha512](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-collector-1.9.1-bin.tar.gz.sha512) ) <br/> [apache-hertzbeat-collector-native-1.9.1-linux-amd64-bin.tar.gz](https://www.apache.org/dyn/closer.lua/hertzbeat/1.9.1/apache-hertzbeat-collector-native-1.9.1-linux-amd64-bin.tar.gz?action=download) (Native Collector linux-amd64) ( [signature](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-collector-native-1.9.1-linux-amd64-bin.tar.gz.asc) , [sha512](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-collector-native-1.9.1-linux-amd64-bin.tar.gz.sha512) ) <br/> [apache-hertzbeat-collector-native-1.9.1-linux-arm64-bin.tar.gz](https://www.apache.org/dyn/closer.lua/hertzbeat/1.9.1/apache-hertzbeat-collector-native-1.9.1-linux-arm64-bin.tar.gz?action=download) (Native Collector linux-arm64) ( [signature](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-collector-native-1.9.1-linux-arm64-bin.tar.gz.asc) , [sha512](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-collector-native-1.9.1-linux-arm64-bin.tar.gz.sha512) ) <br/> [apache-hertzbeat-collector-native-1.9.1-windows-amd64-bin.zip](https://www.apache.org/dyn/closer.lua/hertzbeat/1.9.1/apache-hertzbeat-collector-native-1.9.1-windows-amd64-bin.zip?action=download) (Native Collector windows-amd64) ( [signature](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-collector-native-1.9.1-windows-amd64-bin.zip.asc) , [sha512](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-collector-native-1.9.1-windows-amd64-bin.zip.sha512) ) <br/> [apache-hertzbeat-1.9.1-src.tar.gz](https://www.apache.org/dyn/closer.lua/hertzbeat/1.9.1/apache-hertzbeat-1.9.1-src.tar.gz?action=download) (Source Code) ( [signature](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-1.9.1-src.tar.gz.asc) , [sha512](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-1.9.1-src.tar.gz.sha512) ) <br/> [apache-hertzbeat-1.9.1-docker-compose.tar.gz](https://www.apache.org/dyn/closer.lua/hertzbeat/1.9.1/apache-hertzbeat-1.9.1-docker-compose.tar.gz?action=download) (Docker Compose) ( [signature](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-1.9.1-docker-compose.tar.gz.asc) , [sha512](https://downloads.apache.org/hertzbeat/1.9.1/apache-hertzbeat-1.9.1-docker-compose.tar.gz.sha512) ) | [note](https://hertzbeat.apache.org/zh-cn/blog/2026/11/02/hertzbeat-v1.9.1/) |
 
 ## Docker 镜像版本
 
-> Apache HertzBeat™ 为每个版本制作了 Docker 镜像. 你可以从 [Docker Hub](https://hub.docker.com/r/apache/hertzbeat) 拉取使用.
+> Apache HertzBeat™ 镜像可从 [Docker Hub](https://hub.docker.com/r/apache/hertzbeat) 获取。选择镜像前请查看可用标签。
 
 - HertzBeat [https://hub.docker.com/r/apache/hertzbeat](https://hub.docker.com/r/apache/hertzbeat)
 - HertzBeat Collector [https://hub.docker.com/r/apache/hertzbeat-collector](https://hub.docker.com/r/apache/hertzbeat-collector)
@@ -110,12 +113,12 @@ docker run -d -p 1157:1157 -p 1158:1158 --name hertzbeat apache/hertzbeat
 ### 如何解压和运行二进制？
 
 ```bash
-tar -xzf apache-hertzbeat-1.9.0-bin.tar.gz
-cd apache-hertzbeat-1.9.0
+tar -xzf apache-hertzbeat-1.9.1-bin.tar.gz
+cd apache-hertzbeat-1.9.1
 ./bin/startup.sh
 ```
 
-访问 Web UI：`http://localhost:1157`, 凭据：admin/hertzbeat
+访问 Web UI：`http://localhost:1157`，初始凭据为 admin/hertzbeat，请修改默认密码。
 
 ### 版本之间有什么区别？
 

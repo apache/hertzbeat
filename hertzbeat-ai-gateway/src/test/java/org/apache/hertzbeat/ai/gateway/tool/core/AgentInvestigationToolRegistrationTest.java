@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.ai.gateway.tool.core;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.mock;
 
 import java.util.List;
@@ -41,17 +42,21 @@ class AgentInvestigationToolRegistrationTest {
             context.registerBean(AgentTraceToolService.class,
                     () -> new AgentTraceToolService(mock(EntityTraceQueryService.class)));
             context.registerBean(AgentTopologyToolService.class,
-                    () -> new AgentTopologyToolService(mock(EntityTopologyQueryService.class)));
+                    () -> new AgentTopologyToolService(mock(EntityTopologyQueryService.class),
+                            mock(org.apache.hertzbeat.warehouse.query.admission.ObservabilityQueryAdmissionService.class)));
             context.refresh();
 
             AgentToolRegistry registry = new AgentToolConfiguration()
                     .agentToolRegistry(context.getDefaultListableBeanFactory());
 
-            assertEquals(List.of("entity.get", "entity.query", "topology.query", "traces.get", "traces.query"),
+            assertEquals(List.of(
+                    "entity.get", "entity.query", "topology.query",
+                    "traces.detail", "traces.facet_values", "traces.get",
+                    "traces.group_by", "traces.groups", "traces.histogram",
+                    "traces.list", "traces.overview", "traces.query",
+                    "traces.spans", "traces.structure", "traces.structure_analysis"),
                     registry.descriptors().stream().map(AgentToolDescriptor::getName).sorted().toList());
-            assertEquals(List.of(AgentToolRisk.READ, AgentToolRisk.READ, AgentToolRisk.READ,
-                            AgentToolRisk.READ, AgentToolRisk.READ),
-                    registry.descriptors().stream().map(AgentToolDescriptor::getRisk).toList());
+            assertTrue(registry.descriptors().stream().allMatch(tool -> tool.getRisk() == AgentToolRisk.READ));
         }
     }
 }

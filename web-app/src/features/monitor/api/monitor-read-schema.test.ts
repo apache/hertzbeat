@@ -63,6 +63,22 @@ describe('Monitor primary read schemas', () => {
     });
   });
 
+  it.each(['Development seed description', null, undefined])(
+    'preserves optional list descriptions: %s',
+    description => {
+      const page = parseMonitorPage(
+        {
+          content: [{ id: 7, name: 'checkout', app: 'website', instance: 'prod', status: 1, description }],
+          totalElements: 1,
+          pageIndex: 0,
+          pageSize: 10
+        },
+        query
+      );
+      expect(page.content[0]?.description).toBe(description);
+    }
+  );
+
   it('enforces nested detail identities before returning mapped evidence', () => {
     expect(() =>
       parseMonitorDetail(

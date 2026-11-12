@@ -17,17 +17,16 @@
 
 package org.apache.hertzbeat.ai.gateway.runtime;
 
+import org.springframework.util.StringUtils;
+
 import java.time.Clock;
 import java.time.Duration;
 import java.util.Objects;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
-import org.springframework.util.StringUtils;
 
-/**
- * Shared stop-signal and cancellation control for one runtime invocation.
- */
+/** Shared stop-signal and cancellation control for one runtime invocation. */
 public final class AgentRuntimeControl implements AutoCloseable {
 
     private final Clock clock;
@@ -37,10 +36,36 @@ public final class AgentRuntimeControl implements AutoCloseable {
     private final CopyOnWriteArrayList<Runnable> abortHandlers = new CopyOnWriteArrayList<>();
     private final AtomicReference<StopSignal> stopSignal = new AtomicReference<>();
 
+    private final AtomicReference<java.time.Instant> manifestExpiry = new AtomicReference<>();
+
+    boolean requiresExplicitConfirmation() {
+        return manifestExpiry.get() != null;
+    }
+
+    void bindManifestExpiry(java.time.Instant expiry) {
+        if (expiry == null
+                || (!manifestExpiry.compareAndSet(null, expiry)
+                        && !expiry.equals(manifestExpiry.get())))
+            throw new IllegalArgumentException("An immutable manifest expiry is required");
+        checkpoint();
+    }
+
     private volatile boolean closed;
+    private volatile Runnable operationGuard = () -> {};
+
+    void operationGuard(Runnable guard) {
+        operationGuard = Objects.requireNonNull(guard);
+    }
+
+    void beforeOperation() {
+        checkpoint();
+        operationGuard.run();
+        checkpoint();
+    }
 
     public AgentRuntimeControl(String traceId, String runUid, Clock clock) {
-        // Runtime controls are created from a validated context and require stable cancellation identities.
+        // Runtime controls are created from a validated context and require stable cancellation
+        // identities.
         this.clock = Objects.requireNonNull(clock, "clock must not be null");
         if (!StringUtils.hasText(traceId) || !StringUtils.hasText(runUid)) {
             throw new IllegalArgumentException("traceId and runUid must not be blank");
@@ -50,7 +75,8 @@ public final class AgentRuntimeControl implements AutoCloseable {
     }
 
     public static AgentRuntimeControl forContext(AgentRuntimeContext context, Clock clock) {
-        // Context construction owns runtime identity validation; null cannot produce a usable control.
+        // Context construction owns runtime identity validation; null cannot produce a usable
+        // control.
         Objects.requireNonNull(context, "context must not be null");
         return new AgentRuntimeControl(context.getTraceId(), context.getRunUid(), clock);
     }
@@ -68,6 +94,9 @@ public final class AgentRuntimeControl implements AutoCloseable {
     }
 
     public void checkpoint() {
+        java.time.Instant expiry = manifestExpiry.get();
+        if (expiry != null && !clock.instant().isBefore(expiry))
+            stop("EXPLICIT_MANIFEST_PLAN_EXPIRED: create a new proposal; no new action may start");
         StopSignal signal = stopSignal.get();
         if (signal != null) {
             throw new AgentRuntimeStoppedException(signal.message(), signal.cancelled());
@@ -101,7 +130,7 @@ public final class AgentRuntimeControl implements AutoCloseable {
         Objects.requireNonNull(action, "action must not be null");
         if (stopSignal.get() != null) {
             runAbortHandler(action);
-            return () -> { };
+            return () -> {};
         }
         abortHandlers.add(action);
         if (stopSignal.get() != null && abortHandlers.remove(action)) {
@@ -118,7 +147,8 @@ public final class AgentRuntimeControl implements AutoCloseable {
             throw new IllegalArgumentException("duration must be positive");
         }
         long requestedMs = duration.toMillis();
-        long sleepDeadlineNanos = safeAdd(System.nanoTime(), TimeUnit.MILLISECONDS.toNanos(requestedMs));
+        long sleepDeadlineNanos =
+                safeAdd(System.nanoTime(), TimeUnit.MILLISECONDS.toNanos(requestedMs));
         synchronized (monitor) {
             while (stopSignal.get() == null) {
                 long remainingNanos = sleepDeadlineNanos - System.nanoTime();
@@ -156,8 +186,7 @@ public final class AgentRuntimeControl implements AutoCloseable {
         }
     }
 
-    private record StopSignal(String message, boolean cancelled) {
-    }
+    private record StopSignal(String message, boolean cancelled) {}
 
     private static long safeAdd(long left, long right) {
         if (Long.MAX_VALUE - left < right) {
@@ -168,5 +197,4 @@ public final class AgentRuntimeControl implements AutoCloseable {
         }
         return left + right;
     }
-
 }

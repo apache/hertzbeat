@@ -1,0 +1,129 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.monitorStatus {
+  display: grid;
+  align-content: start;
+  gap: var(--hb-space-3);
+  min-width: 0;
+}
+.monitorTotal {
+  display: flex;
+  align-items: baseline;
+  gap: var(--hb-space-2);
+  width: max-content;
+  max-width: 100%;
+  color: var(--hb-text-primary);
+  font-size: 14px;
+  line-height: 24px;
+  font-weight: 500;
+  border-radius: 4px;
+}
+.monitorTotal span {
+  font-size: 12px;
+  color: var(--hb-text-secondary);
+  font-weight: 400;
+}
+.monitorBar {
+  display: flex;
+  width: 100%;
+  height: 12px;
+  overflow: hidden;
+  border-radius: 3px;
+  background: var(--hb-border-subtle);
+}
+.monitorBar > span {
+  height: 100%;
+  flex: none;
+  opacity: 0.82;
+}
+.monitorBar > .available {
+  background: var(--hb-status-available);
+}
+.monitorBar > .unavailable {
+  background: var(--hb-status-unavailable);
+}
+.monitorBar > .paused {
+  background: var(--hb-text-muted);
+}
+.statusCounts {
+  display: grid;
+  gap: var(--hb-space-1);
+  min-width: 0;
+}
+.statusCounts a,
+.otherStatus {
+  display: grid;
+  grid-template-columns: 6px minmax(0, 1fr) 28px 40px;
+  align-items: center;
+  gap: var(--hb-space-2);
+  min-width: 0;
+  padding: 2px 4px;
+  color: var(--hb-text-secondary);
+  font-size: 12px;
+  line-height: 20px;
+  border-radius: 4px;
+}
+.statusCounts a > span {
+  white-space: nowrap;
+}
+.statusCounts a > span:nth-of-type(2),
+.otherStatus > span:nth-of-type(2) {
+  color: var(--hb-text-primary);
+  font-weight: 400;
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+.statusCounts small {
+  color: var(--hb-text-secondary);
+  font-size: 12px;
+  text-align: end;
+}
+.statusCounts i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--hb-text-muted);
+}
+.available i {
+  background: var(--hb-status-available);
+}
+.unavailable i {
+  background: var(--hb-status-unavailable);
+}
+.monitorTotal:hover,
+.statusCounts a:hover {
+  background: var(--hb-bg-hover);
+}
+.monitorTotal:active,
+.statusCounts a:active {
+  background: var(--hb-bg-selected);
+}
+.monitorStatus a:focus-visible {
+  outline: 2px solid var(--hb-focus-ring);
+  outline-offset: 2px;
+}
+
+@media (min-width: 801px) {
+  .monitorTotal {
+    position: absolute;
+    inset-inline-start: 0;
+    top: calc(-32px - var(--hb-space-4));
+    min-height: 32px;
+    align-items: center;
+  }
+}

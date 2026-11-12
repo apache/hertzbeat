@@ -1,0 +1,127 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+.region {
+  min-width: 0;
+  background: var(--hb-bg-raised);
+  display: flex;
+  flex-direction: column;
+  font-size: 13px;
+  line-height: 20px;
+  border-radius: 6px;
+  padding: 7px;
+  border: 1px solid var(--start-panel-border);
+  min-height: 300px;
+}
+
+.region header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--hb-space-3);
+  margin-bottom: var(--hb-space-2);
+  margin: 0 4px 8px;
+  min-height: 28px;
+}
+
+.region h3 {
+  margin: 0;
+  line-height: 24px;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.region h4 {
+  margin: 0;
+  font-size: 13px;
+}
+
+.region header a,
+.region footer,
+.coverage,
+.rankWindow {
+  font-size: 12px;
+  color: var(--hb-text-secondary);
+}
+
+.region footer {
+  padding-top: var(--hb-space-3);
+}
+
+.empty {
+  color: var(--hb-text-secondary);
+  font-size: 13px;
+  line-height: 20px;
+  padding: var(--hb-space-2) 0;
+  margin: 0;
+}
+
+.region a:focus-visible,
+.region button:focus-visible {
+  outline: 2px solid var(--hb-focus-ring);
+  outline-offset: 2px;
+}
+
+.cardTime {
+  font-size: 12px;
+  line-height: 18px;
+  color: var(--hb-text-muted);
+  white-space: nowrap;
+}
+
+.cardFooter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: auto;
+  line-height: 18px;
+  padding-top: 4px;
+  min-height: 32px;
+}
+
+.cardFooter > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.region h3 :global(.anticon) {
+  color: var(--start-accent);
+  font-size: 16px;
+}
+
+.cardTime :global(.anticon) {
+  color: var(--start-accent);
+  margin-left: 4px;
+}
+
+.region header a:hover {
+  color: var(--ant-color-link-hover, var(--start-link));
+}
+.region header a:active {
+  color: var(--ant-color-link-active, var(--start-link));
+}
+
+.metricCard,
+.logCard,
+.traceCard {
+  background: var(--hb-bg-raised);
+}

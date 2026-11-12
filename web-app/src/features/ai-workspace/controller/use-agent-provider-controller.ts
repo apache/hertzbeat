@@ -33,7 +33,10 @@ import type {
 } from '../model/agent-workspace-contract';
 import type { AgentProviderViewModel } from '../model/agent-workspace-view-model';
 
+import { useAgentProviderConnectionTest } from './use-agent-provider-connection-test';
+
 export function useAgentProviderController(open: boolean): AgentProviderViewModel {
+  const connectionTest = useAgentProviderConnectionTest(open);
   const [options, setOptions] = useState<AgentProviderOption[]>([]);
   const [view, setView] = useState<AgentProviderConfigurationView>();
   const [phase, setPhase] = useState<AgentProviderViewModel['phase']>('loading');
@@ -94,5 +97,5 @@ export function useAgentProviderController(open: boolean): AgentProviderViewMode
     [load, mutate]
   );
 
-  return { options, ...(view ? { view } : {}), phase, actions };
+  return { options, ...(view ? { view } : {}), phase, actions, connectionTest };
 }

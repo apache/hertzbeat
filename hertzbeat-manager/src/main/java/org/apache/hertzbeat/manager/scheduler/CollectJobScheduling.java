@@ -32,6 +32,11 @@ public interface CollectJobScheduling {
      * @return Collection results
      */
     List<CollectRep.MetricsData> collectSyncJobData(Job job);
+
+    /** Approved inline preview supports only this version's in-process main Collector. No remote fallback. */
+    default List<CollectRep.MetricsData> collectLocalApprovedJob(Job job) {
+        throw new IllegalStateException("Bound inline collection is unavailable on this scheduler");
+    }
     
     /**
      * Execute a one-time collection task and get the collected data response

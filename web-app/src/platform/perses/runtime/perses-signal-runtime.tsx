@@ -36,6 +36,7 @@ import type { TraceEvidence } from '@/shared/trace-evidence';
 import { HertzBeatTracingGanttAdapter } from './hertzbeat-tracing-gantt-adapter';
 import { HertzBeatTraceTableAdapter } from './hertzbeat-trace-table-adapter';
 import { useMemo, type ReactNode } from 'react';
+import { useTheme } from '@mui/material/styles';
 import { PersesTooltipTimestampContext } from './perses-tooltip-context';
 
 import type { ExactTimeWindow } from '@/shared/query-context';
@@ -126,7 +127,8 @@ function RuntimeContents(props: PersesSignalRuntimeProps) {
 type SnapshotRuntimeProps = Extract<PersesSignalRuntimeProps, { kind: 'logs-table' | 'metric-time-series' }>;
 
 function SnapshotPanel(props: SnapshotRuntimeProps) {
-  const definition = useMemo(() => panelDefinition(props), [props]);
+  const dark = useTheme().palette.mode === 'dark';
+  const definition = useMemo(() => panelDefinition(props, dark), [props, dark]);
   const queries = useMemo(() => queryDefinitions(props), [props]);
   return (
     <SnapshotQueries props={props} definitions={queries}>
@@ -202,9 +204,9 @@ function queryDefinitions(props: SnapshotRuntimeProps): QueryDefinition[] {
   ];
 }
 
-function panelDefinition(props: SnapshotRuntimeProps): PanelDefinition {
+function panelDefinition(props: SnapshotRuntimeProps, dark: boolean): PanelDefinition {
   const display = { name: props.title };
-  if (props.kind === 'metric-time-series') return metricPanelDefinition(props);
+  if (props.kind === 'metric-time-series') return metricPanelDefinition(props, dark);
   return {
     kind: 'Panel',
     spec: {
@@ -260,7 +262,10 @@ function normalizedLogDisplay(display: HertzBeatLogTableDisplay | undefined) {
   };
 }
 
-function metricPanelDefinition(props: Extract<SnapshotRuntimeProps, { kind: 'metric-time-series' }>): PanelDefinition {
+function metricPanelDefinition(
+  props: Extract<SnapshotRuntimeProps, { kind: 'metric-time-series' }>,
+  dark: boolean
+): PanelDefinition {
   const display = { name: props.title };
   if (props.panel?.kind === 'StatChart')
     return {
@@ -293,15 +298,7 @@ function metricPanelDefinition(props: Extract<SnapshotRuntimeProps, { kind: 'met
         spec: {
           ...(props.compact || props.legend === false ? {} : { legend: { position: 'bottom', size: 'small' } }),
           ...axis,
-          visual:
-            props.display === 'bar'
-              ? {
-                  display: 'bar',
-                  lineWidth: 0,
-                  showPoints: 'auto',
-                  ...(props.compact ? { palette: { mode: 'categorical' } } : {})
-                }
-              : lineVisual(props.data)
+          visual: props.display === 'bar' ? barVisual(Boolean(props.compact), dark) : lineVisual(props.data, dark)
         }
       }
     }
@@ -320,9 +317,19 @@ function checkedMetricYAxis(props: Extract<SnapshotRuntimeProps, { kind: 'metric
   return axis;
 }
 
-function lineVisual(data: TimeSeriesData) {
+function barVisual(compact: boolean, dark: boolean) {
+  return {
+    display: 'bar',
+    lineWidth: 0,
+    showPoints: 'auto',
+    ...(compact || dark ? { palette: { mode: 'categorical' } } : {})
+  } as const;
+}
+
+function lineVisual(data: TimeSeriesData, dark: boolean) {
   const pointRadius = sparseLinePoints(data) ? 4 : 0;
   return {
+    ...(dark ? { palette: { mode: 'categorical' } } : {}),
     display: 'line',
     lineWidth: 1.75,
     showPoints: pointRadius ? 'always' : 'auto',

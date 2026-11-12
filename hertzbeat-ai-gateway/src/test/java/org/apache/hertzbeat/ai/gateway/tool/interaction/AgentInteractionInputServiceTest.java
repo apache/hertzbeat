@@ -143,6 +143,38 @@ class AgentInteractionInputServiceTest {
                 () -> service.validateReference(anotherRunRequest));
     }
 
+    @Test
+    void unsupportedTargetCannotOpenFormOrClaimInputWasAccepted() {
+        List<AgentRuntimeEvent> events = new CopyOnWriteArrayList<>();
+        var context =
+                new AgentToolExecutionContext(
+                        request("interaction.request_input", Map.of()).toBuilder()
+                                .eventConsumer(events::add)
+                                .build(),
+                        AgentToolCall.builder().toolCallId("agc-input").build());
+        for (String target : List.of("alert_inhibit.create", "tool.search", "unknown.execute")) {
+            var failure =
+                    assertThrows(
+                            IllegalArgumentException.class,
+                            () ->
+                                    service.request(
+                                            target,
+                                            "Create disabled test policy",
+                                            null,
+                                            List.of(
+                                                    new InputField(
+                                                            "configuration",
+                                                            "configuration",
+                                                            "text",
+                                                            "Configuration",
+                                                            true,
+                                                            null)),
+                                            context));
+            assertTrue(failure.getMessage().startsWith("INPUT_REFERENCE_TARGET_UNSUPPORTED:"));
+            assertTrue(events.isEmpty());
+        }
+    }
+
     private AgentToolExecutionRequest request(String toolName, Map<String, Object> arguments) {
         return AgentToolExecutionRequest.builder()
                 .sessionUid("ags-1")

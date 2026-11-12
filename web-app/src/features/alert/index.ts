@@ -17,3 +17,7 @@
 
 export { loadAlertSummary } from './api/alert-api';
 export { alertFailureKind } from './model/alert-model';
+
+export { loadAlertGroups } from './api/alert-api';
+export type { AlertGroup } from './model/alert-model';
+export { buildAlertInvestigationPath } from './model/alert-investigation-route';

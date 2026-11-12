@@ -35,7 +35,8 @@ import org.springframework.ai.openai.OpenAiChatOptions;
  */
 class OpenAiCompatibleAgentModelProviderTest {
 
-    private final OpenAiCompatibleAgentModelProvider provider = new OpenAiCompatibleAgentModelProvider();
+    private final OpenAiCompatibleAgentModelProvider provider =
+            new OpenAiCompatibleAgentModelProvider(new org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeProperties());
 
     @Test
     void optionsShouldExposeEverySupportedCompatiblePreset() {
@@ -101,6 +102,27 @@ class OpenAiCompatibleAgentModelProviderTest {
         assertEquals("deepseek-ai/DeepSeek-V3.2", options.getModel());
         assertEquals(0.2D, options.getTemperature());
         assertEquals(4096, options.getMaxCompletionTokens());
+    }
+
+    @Test
+    void freshReadCorrectionRequiresNativeToolCallOnlyWhenRequested() {
+        var callback = org.mockito.Mockito.mock(org.springframework.ai.tool.ToolCallback.class);
+        for (String protocol : List.of("chat-completions", "responses")) {
+            var config = config("custom", "https://model.example.test/v1", "test-model", "secret");
+            config.setProtocol(protocol);
+            for (boolean required : List.of(false, true)) {
+                var request = AgentRuntimeModelRequest.builder()
+                        .prompt(RuntimePrompt.builder().instructions("system").build()).toolCallRequired(required).build();
+                var options = provider.requestOptions(config, request, List.of(callback));
+                Object choice = options instanceof OpenAiChatOptions chat ? chat.getToolChoice()
+                        : ((org.springframework.ai.openai.responses.OpenAiResponsesChatOptions) options).getToolChoice();
+                assertEquals(required ? "required" : null, choice);
+                var noTools = provider.requestOptions(config, request, List.of());
+                Object emptyChoice = noTools instanceof OpenAiChatOptions chat ? chat.getToolChoice()
+                        : ((org.springframework.ai.openai.responses.OpenAiResponsesChatOptions) noTools).getToolChoice();
+                assertNull(emptyChoice);
+            }
+        }
     }
 
     private ModelProviderConfig config(String code, String baseUrl, String model, String apiKey) {

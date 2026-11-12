@@ -1,0 +1,711 @@
+{
+  "runUid": "run_697869576273152",
+  "userMessage": "\u968f\u4fbf\u627e 50 \u4e2a\u516c\u7f51\u57df\u540d\u5e2e\u6211\u521b\u5efa\u7f51\u7ad9\u76d1\u63a7",
+  "plans": [
+    {
+      "intervals": 600,
+      "planVersion": "website-candidate.v1",
+      "valid": true,
+      "requiresHumanApproval": true,
+      "timeout": 3000,
+      "inputHash": "a18b604c89e803dc9c22a85536dc20036810c0d89814c150b4f8aaf803392875",
+      "domains": [
+        "google.com",
+        "github.com",
+        "cloudflare.com",
+        "microsoft.com",
+        "apple.com",
+        "amazon.com",
+        "wikipedia.org",
+        "youtube.com",
+        "twitter.com",
+        "facebook.com",
+        "instagram.com",
+        "linkedin.com",
+        "reddit.com",
+        "netflix.com",
+        "twitch.tv",
+        "stackoverflow.com",
+        "mozilla.org",
+        "adobe.com",
+        "oracle.com",
+        "ibm.com",
+        "salesforce.com",
+        "shopify.com",
+        "wordpress.org",
+        "medium.com",
+        "dropbox.com",
+        "slack.com",
+        "zoom.us",
+        "spotify.com",
+        "pinterest.com",
+        "tumblr.com",
+        "quora.com",
+        "bing.com",
+        "duckduckgo.com",
+        "yahoo.com",
+        "baidu.com",
+        "taobao.com",
+        "jd.com",
+        "alibaba.com",
+        "tencent.com",
+        "huawei.com",
+        "xiaomi.com",
+        "bytedance.com",
+        "meituan.com",
+        "pinduoduo.com",
+        "sina.com.cn",
+        "sohu.com",
+        "163.com",
+        "csdn.net",
+        "zhihu.com",
+        "bilibili.com"
+      ]
+    },
+    {
+      "fragmentValid": true,
+      "invalidIndices": [],
+      "repairable": true,
+      "duplicateDomains": [
+        "paypal.com"
+      ],
+      "uniqueCount": 49,
+      "valid": false,
+      "inputHash": "8d9dac9f7870c0408d1a3371f12a2686b1b24b7b6fcdc3378ac182649e464610",
+      "planVersion": "website-candidate.v1",
+      "validUniqueDomains": [
+        "pinterest.com",
+        "tumblr.com",
+        "quora.com",
+        "duckduckgo.com",
+        "csdn.net",
+        "zhihu.com",
+        "bilibili.com",
+        "walmart.com",
+        "ebay.com",
+        "paypal.com",
+        "cnn.com",
+        "bbc.com",
+        "nytimes.com",
+        "theguardian.com",
+        "forbes.com",
+        "bloomberg.com",
+        "reuters.com",
+        "apnews.com",
+        "nasa.gov",
+        "mit.edu",
+        "stanford.edu",
+        "harvard.edu",
+        "ox.ac.uk",
+        "cambridge.org",
+        "openai.com",
+        "anthropic.com",
+        "nvidia.com",
+        "intel.com",
+        "qualcomm.com",
+        "tesla.com",
+        "spacex.com",
+        "airbnb.com",
+        "uber.com",
+        "lyft.com",
+        "stripe.com",
+        "squareup.com",
+        "godaddy.com",
+        "namecheap.com",
+        "digitalocean.com",
+        "heroku.com",
+        "vercel.com",
+        "netlify.com",
+        "cloudinary.com",
+        "okta.com",
+        "datadoghq.com",
+        "newrelic.com",
+        "splunk.com",
+        "elastic.co",
+        "mongodb.com"
+      ],
+      "code": "WEBSITE_PROPOSAL_DUPLICATE",
+      "candidateCount": 50
+    }
+  ],
+  "preflights": [
+    {
+      "checkedAt": "2026-10-24T15:18:48.512984Z",
+      "planVersion": "website-preflight.v1",
+      "inputHash": "b719b39a37ab39b416da6e65e0d2ebcaaef58de35dde1644e7ac8b0f9ddd5464",
+      "networkProbePerformed": false,
+      "networkProbeRequiresApproval": true,
+      "items": [
+        {
+          "domain": "google.com",
+          "checkedAt": "2026-10-24T15:18:48.512851Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "github.com",
+          "checkedAt": "2026-10-24T15:18:48.512871Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "cloudflare.com",
+          "checkedAt": "2026-10-24T15:18:48.512875Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "microsoft.com",
+          "checkedAt": "2026-10-24T15:18:48.512877Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "apple.com",
+          "checkedAt": "2026-10-24T15:18:48.512879Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "amazon.com",
+          "checkedAt": "2026-10-24T15:18:48.512881Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "wikipedia.org",
+          "checkedAt": "2026-10-24T15:18:48.512883Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "youtube.com",
+          "checkedAt": "2026-10-24T15:18:48.512885Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "twitter.com",
+          "checkedAt": "2026-10-24T15:18:48.512887Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "facebook.com",
+          "checkedAt": "2026-10-24T15:18:48.512889Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "instagram.com",
+          "checkedAt": "2026-10-24T15:18:48.512891Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "linkedin.com",
+          "checkedAt": "2026-10-24T15:18:48.512893Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "reddit.com",
+          "checkedAt": "2026-10-24T15:18:48.512895Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "netflix.com",
+          "checkedAt": "2026-10-24T15:18:48.512897Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "twitch.tv",
+          "checkedAt": "2026-10-24T15:18:48.512902Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "stackoverflow.com",
+          "checkedAt": "2026-10-24T15:18:48.512903Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "mozilla.org",
+          "checkedAt": "2026-10-24T15:18:48.512905Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "adobe.com",
+          "checkedAt": "2026-10-24T15:18:48.512907Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "oracle.com",
+          "checkedAt": "2026-10-24T15:18:48.512909Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "ibm.com",
+          "checkedAt": "2026-10-24T15:18:48.512911Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "salesforce.com",
+          "checkedAt": "2026-10-24T15:18:48.512913Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "shopify.com",
+          "checkedAt": "2026-10-24T15:18:48.512915Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "wordpress.org",
+          "checkedAt": "2026-10-24T15:18:48.512917Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "medium.com",
+          "checkedAt": "2026-10-24T15:18:48.512919Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "dropbox.com",
+          "checkedAt": "2026-10-24T15:18:48.512921Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "slack.com",
+          "checkedAt": "2026-10-24T15:18:48.512923Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "zoom.us",
+          "checkedAt": "2026-10-24T15:18:48.512924Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "spotify.com",
+          "checkedAt": "2026-10-24T15:18:48.512926Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "pinterest.com",
+          "checkedAt": "2026-10-24T15:18:48.512931Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "tumblr.com",
+          "checkedAt": "2026-10-24T15:18:48.512933Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "quora.com",
+          "checkedAt": "2026-10-24T15:18:48.512935Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "bing.com",
+          "checkedAt": "2026-10-24T15:18:48.512937Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "duckduckgo.com",
+          "checkedAt": "2026-10-24T15:18:48.512939Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "yahoo.com",
+          "checkedAt": "2026-10-24T15:18:48.512941Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "baidu.com",
+          "checkedAt": "2026-10-24T15:18:48.512943Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "taobao.com",
+          "checkedAt": "2026-10-24T15:18:48.512945Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "jd.com",
+          "checkedAt": "2026-10-24T15:18:48.512947Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "alibaba.com",
+          "checkedAt": "2026-10-24T15:18:48.512949Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "tencent.com",
+          "checkedAt": "2026-10-24T15:18:48.512951Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "huawei.com",
+          "checkedAt": "2026-10-24T15:18:48.512953Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "xiaomi.com",
+          "checkedAt": "2026-10-24T15:18:48.512957Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "bytedance.com",
+          "checkedAt": "2026-10-24T15:18:48.512959Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "meituan.com",
+          "checkedAt": "2026-10-24T15:18:48.512961Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "pinduoduo.com",
+          "checkedAt": "2026-10-24T15:18:48.512963Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "sina.com.cn",
+          "checkedAt": "2026-10-24T15:18:48.512965Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "sohu.com",
+          "checkedAt": "2026-10-24T15:18:48.512968Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "163.com",
+          "checkedAt": "2026-10-24T15:18:48.512970Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "csdn.net",
+          "checkedAt": "2026-10-24T15:18:48.512973Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "zhihu.com",
+          "checkedAt": "2026-10-24T15:18:48.512975Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "bilibili.com",
+          "checkedAt": "2026-10-24T15:18:48.512977Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        }
+      ],
+      "creationProof": false
+    },
+    {
+      "checkedAt": "2026-10-24T15:18:53.829405Z",
+      "planVersion": "website-preflight.v1",
+      "inputHash": "f5bd2724913dcc9db8890c35d1c8bee3bfec7f5852522b6db6a71d50394a20ee",
+      "networkProbePerformed": false,
+      "networkProbeRequiresApproval": true,
+      "items": [
+        {
+          "domain": "walmart.com",
+          "checkedAt": "2026-10-24T15:18:53.829300Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "ebay.com",
+          "checkedAt": "2026-10-24T15:18:53.829315Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "paypal.com",
+          "checkedAt": "2026-10-24T15:18:53.829317Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "cnn.com",
+          "checkedAt": "2026-10-24T15:18:53.829320Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "bbc.com",
+          "checkedAt": "2026-10-24T15:18:53.829322Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "nytimes.com",
+          "checkedAt": "2026-10-24T15:18:53.829324Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "theguardian.com",
+          "checkedAt": "2026-10-24T15:18:53.829326Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "forbes.com",
+          "checkedAt": "2026-10-24T15:18:53.829328Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "bloomberg.com",
+          "checkedAt": "2026-10-24T15:18:53.829330Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "reuters.com",
+          "checkedAt": "2026-10-24T15:18:53.829332Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "apnews.com",
+          "checkedAt": "2026-10-24T15:18:53.829334Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "nasa.gov",
+          "checkedAt": "2026-10-24T15:18:53.829336Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "mit.edu",
+          "checkedAt": "2026-10-24T15:18:53.829338Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "stanford.edu",
+          "checkedAt": "2026-10-24T15:18:53.829340Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "harvard.edu",
+          "checkedAt": "2026-10-24T15:18:53.829342Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "ox.ac.uk",
+          "checkedAt": "2026-10-24T15:18:53.829344Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "cambridge.org",
+          "checkedAt": "2026-10-24T15:18:53.829346Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "openai.com",
+          "checkedAt": "2026-10-24T15:18:53.829348Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "anthropic.com",
+          "checkedAt": "2026-10-24T15:18:53.829355Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "nvidia.com",
+          "checkedAt": "2026-10-24T15:18:53.829357Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "intel.com",
+          "checkedAt": "2026-10-24T15:18:53.829359Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "qualcomm.com",
+          "checkedAt": "2026-10-24T15:18:53.829361Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "tesla.com",
+          "checkedAt": "2026-10-24T15:18:53.829363Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "spacex.com",
+          "checkedAt": "2026-10-24T15:18:53.829365Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "airbnb.com",
+          "checkedAt": "2026-10-24T15:18:53.829367Z",
+          "state": "EXISTING",
+          "reason": "WEBSITE_ALREADY_MONITORED"
+        },
+        {
+          "domain": "uber.com",
+          "checkedAt": "2026-10-24T15:18:53.829369Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "lyft.com",
+          "checkedAt": "2026-10-24T15:18:53.829371Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "stripe.com",
+          "checkedAt": "2026-10-24T15:18:53.829373Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "squareup.com",
+          "checkedAt": "2026-10-24T15:18:53.829375Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "godaddy.com",
+          "checkedAt": "2026-10-24T15:18:53.829377Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "namecheap.com",
+          "checkedAt": "2026-10-24T15:18:53.829379Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "digitalocean.com",
+          "checkedAt": "2026-10-24T15:18:53.829381Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "heroku.com",
+          "checkedAt": "2026-10-24T15:18:53.829383Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "vercel.com",
+          "checkedAt": "2026-10-24T15:18:53.829385Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "netlify.com",
+          "checkedAt": "2026-10-24T15:18:53.829387Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "cloudinary.com",
+          "checkedAt": "2026-10-24T15:18:53.829389Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "okta.com",
+          "checkedAt": "2026-10-24T15:18:53.829391Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "datadoghq.com",
+          "checkedAt": "2026-10-24T15:18:53.829394Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "newrelic.com",
+          "checkedAt": "2026-10-24T15:18:53.829396Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "splunk.com",
+          "checkedAt": "2026-10-24T15:18:53.829398Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "elastic.co",
+          "checkedAt": "2026-10-24T15:18:53.829400Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        },
+        {
+          "domain": "mongodb.com",
+          "checkedAt": "2026-10-24T15:18:53.829402Z",
+          "state": "NOT_CHECKED",
+          "reason": "APPROVAL_REQUIRED_NATIVE_PROBE"
+        }
+      ],
+      "creationProof": false
+    }
+  ],
+  "firstExisting": 43,
+  "firstRetained": 7,
+  "secondExisting": 17,
+  "secondRetained": 25,
+  "checked": 92,
+  "retained": 32
+}

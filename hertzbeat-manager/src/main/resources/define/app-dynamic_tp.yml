@@ -178,7 +178,7 @@ metrics:
       # http response data parse type: default-hertzbeat rule, jsonpath-jsonpath script, website-for website monitoring, prometheus-prometheus exporter rule
       parseType: jsonPath
       # http response data parse script
-      parseScript: '$.*'
+      parseScript: '$[?(@.poolName)]'
 
   - name: thread_pool_running
     i18n:
@@ -200,7 +200,6 @@ metrics:
           en-US: queue capacity
           ja-JP: キュー容量
         type: 0
-        unit: MB
       - field: queue_size
         i18n:
           zh-CN: 队列大小
@@ -213,7 +212,6 @@ metrics:
           en-US: queue remaining capacity
           ja-JP: 使用可能のキュー容量
         type: 0
-        unit: MB
       - field: active_count
         i18n:
           zh-CN: 活动线程数
@@ -296,9 +294,6 @@ metrics:
       - reject_count=rejectCount
       - run_timeout_count=runTimeoutCount
       - queue_timeout_count=queueTimeoutCount
-    units:
-      - queue_capacity=B->MB
-      - queue_remaining_capacity=B->MB
     protocol: http
     http:
       host: ^_^host^_^
@@ -307,4 +302,4 @@ metrics:
       method: GET
       ssl: ^_^ssl^_^
       parseType: jsonPath
-      parseScript: '$.*'
+      parseScript: '$[?(@.poolName)]'

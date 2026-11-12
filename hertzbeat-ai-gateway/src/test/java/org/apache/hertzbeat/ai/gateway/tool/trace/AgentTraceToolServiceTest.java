@@ -79,6 +79,9 @@ class AgentTraceToolServiceTest {
                 "checkout", null, "prod", null, 2, 500, true);
 
         assertEquals(101L, result.get("totalElements"));
+        assertEquals("newest", result.get("sort"));
+        assertEquals(true, result.get("partial"));
+        assertEquals(1, result.get("returnedRows"));
         assertFalse(result.toString().contains("trace-secret"));
         assertFalse(result.toString().contains("representative-secret"));
         Map<?, ?> content = (Map<?, ?>) ((List<?>) result.get("content")).getFirst();
@@ -91,6 +94,24 @@ class AgentTraceToolServiceTest {
         assertFalse(result.toString().contains("n".repeat(257)));
         verify(traceQueryService).queryTraceList("team-b", 9L, 1_000L, 2_000L, null, true,
                 "checkout", null, "prod", null, null, null, null, 2, 50, true, null, null);
+    }
+
+    @Test
+    void explicitDurationSortIsExecutedByTheQueryService() {
+        var sort = org.apache.hertzbeat.warehouse.repository.TraceQueryRepository.TraceSort.DURATION_DESC;
+        TraceListItemDto row = new TraceListItemDto();
+        row.setTraceId("slow-trace");
+        row.setDurationNanos(1_800_000_000L);
+        when(traceQueryService.queryTraceList("team-b", null, 1_000L, 2_000L, null, null,
+                null, null, null, null, null, null, null, 0, 5, true, null, null, sort))
+                .thenReturn(new PageImpl<>(List.of(row), PageRequest.of(0, 5), 184));
+        Map<String, Object> result = service.queryTraces(null, 1_000L, 2_000L, null, null,
+                null, null, null, null, 0, 5, true, sort);
+        assertEquals("duration_desc", result.get("sort"));
+        assertEquals(true, result.get("partial"));
+        assertEquals(1, result.get("returnedRows"));
+        verify(traceQueryService).queryTraceList("team-b", null, 1_000L, 2_000L, null, null,
+                null, null, null, null, null, null, null, 0, 5, true, null, null, sort);
     }
 
     @Test

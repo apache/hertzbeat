@@ -16,6 +16,7 @@
  */
 
 import { init } from 'echarts';
+import { getSeriesColor } from '@perses-dev/timeseries-chart-plugin/lib/utils/palette-gen.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { createHertzBeatPersesTheme } from './hertzbeat-perses-theme';
 import { createHertzBeatChartsTheme } from './hertzbeat-perses-charts-theme';
@@ -64,6 +65,50 @@ describe('native compact histogram theme', () => {
     try {
       chart.setOption({ xAxis: { type: 'category' }, yAxis: {}, series: [{ type: 'bar', data: [2, 4] }] });
       expect(chart.renderToSVGString()).toContain(`fill="${color}"`);
+    } finally {
+      chart.dispose();
+    }
+  });
+
+  it('keeps all native dark categorical metric colors above 3:1 and distinct', () => {
+    const theme = createHertzBeatPersesTheme('dark', true);
+    const chartTheme = createHertzBeatChartsTheme(theme).echartsTheme;
+    const colors = chartTheme.color as string[];
+    expect(new Set(colors).size).toBe(7);
+    const actual = colors.map((_, seriesIndex) =>
+      getSeriesColor({
+        categoricalPalette: colors,
+        visual: { palette: { mode: 'categorical' } },
+        muiPrimaryColor: theme.palette.primary.main,
+        seriesName: `metric-${seriesIndex}`,
+        seriesIndex,
+        queryHasMultipleResults: true
+      })
+    );
+    expect(actual).toEqual(colors);
+    for (const color of actual)
+      expect(contrast(rgb(color), rgb(theme.palette.background.paper))).toBeGreaterThanOrEqual(3);
+    const chart = init(null, chartTheme, { renderer: 'svg', ssr: true, width: 600, height: 200 });
+    try {
+      chart.setOption({
+        animation: false,
+        legend: {},
+        xAxis: { type: 'category', data: ['a', 'b'] },
+        yAxis: {},
+        series: actual.map((color, index) => ({
+          name: `metric-${index}`,
+          type: 'line',
+          data: [index + 1, index + 2],
+          lineStyle: { color },
+          itemStyle: { color }
+        }))
+      });
+      for (const color of actual) expect(chart.renderToSVGString()).toContain(color);
+      chart.dispatchAction({ type: 'legendUnSelect', name: 'metric-0' });
+      expect(chart.getOption().legend).toMatchObject([{ selected: { 'metric-0': false } }]);
+      chart.dispatchAction({ type: 'legendSelect', name: 'metric-0' });
+      chart.dispatchAction({ type: 'highlight', seriesIndex: 0 });
+      expect(chart.renderToSVGString()).toContain(actual[0]);
     } finally {
       chart.dispose();
     }

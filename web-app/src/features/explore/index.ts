@@ -40,3 +40,17 @@ export {
   investigationDurationNanoToMillis,
   investigationUnixNanoToEpochMillis
 } from './model/explore-investigation-model';
+
+export { loadSavedQueries } from './api/explore-saved-query-api';
+export { readSavedQuery } from './model/explore-saved-query-model';
+export type { MetricExploreQuery, TraceExploreQuery } from './model/explore-query';
+export { useSavedViewDirectoryPreferences } from './controller/use-saved-view-directory-preferences';
+export type { SavedQueryRecord } from './model/explore-saved-query-model';
+export { loadMetricSignal, loadLogStatistics } from './api/explore-api';
+export { loadTraceAnalytics, buildTraceAnalyticsPath } from './api/explore-trace-analytics-api';
+export { metricResultState } from './model/explore-signal-model';
+export type { MetricConsole, MetricSignalEvidence, LogTrend } from './model/explore-signal-contract';
+export type { LogOverview, LogStatisticEvidence } from './model/explore-signal-contract';
+
+export { loadErrorTraceSamples } from './api/explore-trace-samples-api';
+export type { TraceRow } from './model/explore-signal-contract';

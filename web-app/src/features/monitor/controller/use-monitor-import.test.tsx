@@ -17,7 +17,7 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, renderHook, waitFor } from '@testing-library/react';
-import type { PropsWithChildren } from 'react';
+import { StrictMode, type PropsWithChildren } from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const api = vi.hoisted(() => ({ importMonitorConfig: vi.fn() }));
@@ -68,10 +68,12 @@ describe('useMonitorImport', () => {
     expect(api.importMonitorConfig).not.toHaveBeenCalled();
   });
 
-  it('allows a server-authorized user to open the import draft', () => {
+  it('allows a server-authorized user to open the import draft after StrictMode effect replay', () => {
     const allowed = renderImportHook(() => useMonitorImport(vi.fn(), { canWrite: true }));
     act(() => allowed.result.current.actions.open());
     expect(allowed.result.current.state.draft).toEqual({ file: null });
+    expect(allowed.result.current.state.open).toBe(true);
+    expect(api.importMonitorConfig).not.toHaveBeenCalled();
   });
 
   it('keeps a guest direct open inert', () => {
@@ -270,6 +272,10 @@ function renderImportHook<Result>(callback: () => Result) {
 function queryWrapper() {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } });
   return function Wrapper({ children }: PropsWithChildren) {
-    return <QueryClientProvider client={client}>{children}</QueryClientProvider>;
+    return (
+      <StrictMode>
+        <QueryClientProvider client={client}>{children}</QueryClientProvider>
+      </StrictMode>
+    );
   };
 }

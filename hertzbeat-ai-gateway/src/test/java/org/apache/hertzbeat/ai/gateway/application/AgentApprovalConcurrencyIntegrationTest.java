@@ -368,6 +368,30 @@ class AgentApprovalConcurrencyIntegrationTest {
     static class TestApplication {
 
         @org.springframework.context.annotation.Bean
+        org.apache.hertzbeat.ai.gateway.tool.core.AgentApprovalActorVerifier approvalActorVerifier() {
+            com.usthe.sureness.provider.SurenessAccountProvider provider = mock(
+                    com.usthe.sureness.provider.SurenessAccountProvider.class);
+            com.usthe.sureness.provider.SurenessAccount account = mock(
+                    com.usthe.sureness.provider.SurenessAccount.class);
+            when(provider.loadAccount("admin")).thenReturn(account);
+            when(account.getOwnRoles()).thenReturn(List.of("admin"));
+            return new org.apache.hertzbeat.ai.gateway.tool.core.AgentApprovalActorVerifier(provider);
+        }
+
+        @org.springframework.context.annotation.Bean
+        AgentToolRegistry toolRegistry() {
+            AgentToolRegistry registry = new AgentToolRegistry();
+            registry.register(new AgentToolRegistry.RegisteredTool(AgentToolDescriptor.builder()
+                    .name("monitor.delete").namespace("monitor").description("Delete monitor")
+                    .inputSchema("{\"type\":\"object\"}").risk(AgentToolRisk.CHANGE)
+                    .exposure(AgentToolExposure.MODEL_VISIBLE).build(), ignored -> {
+                        throw new AssertionError("Approval catalog must not execute a handler");
+                    }));
+            return registry;
+        }
+
+
+        @org.springframework.context.annotation.Bean
         DataSource dataSource() {
             DriverManagerDataSource dataSource = new DriverManagerDataSource();
             dataSource.setDriverClassName("org.h2.Driver");

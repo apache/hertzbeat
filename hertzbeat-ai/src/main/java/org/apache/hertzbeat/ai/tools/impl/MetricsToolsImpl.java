@@ -72,7 +72,7 @@ public class MetricsToolsImpl implements MetricsTools {
         try {
             log.info("Getting real-time metrics for monitor {} and metrics {}", monitorId, metrics);
             SubjectSum subjectSum = McpContextHolder.getSubject();
-            log.debug("Current subject in get_realtime_metrics tool: {}", subjectSum);
+            log.debug("Current subject in query_realtime_metrics tool: {}", subjectSum);
 
             MetricsData metricsData = metricsDataService.getMetricsData(monitorId, metrics);
 

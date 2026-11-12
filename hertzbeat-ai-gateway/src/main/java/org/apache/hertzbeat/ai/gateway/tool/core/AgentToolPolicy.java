@@ -29,6 +29,8 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface AgentToolPolicy {
 
+    AgentToolAccess access() default AgentToolAccess.STANDARD;
+
     AgentToolRisk risk() default AgentToolRisk.READ;
 
     AgentToolExposure exposure() default AgentToolExposure.MODEL_VISIBLE;

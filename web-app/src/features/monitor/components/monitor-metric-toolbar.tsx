@@ -22,6 +22,7 @@ import { useTranslation } from 'react-i18next';
 import { OperationalCommandBar } from '@/shared/operational-page';
 
 import type { MonitorMetricWorkbenchController } from '../model/monitor-detail-model';
+import { monitorGroupLabel } from '../model/monitor-metric-labels';
 import { MonitorMetricLayoutToolbar } from './monitor-metric-layout-toolbar';
 import styles from './monitor-metric-workbench.module.css';
 import { MonitorRefreshSelect } from './monitor-refresh-select';
@@ -89,7 +90,10 @@ function MetricToolbarPrimary({
         onChange={onGroupFilterChange}
         options={[
           { value: '', label: t('monitorMetrics.allGroups') },
-          ...state.realtimeGroupNames.map(group => ({ value: group, label: group }))
+          ...state.realtimeGroupNames.map(group => ({
+            value: group,
+            label: monitorGroupLabel(state.metricLabels, group)
+          }))
         ]}
       />
       <MetricViewSwitch
