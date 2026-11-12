@@ -23,6 +23,7 @@ import org.apache.hertzbeat.collector.dispatch.unit.UnitConvert;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.Locale;
 import java.util.Map;
 
 /**
@@ -50,10 +51,10 @@ public abstract class AbstractUnitConvert implements UnitConvert {
         Map<String, Long> unitMap = convertUnitEnumToMap();
 
         //There is no need to check again,as both the originUnit and newUnit have already been checked for existence.
-        Long multipleScale = unitMap.get(originUnit.toUpperCase());
+        Long multipleScale = unitMap.get(originUnit.toUpperCase(Locale.ROOT));
         wrappedValue = wrappedValue.multiply(new BigDecimal(multipleScale));
 
-        Long divideScale = unitMap.get(newUnit.toUpperCase());
+        Long divideScale = unitMap.get(newUnit.toUpperCase(Locale.ROOT));
         wrappedValue = wrappedValue.divide(new BigDecimal(divideScale), 12, RoundingMode.HALF_UP);
 
         return wrappedValue.setScale(4, RoundingMode.HALF_UP).stripTrailingZeros().toPlainString();
@@ -65,7 +66,7 @@ public abstract class AbstractUnitConvert implements UnitConvert {
             return false;
         }
         Map<String, Long> convertedUnitEnumToMap = convertUnitEnumToMap();
-        return convertedUnitEnumToMap.containsKey(unit.toUpperCase());
+        return convertedUnitEnumToMap.containsKey(unit.toUpperCase(Locale.ROOT));
     }
 
     /***
