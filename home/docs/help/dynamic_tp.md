@@ -84,10 +84,10 @@ keywords: [open source monitoring tool, open source dynamicTp monitoring tool, m
 | core_pool_size           | None        | Number of core threads                      |
 | maximum_pool_size        | None        | Maximum number of threads                   |
 | queue_type               | None        | Task queue type                             |
-| queue_capacity           | MB          | task queue capacity                         |
+| queue_capacity           | None        | task queue capacity                         |
 | queue_size               | None        | The current occupied size of the task queue |
 | fair                     | None        | Queue mode, SynchronousQueue will be used   |
-| queue_remaining_capacity | MB          | task queue remaining size                   |
+| queue_remaining_capacity | None        | task queue remaining size                   |
 | active_count             | None        | Number of active threads                    |
 | task_count               | None        | Total number of tasks                       |
 | completed_task_count     | None        | Number of completed tasks                   |

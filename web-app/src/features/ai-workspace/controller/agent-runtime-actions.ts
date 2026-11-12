@@ -18,7 +18,8 @@
 import { useCallback } from 'react';
 import type { Dispatch } from 'react';
 
-import { stopAgentRun } from '../api/agent-gateway-api';
+import { streamAgentBatch } from '../api/agent-batch-api';
+import { stopAgentRun, streamAgentChat } from '../api/agent-gateway-api';
 
 type OperationRefs = {
   isMounted: () => boolean;
@@ -49,21 +50,54 @@ export function useStopAgentRun(
 export function useSafeAgentAction<T extends unknown[]>(
   action: (...args: T) => Promise<unknown>,
   refs: OperationRefs,
-  setFailure: Dispatch<React.SetStateAction<'unavailable' | undefined>>
+  setFailure: Dispatch<React.SetStateAction<'unavailable' | undefined>>,
+  afterSuccess?: () => Promise<void>
 ) {
   return useCallback(
     async (...args: T) => {
       const generation = refs.getOperationGeneration();
       try {
         await action(...args);
+        if (currentOperation(refs, generation)) await afterSuccess?.();
       } catch {
         if (currentOperation(refs, generation)) setFailure('unavailable');
       }
     },
-    [action, refs, setFailure]
+    [action, afterSuccess, refs, setFailure]
   );
 }
 
 function currentOperation(refs: OperationRefs, generation: number) {
   return refs.isMounted() && refs.getOperationGeneration() === generation;
+}
+
+export function useBatchExecution(
+  refs: { getConversation: () => string | undefined; setLastRequest: () => void },
+  execute: (
+    request: import('../model/agent-workspace-contract').AgentChatRequest,
+    batch?: { runUid: string; planHash: string }
+  ) => Promise<void>,
+  streaming: boolean
+) {
+  return useCallback(
+    async (batch: { runUid: string; planHash: string }) => {
+      const conversationId = refs.getConversation();
+      if (!conversationId || streaming) return;
+      refs.setLastRequest();
+      await execute({ conversationId, messageId: `batch:${batch.runUid}`, message: '', attachments: [] }, batch);
+    },
+    [execute, refs, streaming]
+  );
+}
+
+export async function streamWorkspaceInput(
+  request: import('../model/agent-workspace-contract').AgentChatRequest,
+  onEvent: (event: import('../model/agent-workspace-contract').AgentGatewayEvent) => void,
+  signal: AbortSignal,
+  language: string | undefined,
+  batch?: { runUid: string; planHash: string }
+) {
+  if (batch) return streamAgentBatch(batch, onEvent, signal, language);
+  const preferredLanguage = request.preferredLanguage ?? language;
+  return streamAgentChat(request, onEvent, { signal, ...(preferredLanguage ? { language: preferredLanguage } : {}) });
 }

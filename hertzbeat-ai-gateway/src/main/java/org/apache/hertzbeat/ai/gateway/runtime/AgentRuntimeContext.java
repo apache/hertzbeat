@@ -17,15 +17,17 @@
 
 package org.apache.hertzbeat.ai.gateway.runtime;
 
-import java.util.List;
-import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Getter;
+
 import org.apache.hertzbeat.ai.gateway.contract.AgentAlertIncidentContext;
-import org.apache.hertzbeat.ai.gateway.identity.AgentActor;
 import org.apache.hertzbeat.ai.gateway.contract.AgentTargetRef;
+import org.apache.hertzbeat.ai.gateway.identity.AgentActor;
 import org.springframework.util.StringUtils;
+
+import java.util.List;
+import java.util.Objects;
 
 /**
  * Immutable runtime context snapshot for one Agent Gateway runtime invocation.
@@ -48,14 +50,36 @@ public final class AgentRuntimeContext {
     private final Long runSessionId;
     private final AgentTargetRef effectiveTarget;
     private final String currentTimeIso;
+    private final AgentRequestedQueryWindow requestedQueryWindow;
     private final String timezone;
     private final String traceId;
     private final List<TranscriptMessage> chatHistory;
     @Getter(AccessLevel.NONE)
     private final boolean durableGroundingVerified;
 
+    private final AgentTaskCheckpoint taskCheckpoint;
+
+    @Getter(AccessLevel.NONE)
+    private final AgentBatchContinuation batchContinuation;
+
+    AgentBatchContinuation batchContinuation() {
+        return batchContinuation;
+    }
+
+    AgentRuntimeContext withBatchContinuation(AgentBatchContinuation continuation) {
+        return new AgentRuntimeContext(this, null, Objects.requireNonNull(continuation));
+    }
+
+    @Getter(AccessLevel.NONE)
+    private final List<AgentRuntimeReadBudget.Attempt> budgetAttempts;
+
+    List<AgentRuntimeReadBudget.Attempt> budgetAttempts() {
+        return budgetAttempts;
+    }
+
     AgentRuntimeContext withVerifiedChatHistory(AgentGroundingEvidenceVerifier.VerifiedHistory verified) {
-        return new AgentRuntimeContext(this, Objects.requireNonNull(verified, "verified history is required"));
+        return new AgentRuntimeContext(
+                this, Objects.requireNonNull(verified, "verified history is required"));
     }
 
     boolean hasVerifiedDurableGrounding() {
@@ -68,15 +92,21 @@ public final class AgentRuntimeContext {
                                 AgentAlertIncidentContext alertIncident, AgentActor actor, String userMessage,
                                 String sessionUid, Long runId, String runUid, Long runSessionId,
                                 AgentTargetRef effectiveTarget, String currentTimeIso, String timezone, String traceId,
-                                List<TranscriptMessage> chatHistory) {
-        // The context is the runtime boundary; every downstream identity is read without DTO/entity fallbacks.
-        this.entryType = Objects.requireNonNull(entryType, "Agent runtime context entry type is required");
+                                List<TranscriptMessage> chatHistory, AgentRequestedQueryWindow requestedQueryWindow) {
+        // The context is the runtime boundary; every downstream identity is read without DTO/entity
+        // fallbacks.
+        this.entryType =
+                Objects.requireNonNull(entryType, "Agent runtime context entry type is required");
         this.approvalHandling = Objects.requireNonNull(approvalHandling,
                 "Agent runtime context approval handling is required");
-        this.receivedAt = Objects.requireNonNull(receivedAt, "Agent runtime context received time is required");
+        this.receivedAt =
+                Objects.requireNonNull(
+                        receivedAt, "Agent runtime context received time is required");
         this.actor = Objects.requireNonNull(actor, "Agent runtime context actor is required");
         this.runId = Objects.requireNonNull(runId, "Agent runtime context run id is required");
-        this.runSessionId = Objects.requireNonNull(runSessionId, "Agent runtime context run session id is required");
+        this.runSessionId =
+                Objects.requireNonNull(
+                        runSessionId, "Agent runtime context run session id is required");
         if (!StringUtils.hasText(channelId)) {
             throw new IllegalArgumentException("Agent runtime context channel id is required");
         }
@@ -110,15 +140,26 @@ public final class AgentRuntimeContext {
         this.runUid = runUid;
         this.effectiveTarget = effectiveTarget;
         this.currentTimeIso = currentTimeIso;
+        this.requestedQueryWindow = requestedQueryWindow;
         this.timezone = timezone;
         this.traceId = traceId;
         // Context builders may omit history for a new session; supplied history must not contain null messages.
         this.chatHistory = chatHistory == null ? List.of() : List.copyOf(chatHistory);
         this.durableGroundingVerified = false;
+        this.taskCheckpoint = null;
+        this.batchContinuation = null;
+        this.budgetAttempts = List.of();
     }
 
     private AgentRuntimeContext(AgentRuntimeContext source,
                                 AgentGroundingEvidenceVerifier.VerifiedHistory verified) {
+        this(source, verified, source.batchContinuation);
+    }
+
+    private AgentRuntimeContext(
+            AgentRuntimeContext source,
+            AgentGroundingEvidenceVerifier.VerifiedHistory verified,
+            AgentBatchContinuation continuation) {
         this.entryType = source.entryType;
         this.approvalHandling = source.approvalHandling;
         this.channelId = source.channelId;
@@ -134,10 +175,15 @@ public final class AgentRuntimeContext {
         this.runSessionId = source.runSessionId;
         this.effectiveTarget = source.effectiveTarget;
         this.currentTimeIso = source.currentTimeIso;
+        this.requestedQueryWindow = source.requestedQueryWindow;
         this.timezone = source.timezone;
         this.traceId = source.traceId;
-        this.chatHistory = verified.messages();
-        this.durableGroundingVerified = verified.grounded();
+        this.chatHistory = verified == null ? source.chatHistory : verified.messages();
+        this.durableGroundingVerified =
+                verified == null ? source.durableGroundingVerified : verified.grounded();
+        this.taskCheckpoint = verified == null ? source.taskCheckpoint : verified.taskCheckpoint();
+        this.budgetAttempts = verified == null ? source.budgetAttempts : verified.budgetAttempts();
+        this.batchContinuation = continuation;
     }
 
 }

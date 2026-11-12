@@ -19,9 +19,11 @@ package org.apache.hertzbeat.collector.collect.common.cache;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -89,6 +91,88 @@ class GlobalConnectionCacheTest {
         assertTrue(connection.closed.await(5, TimeUnit.SECONDS));
         assertEquals(1, connection.closeCount.get());
         assertTrue(globalConnectionCache.getCache("expired", false).isEmpty());
+    }
+
+    @Test
+    void conditionalRemoveDoesNotCloseReplacement() {
+        TestConnection old = new TestConnection();
+        TestConnection replacement = new TestConnection();
+        globalConnectionCache.addCache("key", old);
+        globalConnectionCache.addCache("key", replacement);
+
+        assertFalse(globalConnectionCache.removeCache("key", old));
+        assertEquals(1, old.closeCount.get());
+        assertSame(replacement, globalConnectionCache.getCache("key", false).orElseThrow());
+        assertEquals(0, replacement.closeCount.get());
+        assertTrue(globalConnectionCache.removeCache("key", replacement));
+        assertEquals(1, replacement.closeCount.get());
+        assertTrue(globalConnectionCache.getCache("key", false).isEmpty());
+    }
+
+    @Test
+    void conditionalRemoveUsesIdentityEvenWhenConnectionsCompareEqual() {
+        EqualConnection cached = new EqualConnection();
+        EqualConnection other = new EqualConnection();
+        globalConnectionCache.addCache("equal", cached);
+
+        assertTrue(cached.equals(other));
+        assertFalse(globalConnectionCache.removeCache("equal", other));
+        assertSame(cached, globalConnectionCache.getCache("equal", false).orElseThrow());
+        assertEquals(0, cached.closeCount.get());
+        assertEquals(0, other.closeCount.get());
+        assertTrue(globalConnectionCache.removeCache("equal", cached));
+        assertEquals(1, cached.closeCount.get());
+        assertEquals(0, other.closeCount.get());
+    }
+
+    @Test
+    void staleConditionalRemoveDoesNotRemoveConcurrentEqualReplacement() throws Exception {
+        EqualConnection old = new EqualConnection();
+        EqualConnection replacement = new EqualConnection();
+        globalConnectionCache.addCache("race", old);
+        CountDownLatch replacementAdded = new CountDownLatch(1);
+        var executor = Executors.newSingleThreadExecutor();
+        try {
+            var staleRemoval = executor.submit(() -> {
+                assertTrue(replacementAdded.await(5, TimeUnit.SECONDS));
+                return globalConnectionCache.removeCache("race", old);
+            });
+            globalConnectionCache.addCache("race", replacement);
+            replacementAdded.countDown();
+            assertFalse(staleRemoval.get(5, TimeUnit.SECONDS));
+            assertSame(replacement, globalConnectionCache.getCache("race", false).orElseThrow());
+            assertEquals(1, old.closeCount.get());
+            assertEquals(0, replacement.closeCount.get());
+        } finally {
+            replacementAdded.countDown();
+            executor.shutdownNow();
+            assertTrue(executor.awaitTermination(5, TimeUnit.SECONDS));
+            globalConnectionCache.removeCache("race");
+        }
+    }
+
+    private static final class EqualConnection extends AbstractConnection<Object> {
+        private final AtomicInteger closeCount = new AtomicInteger();
+
+        @Override
+        public Object getConnection() {
+            return this;
+        }
+
+        @Override
+        public void closeConnection() {
+            closeCount.incrementAndGet();
+        }
+
+        @Override
+        public boolean equals(Object other) {
+            return other instanceof EqualConnection;
+        }
+
+        @Override
+        public int hashCode() {
+            return 1;
+        }
     }
 
     private static final class TestGlobalConnectionCache extends GlobalConnectionCache {

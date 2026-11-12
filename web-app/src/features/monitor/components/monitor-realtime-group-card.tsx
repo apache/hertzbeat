@@ -18,6 +18,7 @@
 import { useTranslation } from 'react-i18next';
 
 import type { MonitorMetricWorkbenchController } from '../model/monitor-detail-model';
+import { monitorGroupLabel, type MonitorMetricLabels } from '../model/monitor-metric-labels';
 import styles from './monitor-realtime-card.module.css';
 import { RealtimeEvidence } from './monitor-realtime-evidence';
 import { RealtimeFavoriteButton } from './monitor-realtime-group-support';
@@ -38,7 +39,7 @@ export function RealtimeGroupCard({
 }) {
   return (
     <article className={styles.realtimeGroup} data-monitor-group={group.group}>
-      <RealtimeGroupHeader group={group} onToggle={onToggleGroup} />
+      <RealtimeGroupHeader group={group} labels={state.metricLabels} onToggle={onToggleGroup} />
       {collapsed ? null : <RealtimeGroupBody group={group} state={state} onSelectMetric={onSelectMetric} />}
     </article>
   );
@@ -46,16 +47,18 @@ export function RealtimeGroupCard({
 
 function RealtimeGroupHeader({
   group,
+  labels,
   onToggle
 }: {
   group: MonitorMetricWorkbenchController['state']['realtimeGroups'][number];
+  labels: MonitorMetricLabels | undefined;
   onToggle: MonitorMetricWorkbenchController['actions']['toggleRealtimeFavorite'];
 }) {
   const { t } = useTranslation();
   return (
     <header className={styles.realtimeGroupHeader} data-layout-panel-header="">
       <div className={styles.realtimeGroupIdentity}>
-        <h5>{group.group}</h5>
+        <h5 title={group.group}>{monitorGroupLabel(labels, group.group)}</h5>
         <time>{formatGroupTime(group.result)}</time>
       </div>
       <div className={styles.realtimeGroupActions}>
@@ -80,6 +83,7 @@ function RealtimeGroupBody({
       <RealtimeEvidence
         evidence={group.result}
         group={group.group}
+        labels={state.metricLabels}
         metricOptions={state.catalog.options}
         selectedMetricKey={state.metricKey}
         onSelectMetric={onSelectMetric}

@@ -4371,40 +4371,57 @@
   },
   "aiWorkspace": {
     "title": "AI ワークスペース",
-    "description": "HertzBeat のライブデータを調査し、実行前にすべての操作を確認します。",
+    "description": "HertzBeat のライブデータをタスクし、実行前にすべての操作を確認します。",
     "sessions": {
-      "label": "調査履歴",
-      "title": "調査履歴",
+      "label": "タスク履歴",
+      "title": "タスク履歴",
       "new": "新規",
-      "loading": "調査履歴を読み込んでいます…",
-      "unavailable": "調査履歴を利用できません。",
-      "empty": "調査履歴はまだありません。",
-      "untitled": "無題の調査",
-      "search": "調査を検索",
-      "noMatches": "一致する調査はありません。",
+      "loading": "タスク履歴を読み込んでいます…",
+      "unavailable": "タスク履歴を利用できません。",
+      "empty": "タスク履歴はまだありません。",
+      "untitled": "無題のタスク",
+      "search": "タスクを検索",
+      "noMatches": "一致するタスクはありません。",
       "status": {
         "active": "進行中",
         "completed": "完了",
         "failed": "失敗",
         "cancelled": "キャンセル済み",
         "recoveryRequired": "確認が必要",
-        "noRun": "実行なし"
+        "noRun": "実行なし",
+        "partial": "一部完了",
+        "unfinished": "未完了・詳細を確認"
+      },
+      "delete": "会話を削除",
+      "menu": "会話の操作：{{title}}",
+      "close": "履歴を閉じる",
+      "clearAll": "すべての会話を削除",
+      "deleteTitle": "会話を削除しますか？",
+      "deleteConfirm": "削除（{{count}}）",
+      "deleteDescription": "現在のアカウントの会話 {{count}} 件とメッセージ、実行、ツール記録を完全に削除します。この操作は元に戻せません。",
+      "activeCannotDelete": "実行中の会話を停止してから削除してください。会話は削除されていません。",
+      "deleteUnavailable": "削除の準備または実行に失敗しました。接続を確認して再試行してください。",
+      "groups": {
+        "today": "今日",
+        "yesterday": "昨日",
+        "week": "過去7日間",
+        "older": "以前"
       }
     },
     "investigation": {
-      "label": "調査"
+      "label": "タスク"
     },
     "roles": {
       "you": "あなた",
       "assistant": "HertzBeat AI"
     },
     "empty": {
-      "title": "何を調査しますか？",
+      "title": "何をタスクしますか？",
       "description": "監視、エンティティ、アラート、メトリクス、ログ、トレース、トポロジーについて質問できます。"
     },
     "composer": {
-      "label": "調査プロンプト",
-      "placeholder": "運用上の問題を HertzBeat に調査させる…"
+      "label": "タスクプロンプト",
+      "placeholder": "質問を入力…"
     },
     "actions": {
       "send": "送信",
@@ -4415,13 +4432,17 @@
       "reject": "拒否",
       "submit": "送信"
     },
-    "failure": "調査ストリームを利用できません。操作が完了したとは見なしません。",
-    "sessionLoadIncomplete": "保存済みの調査情報の一部を読み込めませんでした。再読み込みするか、調査を選び直してください。",
+    "failure": "タスクストリームを利用できません。操作が完了したとは見なしません。",
+    "loadOlder": "以前のメッセージを読み込む",
+    "sessionLoadIncomplete": "保存済みのタスク情報の一部を読み込めませんでした。再読み込みするか、タスクを選び直してください。",
     "recoveryRequired": "ツールは実行済みの可能性がありますが、HertzBeat は結果を保存できませんでした。続行する前に対象の状態を確認してください。",
-    "targetMismatch": "この調査対象は無効です。対象の画面に戻って新しい調査を開始してください。",
-    "targetUnavailable": "現在、この調査対象を確認できません。調査は開始されていません。",
-    "invalidTarget": "この調査リンクの対象は無効か、まだ対応していません。元の画面に戻ってやり直してください。",
+    "targetMismatch": "このタスク対象は無効です。対象の画面に戻って新しいタスクを開始してください。",
+    "targetUnavailable": "現在、このタスク対象を確認できません。タスクは開始されていません。",
+    "invalidTarget": "このタスクリンクの対象は無効か、まだ対応していません。元の画面に戻ってやり直してください。",
     "activeObservationPaused": "ライブ監視を一時停止しました。永続化された実行は進行中のままで、完了したとは見なしません。",
+    "modelRetrying": "モデルリクエストが失敗しました：{{reason}}。{{delay}} 秒後に再試行します（{{attempt}}/{{maxAttempts}}）…",
+    "modelRetryingNoDelay": "モデルリクエストが失敗しました：{{reason}}。再試行中（{{attempt}}/{{maxAttempts}}）…",
+    "modelRetryUnknownReason": "不明なサーバーエラー",
     "context": {
       "label": "実行コンテキスト",
       "open": "実行の詳細を開く",
@@ -4442,10 +4463,99 @@
       "noApprovals": "保留中の承認はありません",
       "inputs": "要求された入力",
       "noInputs": "入力要求はありません",
-      "statusUnknown": "実行状態は記録されていません"
+      "statusUnknown": "実行状態は記録されていません",
+      "cancelledBeforeExecution": "実行前にキャンセル",
+      "viewSource": "ソースを表示",
+      "pageScope": "{{page}} ページ · 1 ページ {{size}} 件",
+      "internalHidden": "内部テレメトリを除外",
+      "noiseHidden": "ノイズを除外",
+      "rawOutput": "元の結果"
     },
     "approval": {
-      "adminRequired": "管理者の承認が必要です"
+      "adminRequired": "管理者の承認が必要です",
+      "decisionUnavailable": "このアカウントでは承認できません",
+      "recoveryUnavailable": "承認内容を復元できません。タスクを再読み込みし、再送信はしないでください。",
+      "expired": "承認の有効期限が切れました。操作は許可されていません。",
+      "runtimeUnavailable": "元の承認処理は利用できなくなりました。",
+      "summary": {
+        "title": "承認の詳細",
+        "unavailable": "承認内容の要約を表示できません。判断前に元の依頼と標準画面を確認してください。",
+        "operationCount": "{{operation}}・対象{{count}}件",
+        "unknownTarget": "対象を取得できません",
+        "intervals": "間隔：{{value}}秒",
+        "timeout": "タイムアウト：{{value}} ms",
+        "pathFingerprint": "パスのフィンガープリント",
+        "keyFingerprint": "冪等キーのフィンガープリント",
+        "inputHash": "固定された入力のSHA-256",
+        "masked": "機密値と自由文は省略しています。パスとキーはフィンガープリントで表示します。",
+        "incomplete": "この要約には依頼の全項目が含まれていません。承認前に未対応の項目を標準画面で確認してください。",
+        "operation": {
+          "CREATE": "作成",
+          "UPDATE": "更新",
+          "DELETE": "削除",
+          "PAUSE": "一時停止",
+          "RESUME": "再開",
+          "REVIEW": "確認"
+        },
+        "field": {
+          "INTERVALS": "指定された間隔（秒）",
+          "TIMEOUT": "指定されたタイムアウト（ms）",
+          "RETRY_PREFLIGHT": "既知の事前検証失敗を再試行"
+        }
+      },
+      "collection": {
+        "title": "実行する収集コマンドを確認",
+        "risk": "メインCollectorのOSアカウントで1回収集します。コマンドはその権限でファイルの読み書きやネットワーク接続が可能です。全行を確認し、認証情報を埋め込まないでください。FULLでも承認は必須です。リモートCollector、ファイル指定、定期実行は未対応です。",
+        "target": "対象 / Collector",
+        "account": "実行アカウント / OS",
+        "directory": "作業ディレクトリ",
+        "revision": "テンプレートとパラメーターのリビジョン",
+        "hash": "変更不能な計画のハッシュ",
+        "expires": "有効期限",
+        "confirm": "コマンド全体、対象、アカウント、起こり得る影響を確認しました。"
+      },
+      "personal": {
+        "title": "個人ワークスペースの変更",
+        "scope": "現在のユーザーの監視ワークスペースを変更します",
+        "monitor": "監視",
+        "metric": "メトリクスグループ",
+        "action": "操作",
+        "favorite": "お気に入りに追加",
+        "unfavorite": "お気に入りから削除",
+        "application": "アプリケーション",
+        "revision": "想定する現在のリビジョン",
+        "save": "レイアウトを保存",
+        "reset": "保存済みレイアウトをリセット",
+        "document": "バージョン付きレイアウト要求の全体"
+      },
+      "inhibition": {
+        "title": "アラート抑制ポリシー",
+        "impact": "一致した対象アラートの通知が停止する可能性があります。削除すると通知が再開する可能性があります。",
+        "versionLimit": "ソースハッシュは確認時の状態に対応します。標準APIは原子的なバージョンCASを提供していません。",
+        "target": "ポリシーID",
+        "newTarget": "新規ポリシー（IDはサーバーが割り当て）",
+        "snapshot": "確認済みソースハッシュ",
+        "configuration": "標準設定の全体",
+        "deleting": "このポリシーを完全に削除します。"
+      },
+      "revision": {
+        "creating": "新しいポリシーを1件作成します。",
+        "beforeUnavailable": "確認済みの変更前の値はありません。以前の状態は推測しません。",
+        "noChanges": "確認済みの状態では編集可能な項目に変更はありません。",
+        "changes": "保存・確認済みの値 → 提案値（現在の再取得値ではありません）",
+        "field": "項目",
+        "before": "変更前",
+        "after": "変更後",
+        "removed": "削除済み",
+        "action": "実行を取り消して修正",
+        "title": "修正前にこの実行を取り消す",
+        "confirm": "取り消して下書きを準備",
+        "scope": "保留中の{{count}}件の提案を含め、現在の実行全体を停止します。操作は承認しません。",
+        "effects": "完了済みの変更は元に戻りません。結果が不明な操作を確認してから別の変更を依頼してください。",
+        "instructions": "修正後の依頼全体を入力",
+        "manualSend": "サーバーが取消を確認すると入力欄に反映します。自分で確認・送信してください。新しい提案には改めて承認が必要です。",
+        "failed": "取消を確認できませんでした。修正した依頼は送信していません。実行を再読み込みして状態を確認してください。"
+      }
     },
     "providers": {
       "action": "モデルプロバイダー",
@@ -4467,7 +4577,182 @@
       "model": "モデル",
       "apiKey": "API キー",
       "apiKeyHint": "空欄にすると既存のキーを維持します。",
-      "save": "プロバイダーを保存"
+      "save": "プロバイダーを保存",
+      "protocol": "API プロトコル",
+      "protocolHint": "エンドポイントが対応している場合のみ Responses を選択してください。変更後は新しいタスクを開始してください。",
+      "chatCompletions": "Chat Completions",
+      "responses": "Responses",
+      "testConnection": "接続をテスト",
+      "cancelTest": "テストをキャンセル",
+      "testRunning": "接続をテスト中…",
+      "testHint": "未保存のフォームを使い、短い合成テキストのリクエストを1件送信します。業務データやツールは使用せず、保存や有効化も行いません。成功してもストリーミングやツール呼び出しは検証されません。保存済みキーはプロバイダーのオリジンが同じ場合のみ再利用されます。",
+      "testMetadata": "プロトコル: {{protocol}} · モデル: {{model}} · {{elapsed}} ms · HTTP {{status}}",
+      "testResult": {
+        "OK": "接続に成功し、テキスト生成から応答がありました。",
+        "CONFIGURATION": "プロバイダー、モデル、プロトコル、完全なベースURL（http:// または https://）を確認してください。",
+        "CREDENTIAL_REQUIRED": "接続先が変更されました。この接続先のキーを入力してテストしてください。",
+        "AUTHENTICATION": "認証に失敗しました。APIキーとアクセス権限を確認してください。",
+        "ADDRESS_PATH": "エンドポイントのパスが失敗したか、リダイレクトされました。ベースURLとプロトコルのパスを確認してください。",
+        "MODEL": "モデルが存在しないか、このキーでは利用できません。",
+        "PROTOCOL": "選択したプロトコルをエンドポイントが受け付けないか、その形式で応答しませんでした。代替方式は試していません。",
+        "TIMEOUT": "接続テストがタイムアウトしました。",
+        "CANCELLED": "接続テストをキャンセルしました。",
+        "BUSY": "接続テストが実行中です。しばらくしてから再試行してください。",
+        "RATE_LIMIT": "プロバイダーのレート制限に達しました。",
+        "UPSTREAM": "プロバイダーのサービスで失敗しました。後で再試行してください。",
+        "TLS": "TLSの検証に失敗しました。エンドポイントの証明書を確認してください。",
+        "NETWORK": "接続テストを利用できません。ネットワークとログイン状態を確認してください。"
+      }
+    },
+    "evidence": {
+      "title": "証拠",
+      "collecting": "検証済みの証拠を待っています…",
+      "unrecorded": "このタスクには証拠の参照が記録されていません",
+      "empty": "検証済みの観測結果は記録されていません。システムが正常であることを意味しません。",
+      "partial": "部分的な証拠",
+      "complete": "切り捨ての報告なし",
+      "coverageUnknown": "網羅性の報告なし",
+      "observations": "観測結果 {{count}} 件",
+      "incidentScope": "アラートの事実のみ · ポリシー {{id}}",
+      "investigationScope": "範囲を限定した横断タスク",
+      "investigationLimit": "24 時間以内の時間範囲を選択してください"
+    },
+    "toolFailureWarning": "失敗または拒否されたツール呼び出し：{{count}} 件。これらのエラーは、空の結果や正常性の根拠にはなりません。",
+    "executionSummary": {
+      "UNKNOWN": "実行状態不明：完全なツール記録を取得できません",
+      "IN_PROGRESS": "実行中",
+      "NO_RECORDS": "ツール実行記録がありません",
+      "PARTIAL": "PARTIAL · 実行または検索範囲が不完全です。失敗・予算・範囲制限を確認してください",
+      "RECOVERED": "同一リクエストの後続成功で過去の失敗を回復",
+      "NO_FAILED_ATTEMPTS": "ツール記録に失敗した呼び出しはありません",
+      "counts": "計 {{total}} 件：成功 {{succeeded}}、過去の失敗 {{failed}}、回復 {{recovered}}、未解決/未検証 {{unresolved}}、未完了 {{unfinished}}。",
+      "coverage": "サーバーのツール記録から生成。結論は成功し範囲が検証されたクエリに限られます。成功や空の結果は正常性や完全な網羅性を保証しません。",
+      "UNRESOLVED": "未解決",
+      "SAME_REQUEST_SUCCEEDED": "同一リクエストが後で成功（過去の失敗は保持）",
+      "CHANGED_REQUEST_SUCCEEDED_SCOPE_UNVERIFIED": "変更後のリクエストは成功、元の失敗範囲は未検証",
+      "truncated": "失敗の先頭20件を表示。総数は全記録を含みます。",
+      "queryCoverage": "検索範囲と返却制限（サーバー記録）",
+      "stopReason": "停止理由",
+      "countUnknown": "不明",
+      "absoluteWindowUnknown": "絶対時刻境界は未提供です。記載の範囲を確認してください",
+      "rangeCounts": "返却 {{returned}} / 合計 {{total}} {{unit}}、オフセット {{offset}}",
+      "coverageTruncated": "最初の40件の範囲のみ表示。完全な網羅性を示しません。",
+      "rows": "行",
+      "points": "点",
+      "groups": "グループ",
+      "coverageStates": {
+        "EMPTY_RESULT": "この検索条件で成功した空結果",
+        "PARTIAL_PAGE": "部分結果、全件ではありません",
+        "BOUNDED_RESULTS": "件数制限あり、合計未提供",
+        "OBSERVED_ROWS": "返却された検索データ",
+        "UNKNOWN": "範囲不明、ゼロや正常性を推定しないでください"
+      },
+      "details": "詳細を見る",
+      "toolFailed": "ツールの実行に失敗 · 詳細を見る",
+      "runFailed": "タスクは未完了です。回答が不完全な可能性があります",
+      "compact": {
+        "UNKNOWN": "実行状態を確認できません",
+        "IN_PROGRESS": "タスク中",
+        "NO_RECORDS": "ツール実行記録がありません",
+        "PARTIAL": "一部完了 · 未検証のクエリがあります",
+        "RECOVERED": "以前の失敗は復旧済み",
+        "NO_FAILED_ATTEMPTS": "実行記録"
+      }
+    },
+    "batch": {
+      "title": "バッチ進捗",
+      "counts": "検証済み {{verified}} / {{total}} · 残り {{pending}} · 要確認 {{reviewRequired}}",
+      "segment": "Segment {{segment}} · {{calls}} / {{budget}} tool calls",
+      "target": "Frozen target",
+      "interval": "Interval (s)",
+      "status": "Status",
+      "receipt": "Resource / evidence",
+      "continue": "残りのタスクを続行",
+      "reconcile": "読み取り専用で照合",
+      "reconnect": "現在の区間に再接続",
+      "frozen": "Targets and parameters are frozen. Each segment uses the original run budget and requires an explicit action. Completed or uncertain writes are never repeated.",
+      "unknown": "Some results require review. A matching resource does not prove that this task created it. Reconciliation never repeats a write.",
+      "unavailable": "Progress is unavailable. Refresh before continuing; do not resubmit the original request.",
+      "stopping": "Waiting for the current executor to stop before another segment can begin.",
+      "stage": {
+        "RUNNING": "Current segment is running",
+        "WAITING_APPROVAL": "Waiting for approval",
+        "COMPLETE": "All frozen items verified",
+        "REVIEW_REQUIRED": "Paused: results need review",
+        "PAUSED": "Segment paused; remaining items need explicit continuation"
+      },
+      "receiptKind": {
+        "NATIVE_RECEIPT": "Native receipt",
+        "STATE_READBACK": "State readback",
+        "MATCH_ONLY": "Candidate only; review required",
+        "NONE": "No receipt"
+      },
+      "item": {
+        "PENDING": "Pending",
+        "READY": "Validated",
+        "RECEIPT": "Saved; checking state",
+        "VERIFIED": "Verified",
+        "WAITING_APPROVAL": "Waiting for approval",
+        "FAILED": "Failed; review required",
+        "UNCERTAIN": "Unknown outcome",
+        "REJECTED": "Approval rejected",
+        "VALIDATION_FAILED": "Validation failed",
+        "MATCHED_REVIEW": "Matching candidate; review required",
+        "UNRESOLVED_REVIEW": "Unresolved; review required",
+        "RUNNING": "Running",
+        "VALIDATING": "検証中",
+        "EXECUTING": "実行中",
+        "CHECKING": "状態照合中"
+      },
+      "monitor": "監視 {{id}}",
+      "parameters": "固定パラメーター",
+      "retryPreflight": "失敗した事前検査を再試行",
+      "cancelled": "取り消されました。この実行は終了しています。履歴を保持し、自動で継続や再試行はしません。",
+      "preflightStopped": "事前検証の失敗により、この区間は終了しました。検証済みリソースは再作成しません。",
+      "ended": "この区間は終了しました。継続操作は利用できません。"
+    },
+    "permission": {
+      "label": "承認モード",
+      "manual": "変更ごとに承認",
+      "full": "完全モード（15分）",
+      "loading": "承認モードを確認中",
+      "unavailable": "モードを確認できません",
+      "selectSession": "先にタスクを開始または選択してください。",
+      "scope": "この会話でのあなたの操作だけに15分間適用されます。変更ごとの承認にいつでも戻せます。",
+      "boundaries": "ロール権限、タスク範囲、予算、必須承認は引き続き適用されます。危険な操作などは個別の承認が必要です。",
+      "riskTitle": "完全モードの権限を確認",
+      "risk": "有効にすると、対象となる変更は個別の確認なしに実行されます。範囲とリスクを確認してください。",
+      "acknowledge": "リスクを理解し、この会話で対象の変更を許可します。",
+      "wait": "あと{{seconds}}秒間リスクを確認してください。",
+      "ready": "待機時間が終了しました。明示的に確認して有効にしてください。",
+      "enable": "完全モードを有効にする",
+      "expired": "確認の期限が切れました。閉じてから再度開いてください。",
+      "error": "応答を検証できません。現在のモードを更新してから続行してください。"
+    },
+    "waiting": {
+      "thinking": "考え中…",
+      "findingTools": "利用可能なツールを検索中…",
+      "queryingLogs": "ログを検索中…",
+      "executingTool": "ツールを実行中…",
+      "responding": "回答を作成中…"
+    },
+    "conversationHistory": "会話のメッセージ",
+    "latestMessages": "最新のメッセージに戻る",
+    "message": {
+      "copy": "メッセージをコピー",
+      "copied": "コピーしました",
+      "copyFailed": "コピーできませんでした。テキストを選択して手動でコピーしてください。",
+      "copyAfterGeneration": "回答の完了後にコピーできます"
+    },
+    "transportFailure": {
+      "QUEUE_TIMEOUT": "ブラウザーのセッション待機がタイムアウトし、リクエストは送信されていません。",
+      "HEADER_TIMEOUT": "ブラウザーに送信を依頼しましたが、応答ヘッダーが届いていません。再送前にサーバーのタスクを確認してください。",
+      "REQUEST_PREPARATION_FAILED": "リクエストの準備に失敗し、送信されていません。",
+      "HTTP_REJECTED": "サーバーがリクエストを拒否しました（HTTP {{status}}）。タスクの受理は未確認です。",
+      "TRANSPORT_FAILURE": "ブラウザーの通信に失敗しました。サーバーの受理は未確認です。",
+      "STREAM_CONTRACT": "タスクストリームとして応答を検証できません。サーバーの状態を確認してください。",
+      "STREAM_READ_FAILED": "タスクストリームが中断しました。再試行前にサーバーのタスクを確認してください。",
+      "requestId": "リクエスト ID: {{id}}"
     }
   },
   "alertInvestigation": {
@@ -4552,15 +4837,15 @@
     }
   },
   "aiSchedules": {
-    "title": "定期調査",
-    "description": "決まった調査をスケジュール実行し、設定済みの通知先へ結果を送信します。",
-    "workspaceAction": "定期調査",
-    "create": "定期調査を作成",
+    "title": "定期タスク",
+    "description": "決まったタスクをスケジュール実行し、設定済みの通知先へ結果を送信します。",
+    "workspaceAction": "定期タスク",
+    "create": "定期タスクを作成",
     "never": "未設定",
     "receiverCount": "{{count}} 件の通知先",
     "columns": {
       "schedule": "スケジュール",
-      "instruction": "調査指示",
+      "instruction": "タスク指示",
       "delivery": "通知",
       "nextRun": "次回実行",
       "enabled": "有効",
@@ -4571,20 +4856,20 @@
       "transcript": "実行履歴",
       "edit": "編集",
       "delete": "削除",
-      "deleteConfirm": "この定期調査を削除しますか？"
+      "deleteConfirm": "この定期タスクを削除しますか？"
     },
     "states": {
-      "loading": "定期調査を読み込んでいます…",
-      "empty": "定期調査はまだありません。",
-      "emptyDescription": "同じ調査を定期実行し、指定した通知先へ送信できます。",
-      "unavailable": "定期調査を利用できません。",
+      "loading": "定期タスクを読み込んでいます…",
+      "empty": "定期タスクはまだありません。",
+      "emptyDescription": "同じタスクを定期実行し、指定した通知先へ送信できます。",
+      "unavailable": "定期タスクを利用できません。",
       "mutationFailed": "変更を確認できませんでした。更新してから再試行してください。"
     },
     "editor": {
-      "createTitle": "定期調査を作成",
-      "editTitle": "定期調査を編集",
+      "createTitle": "定期タスクを作成",
+      "editTitle": "定期タスクを編集",
       "name": "名前",
-      "instruction": "調査指示",
+      "instruction": "タスク指示",
       "cron": "実行スケジュール",
       "cronHint": "6 フィールドの Spring cron。秒は 0 にしてください",
       "receivers": "通知先",
@@ -4592,12 +4877,12 @@
       "templateHint": "カスタムテンプレートでは通知先の種別を統一してください",
       "defaultTemplate": "通知先種別ごとの既定テンプレートを使用",
       "enabled": "保存後に有効化",
-      "save": "定期調査を保存"
+      "save": "定期タスクを保存"
     },
     "transcript": {
       "title": "実行履歴 · {{name}}",
       "loading": "実行履歴を読み込んでいます…",
-      "empty": "この定期調査には実行履歴がありません。",
+      "empty": "この定期タスクには実行履歴がありません。",
       "unavailable": "実行履歴を利用できません。",
       "loadEarlier": "以前の履歴を読み込む",
       "noText": "テキスト内容なし"
@@ -4916,5 +5201,6 @@
   "dashboard.v3.traceSamplesFailed": "異常トレースの読み込みに失敗しました",
   "dashboard.v3.traceSamplesUnsupported": "このバックエンドは異常トレースの検索に対応していません",
   "dashboard.v3.traceSamplesMissing": "この時間範囲では異常サンプルを取得できませんでした",
-  "dashboard.v3.errorSpans": "エラースパン {{count}}"
+  "dashboard.v3.errorSpans": "エラースパン {{count}}",
+  "aiWorkspace.composer.tooLarge": "メッセージの上限は32,768文字または48 KiBです。下書きは保持されています。短くしてから送信してください。"
 }

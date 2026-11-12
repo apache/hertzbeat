@@ -456,6 +456,16 @@ class AgentRunAdmissionConcurrencyIntegrationTest {
         }
 
         @Bean
+        AgentIncidentTargetAuthorityService incidentTargetAuthorityService() {
+            return org.mockito.Mockito.mock(AgentIncidentTargetAuthorityService.class);
+        }
+
+        @Bean
+        AgentEntityInvestigationAuthorityService entityInvestigationAuthorityService() {
+            return org.mockito.Mockito.mock(AgentEntityInvestigationAuthorityService.class);
+        }
+
+        @Bean
         AlertService alertService() {
             return org.mockito.Mockito.mock(AlertService.class);
         }

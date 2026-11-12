@@ -21,6 +21,7 @@ package org.apache.hertzbeat.collector.collect.common.cache;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -55,7 +56,7 @@ public class GlobalConnectionCache {
     /**
      * Object cache
      */
-    private final ConcurrentLinkedHashMap<Object, AbstractConnection<?>> cacheMap;
+    private final ConcurrentLinkedHashMap<Object, CacheEntry> cacheMap;
 
     private final ScheduledExecutorService scheduledExecutor;
 
@@ -71,7 +72,7 @@ public class GlobalConnectionCache {
     }
 
     GlobalConnectionCache(boolean autoStart) {
-        cacheMap = new ConcurrentLinkedHashMap.Builder<Object, AbstractConnection<?>>()
+        cacheMap = new ConcurrentLinkedHashMap.Builder<Object, CacheEntry>()
                 .maximumWeightedCapacity(Integer.MAX_VALUE)
                 .listener((key, value) -> {
                     timeoutMap.remove(key);
@@ -181,7 +182,7 @@ public class GlobalConnectionCache {
         if (timeDiff == null) {
             timeDiff = DEFAULT_CACHE_TIMEOUT;
         }
-        cacheMap.put(key, value);
+        cacheMap.put(key, new CacheEntry(value));
         timeoutMap.put(key, new Long[]{System.currentTimeMillis(), timeDiff});
     }
 
@@ -214,7 +215,7 @@ public class GlobalConnectionCache {
             removeCache(key);
             return Optional.empty();
         }
-        AbstractConnection<?> value = cacheMap.compute(key, (k, v) -> {
+        CacheEntry value = cacheMap.compute(key, (k, v) -> {
             if (v == null) {
                 log.error("[GlobalConnectionCache] Value is null, removing key {}.", key);
                 timeoutMap.remove(key);
@@ -226,7 +227,7 @@ public class GlobalConnectionCache {
             }
             return v;
         });
-        return Optional.ofNullable(value);
+        return Optional.ofNullable(value).map(entry -> entry.connection);
     }
 
     /**
@@ -236,13 +237,56 @@ public class GlobalConnectionCache {
      */
     public void removeCache(Object key) {
         timeoutMap.remove(key);
-        AbstractConnection<?> value = cacheMap.remove(key);
+        CacheEntry value = cacheMap.remove(key);
         try {
             if (value != null) {
                 value.close();
             }
         } catch (Exception e) {
             log.error("Connection close error for key {}: {}", key, e.getMessage(), e);
+        }
+    }
+
+    /**
+     * Remove and close an entry only if it still holds the expected connection instance.
+     *
+     * @param key cache key
+     * @param expected connection observed by the caller
+     * @return whether the expected connection was removed
+     */
+    public boolean removeCache(Object key, AbstractConnection<?> expected) {
+        Long[] cacheTime = timeoutMap.get(key);
+        CacheEntry entry = cacheMap.get(key);
+        if (entry == null || entry.connection != expected || !cacheMap.remove(key, entry)) {
+            return false;
+        }
+        if (cacheTime != null) {
+            timeoutMap.remove(key, cacheTime);
+        }
+        try {
+            entry.close();
+        } catch (Exception e) {
+            log.error("Connection close error for key {}: {}", key, e.getMessage(), e);
+        }
+        return true;
+    }
+
+    /** Each insertion has a distinct identity for atomic conditional removal. */
+    private static final class CacheEntry implements AutoCloseable {
+        private final AbstractConnection<?> connection;
+
+        private CacheEntry(AbstractConnection<?> connection) {
+            this.connection = Objects.requireNonNull(connection);
+        }
+
+        @Override
+        public void close() throws Exception {
+            connection.close();
+        }
+
+        @Override
+        public String toString() {
+            return connection.toString();
         }
     }
 

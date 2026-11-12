@@ -32,10 +32,8 @@ import org.apache.hertzbeat.common.util.IpDomainUtil;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -88,24 +86,36 @@ public class CollectJobService {
      * @return Collection results
      */
     public List<CollectRep.MetricsData> collectSyncJobData(Job job) {
-        final List<CollectRep.MetricsData> metricsData = new LinkedList<>();
-        final CountDownLatch countDownLatch = new CountDownLatch(1);
-        CollectResponseEventListener listener = new CollectResponseEventListener() {
-            @Override
-            public void response(List<CollectRep.MetricsData> responseMetrics) {
-                if (responseMetrics != null) {
-                    metricsData.addAll(responseMetrics);
-                }
-                countDownLatch.countDown();
-            }
-        };
-        timerDispatch.addJob(job, listener);
+        // Local temporary tasks are keyed by Job.id, independently of monitorId (remote routing).
+        // A cloned app definition has the same id for every caller; never share its waiter key.
+        job.setId(org.apache.hertzbeat.common.util.SnowFlakeIdGenerator.generateId());
+        final var response =
+                new java.util.concurrent.CompletableFuture<List<CollectRep.MetricsData>>();
+        CollectResponseEventListener listener =
+                new CollectResponseEventListener() {
+                    @Override
+                    public void response(List<CollectRep.MetricsData> responseMetrics) {
+                        List<CollectRep.MetricsData> value =
+                                responseMetrics == null ? List.of() : List.copyOf(responseMetrics);
+                        if (!response.complete(value)) value.forEach(CollectRep.MetricsData::close);
+                    }
+                };
         try {
-            countDownLatch.await(120, TimeUnit.SECONDS);
-        } catch (Exception e) {
-            log.info("The sync task runs for 120 seconds with no response and returns");
+            timerDispatch.addJob(job, listener);
+            return response.get(120, TimeUnit.SECONDS);
+        } catch (InterruptedException cancelled) {
+            Thread.currentThread().interrupt();
+            log.info("One-time collection interrupted before a response");
+            return List.of();
+        } catch (java.util.concurrent.TimeoutException expired) {
+            log.info("One-time collection reached its 120-second response deadline");
+            return List.of();
+        } catch (java.util.concurrent.ExecutionException failed) {
+            throw new IllegalStateException("One-time collection failed", failed.getCause());
+        } finally {
+            response.cancel(false);
+            timerDispatch.deleteJob(job.getId(), false);
         }
-        return metricsData;
     }
 
     /**

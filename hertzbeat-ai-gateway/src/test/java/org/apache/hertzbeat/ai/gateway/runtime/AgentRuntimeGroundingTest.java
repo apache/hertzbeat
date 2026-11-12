@@ -54,7 +54,7 @@ class AgentRuntimeGroundingTest {
     private static final Clock CLOCK = Clock.fixed(
             Instant.parse("2026-08-14T00:00:00Z"), ZoneOffset.UTC);
     private static final String GROUNDING_ERROR =
-            "Investigation requires a successful HertzBeat data observation before a final answer.";
+            java.util.ResourceBundle.getBundle("agent_reply", java.util.Locale.ENGLISH).getString("unverified");
     private static final String TOOL_SEARCH = "tool.search";
 
     @Test
@@ -67,8 +67,9 @@ class AgentRuntimeGroundingTest {
 
         assertEquals(AgentRuntimeEventType.ERROR, terminal(events).getType());
         assertEquals(GROUNDING_ERROR, terminal(events).getErrorMessage());
-        assertFalse(events.stream().anyMatch(event -> event.getType() == AgentRuntimeEventType.ITEM_DELTA));
-        assertTrue(transcript.isEmpty());
+        assertFalse(events.stream().anyMatch(event -> event.getType() == AgentRuntimeEventType.ITEM_DELTA
+                && event.getDelta() != null && (event.getDelta().contains("The monitor is healthy.") || event.getDelta().contains("I can explain my capabilities."))));
+        assertTrue(transcript.stream().noneMatch(message -> message.text().contains("The monitor is healthy.")));
         verify(bridge, never()).execute(any(), any(), any(), any(), any());
     }
 
@@ -102,7 +103,8 @@ class AgentRuntimeGroundingTest {
 
         assertEquals(AgentRuntimeEventType.ERROR, terminal(events).getType());
         assertEquals(GROUNDING_ERROR, terminal(events).getErrorMessage());
-        assertFalse(events.stream().anyMatch(event -> event.getType() == AgentRuntimeEventType.ITEM_DELTA));
+        assertFalse(events.stream().anyMatch(event -> event.getType() == AgentRuntimeEventType.ITEM_DELTA
+                && event.getDelta() != null && (event.getDelta().contains("The monitor is healthy.") || event.getDelta().contains("I can explain my capabilities."))));
     }
 
     @Test
@@ -302,7 +304,8 @@ class AgentRuntimeGroundingTest {
         List<AgentRuntimeEvent> events = run(untargetedContext(), modelClient, bridge, new ArrayList<>());
 
         assertEquals(AgentRuntimeEventType.ERROR, terminal(events).getType());
-        assertFalse(events.stream().anyMatch(event -> event.getType() == AgentRuntimeEventType.ITEM_DELTA));
+        assertFalse(events.stream().anyMatch(event -> event.getType() == AgentRuntimeEventType.ITEM_DELTA
+                && event.getDelta() != null && (event.getDelta().contains("The monitor is healthy.") || event.getDelta().contains("I can explain my capabilities."))));
     }
 
     private List<AgentRuntimeEvent> run(AgentRuntimeContext context, AgentRuntimeModelClient modelClient,
@@ -489,8 +492,18 @@ class AgentRuntimeGroundingTest {
         }
 
         @Override
+        public boolean supportsReplyReview() { return true; }
+
+        @Override
         public AgentRuntimeModelResponse stream(AgentRuntimeModelRequest request, AgentRuntimeControl control,
                                                 Consumer<String> textDeltaConsumer) {
+            if (request.getPrompt().getInstructions().contains("ORIGINAL_TASK_COMPLETION_REVIEW"))
+                return AgentRuntimeModelResponse.finalAnswer(JsonUtil.toJson(new AgentTaskAssessment(
+                    new AgentTaskAssessment.Goal(AgentTaskAssessment.Type.OBSERVATION, AgentTaskAssessment.Operation.QUERY, "monitor", null),
+                    AgentTaskOutcome.Stage.COMPLETE, true, List.of())), null);
+            // The runtime may request one fresh read after rejecting stale history. A dishonest
+            // retry candidate must still fail closed without a new observation.
+            if (responses.isEmpty()) return AgentRuntimeModelResponse.finalAnswer("Unverified retry candidate.", null);
             AgentRuntimeModelResponse response = responses.remove();
             if (streamFinalAnswer
                     && response.getType() == AgentRuntimeModelResponse.ResponseType.FINAL_ANSWER) {

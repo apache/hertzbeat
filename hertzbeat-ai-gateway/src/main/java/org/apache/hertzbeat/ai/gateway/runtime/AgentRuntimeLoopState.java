@@ -17,6 +17,12 @@
 
 package org.apache.hertzbeat.ai.gateway.runtime;
 
+import org.apache.hertzbeat.ai.gateway.contract.AgentTargetRef;
+import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolDescriptor;
+import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolExecutionResult;
+import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolRisk;
+import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolStatus;
+
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -25,8 +31,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
-import org.apache.hertzbeat.ai.gateway.contract.AgentTargetRef;
-import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolDescriptor;
 
 /**
  * Mutable counters and bounded artifacts for one loop run.
@@ -38,6 +42,12 @@ final class AgentRuntimeLoopState {
     private final List<TranscriptMessage> messages = new ArrayList<>();
     private final Set<String> startedItemIds = new HashSet<>();
     private final Map<String, AgentToolDescriptor> discoveredTools = new LinkedHashMap<>();
+
+    private final Map<String, ReadFailureStreak> readFailureStreaks = new LinkedHashMap<>();
+
+    private final AgentRuntimeReadBudget readBudget = new AgentRuntimeReadBudget();
+    private final Set<String> countedToolCallIds = new HashSet<>();
+    private String restoredBudgetStop;
 
     private int usageBaselineStartIndex;
     private int modelRequestCount;
@@ -97,8 +107,34 @@ final class AgentRuntimeLoopState {
         modelRequestCount++;
     }
 
-    void incrementToolCallCount() {
-        toolCallCount++;
+    boolean hasCountedToolCall(String toolCallId) {
+        return countedToolCallIds.contains(toolCallId);
+    }
+
+    void incrementToolCallCount(String toolCallId) {
+        if (countedToolCallIds.add(toolCallId)) {
+            toolCallCount++;
+        }
+    }
+
+    void restoreBudget(List<AgentRuntimeReadBudget.Attempt> attempts, AgentRuntimeProperties limits) {
+        for (var attempt : attempts) {
+            if (countedToolCallIds.add(attempt.toolCallId())) {
+                toolCallCount++;
+                String stop = readBudget.record(attempt, limits);
+                if (stop != null) {
+                    restoredBudgetStop = stop;
+                }
+            }
+        }
+    }
+
+    String budgetStop() {
+        return restoredBudgetStop;
+    }
+
+    String recordReadBudget(AgentRuntimeToolCall call, AgentToolExecutionResult result, AgentRuntimeProperties limits) {
+        return readBudget.record(call, result, limits);
     }
 
     long nextEventSequence() {
@@ -140,6 +176,27 @@ final class AgentRuntimeLoopState {
     int getToolCallCount() {
         return toolCallCount;
     }
+
+    int recordReadResult(AgentToolExecutionResult result) {
+        if (result.getRisk() != AgentToolRisk.READ) {
+            return 0;
+        }
+        String tool = result.getToolName();
+        if (result.getStatus() == AgentToolStatus.SUCCEEDED) {
+            readFailureStreaks.remove(tool);
+            return 0;
+        }
+        if (result.getStatus() != AgentToolStatus.FAILED && result.getStatus() != AgentToolStatus.DENIED) {
+            return 0;
+        }
+        String reason = AgentRuntimeTextSanitizer.redact(result.getErrorMessage());
+        ReadFailureStreak previous = readFailureStreaks.get(tool);
+        int count = previous != null && Objects.equals(previous.reason(), reason) ? previous.count() + 1 : 1;
+        readFailureStreaks.put(tool, new ReadFailureStreak(reason, count));
+        return count;
+    }
+
+    private record ReadFailureStreak(String reason, int count) { }
 
     void recordSuccessfulReadObservation() {
         successfulReadObservation = true;

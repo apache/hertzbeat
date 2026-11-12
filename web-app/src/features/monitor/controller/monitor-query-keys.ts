@@ -46,6 +46,7 @@ export const monitorQueryKeys = {
   collectors: () => [...rootKey, 'collectors'] as const,
   labelSuggestions: () => [...rootKey, 'editor', 'label-suggestions'] as const,
   appGuidance: (app: string, locale: string) => [...rootKey, 'editor', 'guidance', app, locale] as const,
+  i18nResources: (locale: string) => [...rootKey, 'i18n-resources', locale] as const,
   appDefines: (app: string) => [...rootKey, 'defines', 'app', app] as const,
   sdDefines: (scrape: string) => [...rootKey, 'defines', 'sd', scrape] as const,
   metricCatalog: (id: number | undefined, app: string | undefined, scrape: string | null | undefined) =>

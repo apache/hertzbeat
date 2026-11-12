@@ -33,6 +33,84 @@ describe('Alert Center realtime refresh', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    vi.restoreAllMocks();
+  });
+
+  it('does not open a stream while hidden and reconciles canonical state on visible reconnect', async () => {
+    const visible = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
+    const refresh = vi.fn().mockResolvedValue(undefined);
+    const view = renderHook(() => useAlertCenterRealtimeRefresh(refresh));
+    expect(FakeStream.instances).toHaveLength(0);
+    visible.mockReturnValue('visible');
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    expect(FakeStream.instances).toHaveLength(1);
+    act(() => FakeStream.instances[0]!.open());
+    await act(async () => vi.advanceTimersByTimeAsync(250));
+    expect(refresh).toHaveBeenCalledOnce();
+    view.unmount();
+    expect(FakeStream.instances[0]!.close).toHaveBeenCalledOnce();
+  });
+
+  it('closes hidden streams and timers, discards late events and reconnects only once when visible', async () => {
+    const visible = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('visible');
+    const refresh = vi.fn().mockResolvedValue(undefined);
+    const onAlert = vi.fn();
+    const view = renderHook(() => useAlertCenterRealtimeRefresh(refresh, onAlert));
+    const old = FakeStream.instances[0]!;
+    visible.mockReturnValue('hidden');
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    expect(old.close).toHaveBeenCalledOnce();
+    act(() => {
+      old.alert();
+      old.open();
+      old.unavailable();
+    });
+    await act(async () => vi.advanceTimersByTimeAsync(10 * 60_000));
+    expect(onAlert).not.toHaveBeenCalled();
+    expect(refresh).not.toHaveBeenCalled();
+    expect(FakeStream.instances).toHaveLength(1);
+    visible.mockReturnValue('visible');
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange'));
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    expect(FakeStream.instances).toHaveLength(2);
+    act(() => FakeStream.instances[1]!.open());
+    await act(async () => vi.advanceTimersByTimeAsync(250));
+    expect(refresh).toHaveBeenCalledOnce();
+    view.unmount();
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    expect(FakeStream.instances).toHaveLength(2);
+  });
+
+  it('retains background delivery when the user enabled alert sound or desktop notification', () => {
+    const visible = vi.spyOn(document, 'visibilityState', 'get').mockReturnValue('hidden');
+    const refresh = vi.fn().mockResolvedValue(undefined);
+    const onAlert = vi.fn();
+    const view = renderHook(
+      ({ enabled }) => useAlertCenterRealtimeRefresh(refresh, onAlert, { keepAliveWhenHidden: enabled }),
+      {
+        initialProps: { enabled: true }
+      }
+    );
+    const background = FakeStream.instances[0]!;
+    expect(background).toBeDefined();
+    act(() => background.alert());
+    expect(onAlert).toHaveBeenCalledOnce();
+    view.rerender({ enabled: false });
+    expect(background.close).toHaveBeenCalledOnce();
+    expect(FakeStream.instances).toHaveLength(1);
+    visible.mockReturnValue('visible');
+    act(() => {
+      document.dispatchEvent(new Event('visibilitychange'));
+    });
+    expect(FakeStream.instances).toHaveLength(2);
   });
 
   it('coalesces an alert burst into one authoritative refresh', async () => {

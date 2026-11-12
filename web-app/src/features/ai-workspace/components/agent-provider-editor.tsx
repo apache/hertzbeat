@@ -25,6 +25,7 @@ import type {
 } from '../model/agent-workspace-contract';
 import type { AgentProviderViewModel } from '../model/agent-workspace-view-model';
 import styles from './agent-provider-dialog.module.css';
+import { AgentProviderTestControls } from './agent-provider-test-controls';
 
 type ProviderForm = AgentProviderInput & { selection: string };
 
@@ -40,6 +41,19 @@ export function AgentProviderEditor({
   const { t } = useTranslation();
   const [form] = Form.useForm<ProviderForm>();
   const initial = provider ? formForProvider(provider) : formForOption(controller.options[0]);
+  const running = controller.connectionTest?.state.phase === 'running';
+  const test = async () => {
+    try {
+      const value = await form.validateFields();
+      await controller.connectionTest?.start(providerInput(value, provider));
+    } catch {
+      /* Form fields own their validation messages. */
+    }
+  };
+  const dismiss = () => {
+    controller.connectionTest?.reset();
+    close();
+  };
   const submit = async (value: ProviderForm) => {
     const input = providerInput(value, provider);
     const saved = provider
@@ -53,9 +67,32 @@ export function AgentProviderEditor({
       form={form}
       initialValues={initial}
       layout="vertical"
-      onFinish={value => void submit(value)}
+      onFinish={value => {
+        if (!running) void submit(value);
+      }}
+      onValuesChange={() => controller.connectionTest?.reset()}
     >
       <ProviderTypeField form={form} options={controller.options} disabled={Boolean(provider)} />
+      <ProviderProtocolField />
+      <ProviderConnectionFields provider={provider} />
+      <AgentProviderTestControls
+        test={controller.connectionTest}
+        start={() => void test()}
+        disabled={controller.phase === 'saving'}
+      >
+        <Button type="primary" htmlType="submit" disabled={running} loading={controller.phase === 'saving'}>
+          {t('aiWorkspace.providers.save')}
+        </Button>
+        <Button onClick={dismiss}>{t('common.cancel')}</Button>
+      </AgentProviderTestControls>
+    </Form>
+  );
+}
+
+function ProviderConnectionFields({ provider }: { provider: AgentProviderConfiguration | null }) {
+  const { t } = useTranslation();
+  return (
+    <>
       <Form.Item name="type" hidden>
         <Input />
       </Form.Item>
@@ -75,13 +112,25 @@ export function AgentProviderEditor({
       >
         <Input.Password autoComplete="new-password" />
       </Form.Item>
-      <div className={styles.formActions}>
-        <Button type="primary" htmlType="submit" loading={controller.phase === 'saving'}>
-          {t('aiWorkspace.providers.save')}
-        </Button>
-        <Button onClick={close}>{t('common.cancel')}</Button>
-      </div>
-    </Form>
+    </>
+  );
+}
+
+function ProviderProtocolField() {
+  const { t } = useTranslation();
+  return (
+    <Form.Item
+      name="protocol"
+      label={t('aiWorkspace.providers.protocol')}
+      extra={t('aiWorkspace.providers.protocolHint')}
+    >
+      <Select
+        options={[
+          { value: 'chat-completions', label: t('aiWorkspace.providers.chatCompletions') },
+          { value: 'responses', label: t('aiWorkspace.providers.responses') }
+        ]}
+      />
+    </Form.Item>
   );
 }
 
@@ -116,6 +165,7 @@ function providerInput(value: ProviderForm, provider: AgentProviderConfiguration
     code: value.code,
     baseUrl: value.baseUrl,
     model: value.model,
+    protocol: value.protocol ?? 'chat-completions',
     ...(value.apiKey ? { apiKey: value.apiKey } : {})
   };
 }
@@ -128,7 +178,8 @@ function formForProvider(provider: AgentProviderConfiguration): ProviderForm {
     code: provider.code,
     baseUrl: provider.baseUrl ?? '',
     model: provider.model ?? '',
-    apiKey: ''
+    apiKey: '',
+    protocol: provider.protocol ?? 'chat-completions'
   };
 }
 
@@ -144,7 +195,8 @@ function formForOption(option: AgentProviderOption | undefined): ProviderForm {
         code: option.code,
         baseUrl: option.defaultBaseUrl ?? '',
         model: option.defaultModel ?? '',
+        protocol: 'chat-completions',
         apiKey: ''
       }
-    : { selection: '', type: '', code: '', baseUrl: '', model: '', apiKey: '' };
+    : { protocol: 'chat-completions', selection: '', type: '', code: '', baseUrl: '', model: '', apiKey: '' };
 }

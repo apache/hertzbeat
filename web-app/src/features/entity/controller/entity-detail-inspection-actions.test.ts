@@ -24,6 +24,22 @@ import type { EntityDetailEvidence } from '../model/entity-view-model';
 import { buildEntityInspectionActions } from './entity-detail-inspection-actions';
 
 describe('entity detail inspection actions', () => {
+  it('opens a bounded AI investigation with the exact entity signal window', () => {
+    const navigate = vi.fn();
+    buildEntityInspectionActions(evidence(), unknownMetricSignals(), null, navigate).investigate();
+    expect(navigate).toHaveBeenCalledWith(
+      '/ai?source=entityInvestigation&entityId=7&start=1750000000000&end=1750000060000&timezone=UTC'
+    );
+  });
+
+  it('does not broaden a window larger than 24 hours', () => {
+    const navigate = vi.fn();
+    const signals = unknownMetricSignals();
+    signals.plan.anchor.window.to = signals.plan.anchor.window.from + 86400001;
+    buildEntityInspectionActions(evidence(), signals, null, navigate).investigate();
+    expect(navigate).not.toHaveBeenCalled();
+  });
+
   it('falls back to the existing monitor-backed Metrics handoff when exact RED is not available', () => {
     const navigate = vi.fn();
     const actions = buildEntityInspectionActions(evidence(), unknownMetricSignals(), null, navigate);

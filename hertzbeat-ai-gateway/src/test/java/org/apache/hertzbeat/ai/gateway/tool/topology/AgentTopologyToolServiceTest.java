@@ -25,6 +25,10 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import java.time.Duration;
+import java.util.function.Supplier;
+import org.apache.hertzbeat.warehouse.query.admission.ObservabilityQueryAdmissionService;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import org.apache.hertzbeat.common.observability.gateway.AuthTokenRequestContext;
 import org.apache.hertzbeat.common.support.exception.CommonException;
 import org.apache.hertzbeat.manager.pojo.dto.EntityTopologyGraphInfo;
@@ -38,12 +42,15 @@ class AgentTopologyToolServiceTest {
 
     private EntityTopologyQueryService topologyQueryService;
     private AgentTopologyToolService service;
+    private ObservabilityQueryAdmissionService admission;
 
     @BeforeEach
     void setUp() {
         AuthTokenRequestContext.bindWorkspaceId("team-b");
         topologyQueryService = mock(EntityTopologyQueryService.class);
-        service = new AgentTopologyToolService(topologyQueryService);
+        admission = mock(ObservabilityQueryAdmissionService.class);
+        when(admission.execute(eq("topology"), any())).thenAnswer(call -> ((Supplier<?>) call.getArgument(1)).get());
+        service = new AgentTopologyToolService(topologyQueryService, admission);
     }
 
     @AfterEach
@@ -65,6 +72,14 @@ class AgentTopologyToolServiceTest {
         verify(topologyQueryService).buildFocusedTopology(
                 "team-b", 11L, 2, "prod", "otlp-trace-call", 1_000L, 2_000L,
                 "trace-call", true, 0, 100);
+    }
+
+    @Test
+    void shouldNotReadTopologyWhenAdmissionRejectsQuery() {
+        when(admission.execute(eq("topology"), any())).thenThrow(new IllegalStateException("capacity exhausted"));
+        assertThrows(IllegalStateException.class, () -> service.queryTopology(
+                11L, 1, null, null, 1000L, 2000L, null, null, 0, 10));
+        verifyNoInteractions(topologyQueryService);
     }
 
     @Test

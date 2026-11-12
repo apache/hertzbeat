@@ -60,6 +60,7 @@ public interface MetricInventoryRepository {
     record Result(Status status, List<String> names, String errorMessage) {
 
         public static final String INVENTORY_UNAVAILABLE = "metric_inventory_unavailable";
+        public static final String INVENTORY_SCHEMA_INCOMPATIBLE = "metric_inventory_schema_incompatible";
 
         public Result {
             status = Objects.requireNonNull(status, "status");
@@ -74,7 +75,8 @@ public interface MetricInventoryRepository {
                 }
                 case FAILURE -> {
                     names = List.of();
-                    errorMessage = INVENTORY_UNAVAILABLE;
+                    errorMessage = INVENTORY_SCHEMA_INCOMPATIBLE.equals(errorMessage)
+                            ? INVENTORY_SCHEMA_INCOMPATIBLE : INVENTORY_UNAVAILABLE;
                 }
                 default -> throw new IllegalStateException("Unsupported metric inventory status");
             }
@@ -86,6 +88,10 @@ public interface MetricInventoryRepository {
 
         public static Result unsupported() {
             return new Result(Status.UNSUPPORTED, List.of(), null);
+        }
+
+        public static Result schemaIncompatible() {
+            return new Result(Status.FAILURE, List.of(), INVENTORY_SCHEMA_INCOMPATIBLE);
         }
 
         public static Result failure() {

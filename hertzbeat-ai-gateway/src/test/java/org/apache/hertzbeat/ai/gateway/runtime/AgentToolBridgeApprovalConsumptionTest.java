@@ -26,16 +26,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.time.Clock;
-import java.time.Duration;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import org.apache.hertzbeat.ai.gateway.identity.AgentActor;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentApprovalConsumption;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentApprovalDecision;
@@ -51,44 +41,134 @@ import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolRisk;
 import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolStatus;
 import org.junit.jupiter.api.Test;
 
+import java.time.Clock;
+import java.time.Duration;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+
 /** Approval delivery must remain provisional until durable tool resume starts. */
 class AgentToolBridgeApprovalConsumptionTest {
+    @Test
+    void expiredApprovalStopsBeforeHandlerAndRemovesWaiter() {
+        AgentToolRegistry tools = new AgentToolRegistry();
+        tools.register(
+                new AgentToolRegistry.RegisteredTool(
+                        descriptor(),
+                        ignored -> {
+                            throw new AssertionError("must not execute");
+                        }));
+        AgentToolExecutionOrchestrator orchestrator = mock(AgentToolExecutionOrchestrator.class);
+        when(orchestrator.execute(any()))
+                .thenReturn(
+                        waitingResult().toBuilder()
+                                .approvalExpiresAt(java.time.LocalDateTime.now().minusSeconds(1))
+                                .build());
+        AgentRuntimeApprovalRegistry approvals = new AgentRuntimeApprovalRegistry();
+        AgentToolBridge bridge =
+                new AgentToolBridge(
+                        tools,
+                        Clock.systemUTC(),
+                        new AgentRuntimeBlockingTaskRunner(),
+                        orchestrator,
+                        approvals);
+        AgentRuntimeContext context = context();
+        AgentRuntimeControl control = AgentRuntimeControl.forContext(context, Clock.systemUTC());
+        AgentToolBridge.ExecutionListener listener =
+                new AgentToolBridge.ExecutionListener() {
+                    public void approvalRequested(
+                            AgentRuntimeToolCall call, AgentToolExecutionResult result) {}
+
+                    public void approvalCompleted(
+                            AgentRuntimeToolCall call,
+                            AgentToolExecutionResult result,
+                            AgentApprovalDecision decision) {
+                        throw new AssertionError("no decision");
+                    }
+
+                    public void toolEvent(AgentRuntimeToolCall call, AgentRuntimeEvent event) {}
+                };
+        var failure =
+                assertThrows(
+                        AgentRuntimeStoppedException.class,
+                        () ->
+                                bridge.execute(
+                                        context,
+                                        new AgentRuntimeProperties(),
+                                        toolCall(),
+                                        control,
+                                        listener));
+        assertTrue(failure.getMessage().contains("expired"));
+        verify(orchestrator, times(1)).execute(any());
+        verify(orchestrator)
+                .expireWaitingApproval(
+                        waitingResult().getApprovalId(),
+                        waitingResult().getToolCallId(),
+                        context.getRunUid());
+        assertFalse(approvals.isAwaitingDecision(waitingResult().getApprovalId()));
+    }
 
     @Test
-    void stopAfterDeliveryBeforeResumeShouldRejectConsumptionAndNeverExecuteAgain() throws Exception {
+    void stopAfterDeliveryBeforeResumeShouldRejectConsumptionAndNeverExecuteAgain()
+            throws Exception {
         AgentToolRegistry tools = new AgentToolRegistry();
-        tools.register(new AgentToolRegistry.RegisteredTool(descriptor(), ignored -> AgentToolOutput.builder()
-                .status(AgentToolStatus.SUCCEEDED)
-                .modelContent("ok")
-                .build()));
+        tools.register(
+                new AgentToolRegistry.RegisteredTool(
+                        descriptor(),
+                        ignored ->
+                                AgentToolOutput.builder()
+                                        .status(AgentToolStatus.SUCCEEDED)
+                                        .modelContent("ok")
+                                        .build()));
         AgentToolExecutionOrchestrator orchestrator = mock(AgentToolExecutionOrchestrator.class);
         when(orchestrator.execute(any())).thenReturn(waitingResult());
         AgentRuntimeApprovalRegistry approvals = new AgentRuntimeApprovalRegistry();
-        AgentToolBridge bridge = new AgentToolBridge(tools, Clock.systemUTC(),
-                new AgentRuntimeBlockingTaskRunner(), orchestrator, approvals);
+        AgentToolBridge bridge =
+                new AgentToolBridge(
+                        tools,
+                        Clock.systemUTC(),
+                        new AgentRuntimeBlockingTaskRunner(),
+                        orchestrator,
+                        approvals);
         AgentRuntimeContext context = context();
         AgentRuntimeControl control = AgentRuntimeControl.forContext(context, Clock.systemUTC());
         CountDownLatch requested = new CountDownLatch(1);
-        AgentToolBridge.ExecutionListener listener = new AgentToolBridge.ExecutionListener() {
-            @Override
-            public void approvalRequested(AgentRuntimeToolCall toolCall, AgentToolExecutionResult result) {
-                requested.countDown();
-            }
+        AgentToolBridge.ExecutionListener listener =
+                new AgentToolBridge.ExecutionListener() {
+                    @Override
+                    public void approvalRequested(
+                            AgentRuntimeToolCall toolCall, AgentToolExecutionResult result) {
+                        requested.countDown();
+                    }
 
-            @Override
-            public void approvalCompleted(AgentRuntimeToolCall toolCall, AgentToolExecutionResult result,
-                                          AgentApprovalDecision decision) {
-                control.stop("stopped before durable resume");
-            }
+                    @Override
+                    public void approvalCompleted(
+                            AgentRuntimeToolCall toolCall,
+                            AgentToolExecutionResult result,
+                            AgentApprovalDecision decision) {
+                        control.stop("stopped before durable resume");
+                    }
 
-            @Override
-            public void toolEvent(AgentRuntimeToolCall toolCall, AgentRuntimeEvent event) {
-            }
-        };
+                    @Override
+                    public void toolEvent(AgentRuntimeToolCall toolCall, AgentRuntimeEvent event) {}
+                };
 
-        try (control; var executor = Executors.newSingleThreadExecutor()) {
-            var runtime = executor.submit(() -> bridge.execute(context, new AgentRuntimeProperties(), toolCall(),
-                    control, listener));
+        try (control;
+                var executor = Executors.newSingleThreadExecutor()) {
+            var runtime =
+                    executor.submit(
+                            () ->
+                                    bridge.execute(
+                                            context,
+                                            new AgentRuntimeProperties(),
+                                            toolCall(),
+                                            control,
+                                            listener));
             assertTrue(requested.await(5, TimeUnit.SECONDS));
             var reservation = approvals.reserve("approval-1").orElseThrow();
             var delivery = reservation.deliver(AgentApprovalDecision.APPROVED);
@@ -105,40 +185,62 @@ class AgentToolBridgeApprovalConsumptionTest {
     @Test
     void rejectedDecisionCancelledAfterClaimShouldReleaseAndStop() throws Exception {
         AgentToolRegistry tools = new AgentToolRegistry();
-        tools.register(new AgentToolRegistry.RegisteredTool(descriptor(), ignored -> AgentToolOutput.builder()
-                .status(AgentToolStatus.SUCCEEDED)
-                .modelContent("ok")
-                .build()));
+        tools.register(
+                new AgentToolRegistry.RegisteredTool(
+                        descriptor(),
+                        ignored ->
+                                AgentToolOutput.builder()
+                                        .status(AgentToolStatus.SUCCEEDED)
+                                        .modelContent("ok")
+                                        .build()));
         AgentToolExecutionOrchestrator orchestrator = mock(AgentToolExecutionOrchestrator.class);
         when(orchestrator.execute(any())).thenReturn(waitingResult());
         CancelAfterClaimRegistry approvals = new CancelAfterClaimRegistry();
-        AgentToolBridge bridge = new AgentToolBridge(tools, Clock.systemUTC(),
-                new AgentRuntimeBlockingTaskRunner(), orchestrator, approvals);
+        AgentToolBridge bridge =
+                new AgentToolBridge(
+                        tools,
+                        Clock.systemUTC(),
+                        new AgentRuntimeBlockingTaskRunner(),
+                        orchestrator,
+                        approvals);
         AgentRuntimeContext context = context();
         AgentRuntimeControl control = AgentRuntimeControl.forContext(context, Clock.systemUTC());
         CountDownLatch requested = new CountDownLatch(1);
-        AgentToolBridge.ExecutionListener listener = new AgentToolBridge.ExecutionListener() {
-            @Override
-            public void approvalRequested(AgentRuntimeToolCall toolCall, AgentToolExecutionResult result) {
-                requested.countDown();
-            }
+        AgentToolBridge.ExecutionListener listener =
+                new AgentToolBridge.ExecutionListener() {
+                    @Override
+                    public void approvalRequested(
+                            AgentRuntimeToolCall toolCall, AgentToolExecutionResult result) {
+                        requested.countDown();
+                    }
 
-            @Override
-            public void approvalCompleted(AgentRuntimeToolCall toolCall, AgentToolExecutionResult result,
-                                          AgentApprovalDecision decision) {
-            }
+                    @Override
+                    public void approvalCompleted(
+                            AgentRuntimeToolCall toolCall,
+                            AgentToolExecutionResult result,
+                            AgentApprovalDecision decision) {}
 
-            @Override
-            public void toolEvent(AgentRuntimeToolCall toolCall, AgentRuntimeEvent event) {
-            }
-        };
+                    @Override
+                    public void toolEvent(AgentRuntimeToolCall toolCall, AgentRuntimeEvent event) {}
+                };
 
-        try (control; var executor = Executors.newSingleThreadExecutor()) {
-            var runtime = executor.submit(() -> bridge.execute(context, new AgentRuntimeProperties(), toolCall(),
-                    control, listener));
+        try (control;
+                var executor = Executors.newSingleThreadExecutor()) {
+            var runtime =
+                    executor.submit(
+                            () ->
+                                    bridge.execute(
+                                            context,
+                                            new AgentRuntimeProperties(),
+                                            toolCall(),
+                                            control,
+                                            listener));
             assertTrue(requested.await(5, TimeUnit.SECONDS));
-            var delivery = approvals.reserve("approval-1").orElseThrow()
-                    .deliver(AgentApprovalDecision.REJECTED);
+            var delivery =
+                    approvals
+                            .reserve("approval-1")
+                            .orElseThrow()
+                            .deliver(AgentApprovalDecision.REJECTED);
 
             assertTrue(delivery.accepted());
             assertThrows(ExecutionException.class, () -> runtime.get(5, TimeUnit.SECONDS));
@@ -156,7 +258,12 @@ class AgentToolBridgeApprovalConsumptionTest {
                 .channelId("web-ui")
                 .workspaceId("default")
                 .receivedAt(1L)
-                .actor(AgentActor.builder().type("user").id("admin").roles(List.of("admin")).build())
+                .actor(
+                        AgentActor.builder()
+                                .type("user")
+                                .id("admin")
+                                .roles(List.of("admin"))
+                                .build())
                 .userMessage("run approved tool")
                 .sessionUid("session-1")
                 .runId(1L)
@@ -212,7 +319,8 @@ class AgentToolBridgeApprovalConsumptionTest {
         @Override
         public Optional<AgentApprovalConsumption.Claim> beginConsumption(
                 String approvalId, AgentApprovalDecision decision) {
-            Optional<AgentApprovalConsumption.Claim> consumption = super.beginConsumption(approvalId, decision);
+            Optional<AgentApprovalConsumption.Claim> consumption =
+                    super.beginConsumption(approvalId, decision);
             waiter.cancel(false);
             return consumption;
         }

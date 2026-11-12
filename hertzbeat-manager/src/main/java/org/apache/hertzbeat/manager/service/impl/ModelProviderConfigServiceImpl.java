@@ -92,6 +92,9 @@ public class ModelProviderConfigServiceImpl extends AbstractGeneralConfigService
         ModelProviderConfig previous = findConfiguration(state, uid);
         ModelProviderConfig replacement = copyConfiguration(config);
         replacement.setUid(uid);
+        if (config.getProtocol() == null) {
+            replacement.setProtocol(previous.getProtocol());
+        }
         boolean sameProvider = Objects.equals(previous.getCode(), replacement.getCode())
                 && Objects.equals(previous.getType(), replacement.getType());
         if (!StringUtils.hasText(replacement.getApiKey()) && sameProvider) {
@@ -263,6 +266,7 @@ public class ModelProviderConfigServiceImpl extends AbstractGeneralConfigService
         copy.setCode(source.getCode());
         copy.setBaseUrl(source.getBaseUrl());
         copy.setModel(source.getModel());
+        copy.setProtocol(source.getProtocol());
         copy.setApiKey(source.getApiKey());
         return copy;
     }

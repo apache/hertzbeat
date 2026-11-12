@@ -24,8 +24,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import java.util.List;
-import java.util.Map;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
 import org.apache.hertzbeat.manager.scheduler.CollectJobScheduling;
@@ -34,6 +32,9 @@ import org.apache.hertzbeat.manager.service.CollectorService;
 import org.apache.hertzbeat.manager.service.MonitorService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import java.util.List;
+import java.util.Map;
 
 /** Test collector state and assignment operations. */
 class AgentCollectorToolServiceTest {
@@ -46,15 +47,29 @@ class AgentCollectorToolServiceTest {
     void setUp() {
         collectorService = mock(CollectorService.class);
         monitorService = mock(MonitorService.class);
-        service = new AgentCollectorToolService(collectorService, monitorService,
-                mock(AppService.class), mock(CollectJobScheduling.class));
+        AppService apps = mock(AppService.class);
+        org.mockito.Mockito.lenient()
+                .when(apps.getAppDefine(org.mockito.ArgumentMatchers.anyString()))
+                .thenReturn(
+                        org.apache.hertzbeat.common.entity.job.Job.builder()
+                                .metrics(
+                                        List.of(
+                                                org.apache.hertzbeat.common.entity.job.Metrics
+                                                        .builder()
+                                                        .protocol("http")
+                                                        .build()))
+                                .build());
+        service =
+                new AgentCollectorToolService(
+                        collectorService, monitorService, apps, mock(CollectJobScheduling.class));
     }
 
     @Test
     void shouldDeduplicateCollectorsBeforeChangingState() {
         when(collectorService.hasCollector("edge-a")).thenReturn(true);
 
-        Map<String, Object> result = service.setCollectorState(List.of("edge-a", "edge-a"), "offline");
+        Map<String, Object> result =
+                service.setCollectorState(List.of("edge-a", "edge-a"), "offline");
 
         verify(collectorService).makeCollectorsOffline(List.of("edge-a"));
         assertEquals(1, result.get("affectedCount"));
@@ -63,12 +78,13 @@ class AgentCollectorToolServiceTest {
     @Test
     void shouldUnassignMonitorThroughMonitorDomainService() {
         MonitorDto monitor = new MonitorDto();
-        monitor.setMonitor(Monitor.builder().id(42L).build());
+        monitor.setMonitor(Monitor.builder().id(42L).app("website").build());
         monitor.setParams(List.of());
         when(monitorService.getMonitorDto(42L)).thenReturn(monitor);
 
         service.unassignMonitor(42L);
 
-        verify(monitorService).modifyMonitor(eq(monitor.getMonitor()), eq(List.of()), isNull(), isNull());
+        verify(monitorService)
+                .modifyMonitor(eq(monitor.getMonitor()), eq(List.of()), isNull(), isNull());
     }
 }

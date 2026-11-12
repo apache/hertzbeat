@@ -21,8 +21,8 @@
   display: grid;
   grid-template-columns: 252px minmax(0, 1fr);
   min-width: 0;
-  height: calc(100vh - 116px);
-  min-height: 560px;
+  height: calc(100dvh - var(--hb-shell-header-height) - 22px);
+  min-height: 0;
   overflow: hidden;
   background: var(--hb-bg-chrome);
 }
@@ -43,7 +43,22 @@
   .workspace,
   .workspace[data-context-open='true'] {
     grid-template-columns: minmax(0, 1fr);
-    height: auto;
-    min-height: calc(100vh - 96px);
+  }
+}
+
+.historyBackdrop {
+  display: none;
+}
+@media (max-width: 700px) {
+  .workspace {
+    position: relative;
+  }
+  .historyBackdrop {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 5;
+    border: 0;
+    background: color-mix(in srgb, var(--hb-bg-canvas) 64%, transparent);
   }
 }

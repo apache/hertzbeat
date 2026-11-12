@@ -54,7 +54,7 @@ class AgentManagementToolRegistrationTest {
             context.registerBean(AgentAlertSilenceToolService.class,
                     () -> new AgentAlertSilenceToolService(mock(AlertSilenceService.class)));
             context.registerBean(AgentAlertRuleToolService.class,
-                    () -> new AgentAlertRuleToolService(mock(AlertDefineService.class), mock(AppService.class)));
+                    () -> new AgentAlertRuleToolService(mock(AlertDefineService.class), mock(AppService.class), mock(jakarta.validation.Validator.class)));
             context.registerBean(AgentCollectorToolService.class,
                     () -> new AgentCollectorToolService(mock(CollectorService.class), mock(MonitorService.class),
                             mock(AppService.class), mock(CollectJobScheduling.class)));
@@ -70,7 +70,7 @@ class AgentManagementToolRegistrationTest {
             Map<String, AgentToolDescriptor> tools = registry.descriptors().stream()
                     .collect(Collectors.toMap(AgentToolDescriptor::getName, Function.identity()));
 
-            assertEquals(38, tools.size());
+            assertEquals(65, tools.size());
             assertEquals(AgentToolExposure.MODEL_VISIBLE, tools.get("monitor.query").getExposure());
             Set<String> visibleTools = Set.of("monitor.query", "monitor.get", "alert.query", "alert.summary",
                     "alert.get");

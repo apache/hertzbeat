@@ -17,14 +17,20 @@
 
 package org.apache.hertzbeat.ai.gateway.tool.core;
 
-import java.util.Objects;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import lombok.Builder;
 import lombok.Getter;
+
+import org.apache.hertzbeat.ai.gateway.runtime.AgentRequestedQueryWindow;
 import org.springframework.util.StringUtils;
 
-/**
- * Tool execution state shared by orchestration and runtime layers.
- */
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Objects;
+
+/** Tool execution state shared by orchestration and runtime layers. */
 @Getter
 public class AgentToolExecutionResult {
 
@@ -48,12 +54,36 @@ public class AgentToolExecutionResult {
 
     private final long elapsedMs;
 
+    private final Boolean canDecide;
+
+    private final org.apache.hertzbeat.ai.gateway.conversation.AgentApprovalSummary approvalSummary;
+
+    @JsonIgnore private final java.time.LocalDateTime approvalExpiresAt;
+
+    /** Internal effective arguments only; never serialized into public events or API results. */
+    @JsonIgnore private final Map<String, Object> effectiveArguments;
+
+    @JsonIgnore private final AgentRequestedQueryWindow inheritedQueryWindow;
+
     @Builder(toBuilder = true)
-    private AgentToolExecutionResult(String toolCallId, String approvalId, String toolName,
-                                     AgentToolStatus status, AgentPolicyDecision decision, AgentToolRisk risk,
-                                     AgentApprovalStatus approvalStatus, String output, String errorMessage,
-                                     long elapsedMs) {
-        // Tool execution results are emitted to runtime and event layers with stable ledger identifiers.
+    private AgentToolExecutionResult(
+            String toolCallId,
+            String approvalId,
+            String toolName,
+            AgentToolStatus status,
+            AgentPolicyDecision decision,
+            AgentToolRisk risk,
+            AgentApprovalStatus approvalStatus,
+            String output,
+            String errorMessage,
+            long elapsedMs,
+            Boolean canDecide,
+            org.apache.hertzbeat.ai.gateway.conversation.AgentApprovalSummary approvalSummary,
+            java.time.LocalDateTime approvalExpiresAt,
+            Map<String, Object> effectiveArguments,
+            AgentRequestedQueryWindow inheritedQueryWindow) {
+        // Tool execution results are emitted to runtime and event layers with stable ledger
+        // identifiers.
         Objects.requireNonNull(toolCallId, "toolCallId must not be null");
         if (!StringUtils.hasText(toolCallId)) {
             throw new IllegalArgumentException("toolCallId must not be blank");
@@ -66,16 +96,19 @@ public class AgentToolExecutionResult {
         }
         this.toolCallId = toolCallId;
         this.toolName = toolName;
-        // Execution lifecycle state is consumed without fallbacks by runtime and ledger projections.
+        // Execution lifecycle state is consumed without fallbacks by runtime and ledger
+        // projections.
         this.status = Objects.requireNonNull(status, "status must not be null");
         this.decision = Objects.requireNonNull(decision, "decision must not be null");
         this.risk = Objects.requireNonNull(risk, "risk must not be null");
-        this.approvalStatus = Objects.requireNonNull(approvalStatus, "approvalStatus must not be null");
+        this.approvalStatus =
+                Objects.requireNonNull(approvalStatus, "approvalStatus must not be null");
         if ((status == AgentToolStatus.WAITING_APPROVAL
-                || decision == AgentPolicyDecision.REQUIRE_APPROVAL
-                || approvalStatus == AgentApprovalStatus.PENDING)
+                        || decision == AgentPolicyDecision.REQUIRE_APPROVAL
+                        || approvalStatus == AgentApprovalStatus.PENDING)
                 && !StringUtils.hasText(approvalId)) {
-            throw new IllegalArgumentException("approvalId is required while tool execution awaits approval");
+            throw new IllegalArgumentException(
+                    "approvalId is required while tool execution awaits approval");
         }
         if (elapsedMs < 0) {
             throw new IllegalArgumentException("elapsedMs must not be negative");
@@ -83,5 +116,13 @@ public class AgentToolExecutionResult {
         this.output = output;
         this.errorMessage = errorMessage;
         this.elapsedMs = elapsedMs;
+        this.canDecide = canDecide;
+        this.approvalSummary = approvalSummary;
+        this.approvalExpiresAt = approvalExpiresAt;
+        this.effectiveArguments =
+                effectiveArguments == null
+                        ? null
+                        : Collections.unmodifiableMap(new LinkedHashMap<>(effectiveArguments));
+        this.inheritedQueryWindow = inheritedQueryWindow;
     }
 }
