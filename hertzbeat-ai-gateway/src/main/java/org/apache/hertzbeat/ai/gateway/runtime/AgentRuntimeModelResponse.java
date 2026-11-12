@@ -44,6 +44,9 @@ public class AgentRuntimeModelResponse {
 
     String errorMessage;
 
+    @lombok.With
+    AgentModelParts modelParts;
+
     public static AgentRuntimeModelResponse finalAnswer(String finalAnswer,
                                                         Usage usage) {
         // Factory methods enforce the normalized response contract before the runtime loop branches on type.
@@ -56,7 +59,7 @@ public class AgentRuntimeModelResponse {
                 null,
                 List.of(),
                 usage,
-                null);
+                null, null);
     }
 
     public static AgentRuntimeModelResponse toolCalls(String assistantText,
@@ -74,7 +77,7 @@ public class AgentRuntimeModelResponse {
                 assistantText,
                 safeToolCalls,
                 usage,
-                null);
+                null, null);
     }
 
     public static AgentRuntimeModelResponse invalidResponse(String errorMessage,
@@ -89,7 +92,7 @@ public class AgentRuntimeModelResponse {
                 null,
                 List.of(),
                 usage,
-                errorMessage);
+                errorMessage, null);
     }
 
     /**

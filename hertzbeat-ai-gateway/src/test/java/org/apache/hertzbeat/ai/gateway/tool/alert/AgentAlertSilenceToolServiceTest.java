@@ -69,4 +69,28 @@ class AgentAlertSilenceToolServiceTest {
                 () -> service.createOnce("maintenance", Map.of(), "2026-01-01T00:00:00Z",
                         "2028-01-01T00:00:00Z", true));
     }
+
+    @Test
+    void shouldCreateWeeklySilenceWithTimezoneAndReturnDays() {
+        doAnswer(invocation -> {
+            AlertSilenceRequest silence = invocation.getArgument(0);
+            return new AlertSilenceResponse(7L, silence.getName(), silence.getEnable(), silence.getMatchAll(),
+                    silence.getType(), null, silence.getLabels(), silence.getDays(), silence.getPeriodStart(),
+                    silence.getPeriodEnd(), null, null, null, null);
+        }).when(alertSilenceService).create(org.mockito.ArgumentMatchers.any(AlertSilenceRequest.class));
+        Map<String, Object> result = service.createRecurring("weekly", Map.of("env", "test"), List.of((byte) 1, (byte) 5),
+                "2026-10-16T22:00:00+08:00", "2026-10-17T02:00:00+08:00", true);
+        assertEquals(List.of(1, 5), ((Map<?, ?>) result.get("data")).get("days"));
+        assertEquals("recurring", ((Map<?, ?>) result.get("data")).get("type"));
+        verify(alertSilenceService).create(argThat(request -> request.getType() == 1
+                && request.getPeriodStart().getOffset().getTotalSeconds() == 28800));
+    }
+
+    @Test
+    void shouldRequireExplicitRecurringWindow() {
+        assertThrows(IllegalArgumentException.class, () -> service.createRecurring("weekly", Map.of(), List.of((byte) 1),
+                null, "2026-10-16T01:00:00Z", true));
+        assertThrows(IllegalArgumentException.class, () -> service.createRecurring("weekly", Map.of(), List.of((byte) 1),
+                "2026-10-16T00:00:00", "2026-10-16T01:00:00Z", true));
+    }
 }

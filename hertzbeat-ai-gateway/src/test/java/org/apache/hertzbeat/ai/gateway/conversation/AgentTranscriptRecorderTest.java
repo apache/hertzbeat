@@ -200,6 +200,25 @@ class AgentTranscriptRecorderTest {
                 .getBytes(StandardCharsets.UTF_8).length <= 65535);
     }
 
+    @Test
+    void shouldPreserveCompleteManifestSizedRetrySnapshotWithoutTruncation() {
+        when(sessionService.recordTranscriptEntry(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        AgentTranscriptRecorder recorder = new AgentTranscriptRecorder(sessionService);
+        AgentSession session = AgentSession.builder().id(1L).sessionUid("session-1").build();
+        AgentRun run = AgentRun.builder().id(2L).runUid("run-1").sessionId(1L).build();
+        String text = "manifest-" + "x".repeat(8763);
+        UserInput input = UserInput.builder().messageId("message-1").conversationId("conversation-1")
+                .message(Message.builder().text(text).attachments(List.of()).build()).build();
+        AgentRunRequestSnapshot request = AgentRunRequestSnapshot.builder()
+                .version(AgentRunRequestSnapshot.VERSION).conversationId("conversation-1")
+                .messageId("message-1").entryType("USER_INPUT").message(text)
+                .attachments(List.of()).build();
+        AgentTranscriptEntry entry = recorder.recordUserTranscriptEntry(
+                session, run, input, "1", "fingerprint", request);
+        assertEquals(text, message(entry).text());
+        assertEquals(text, message(entry).getRequestSnapshot().message());
+    }
+
     private TranscriptMessage message(AgentTranscriptEntry entry) {
         return JsonUtil.fromJson(entry.getPayloadJson(), TranscriptMessage.class);
     }

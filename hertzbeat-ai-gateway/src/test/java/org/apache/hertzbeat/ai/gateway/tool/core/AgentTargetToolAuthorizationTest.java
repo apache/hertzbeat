@@ -69,6 +69,14 @@ class AgentTargetToolAuthorizationTest {
     }
 
     @Test
+    void platformExpansionDoesNotBroadenAnExistingBoundInvestigation() {
+        for (String name : List.of("metrics.otlp_console", "logs.analysis", "traces.structure",
+                "dashboard.list", "saved_view.list", "label.list", "collector.runtime")) {
+            assertDenied(request(name, Map.of(), exactTarget()), AgentToolRisk.READ);
+        }
+    }
+
+    @Test
     void targetShouldNotGrantChangeOrNonUserRunsAdditionalAccess() {
         AgentTargetRef target = exactTarget();
 

@@ -26,12 +26,13 @@ import org.apache.hertzbeat.collector.collect.ipmi2.protocol.ipmi.payload.RakpMe
 import org.apache.hertzbeat.collector.collect.ipmi2.protocol.ipmi.payload.RakpMessage4;
 import org.apache.hertzbeat.collector.collect.ipmi2.protocol.ipmi.payload.RmcpPlusOpenSessionRequest;
 import org.apache.hertzbeat.collector.collect.ipmi2.protocol.ipmi.payload.RmcpPlusOpenSessionResponse;
+import org.apache.hertzbeat.collector.util.CollectUtil;
 import org.apache.hertzbeat.common.entity.job.protocol.IpmiProtocol;
 
 /**
  * IpmiClient used to connect to a remote Ipmi server
  */
-public class IpmiClient {
+public class IpmiClient implements AutoCloseable {
 
     UdpConnection connection;
     private final String host;
@@ -40,37 +41,60 @@ public class IpmiClient {
     private final String password;
 
     public IpmiClient(String host, Integer port, String username, String password) throws IOException {
+        this(host, port, username, password, UdpConnection.DEFAULT_RECEIVE_TIMEOUT_MILLIS);
+    }
+
+    public IpmiClient(String host, Integer port, String username, String password, int receiveTimeoutMillis)
+            throws IOException {
         this.host = host;
         this.port = port;
         this.username = username;
         this.password = password;
-        connection = new UdpConnection(host, port);
+        connection = new UdpConnection(host, port, receiveTimeoutMillis);
     }
 
     public static IpmiClient create(IpmiProtocol ipmiProtocol) throws IOException {
+        int receiveTimeout = CollectUtil.getTimeout(ipmiProtocol.getTimeout(),
+                UdpConnection.DEFAULT_RECEIVE_TIMEOUT_MILLIS);
         return new IpmiClient(ipmiProtocol.getHost(), Integer.parseInt(ipmiProtocol.getPort()),
-                ipmiProtocol.getUsername(), ipmiProtocol.getPassword());
+                ipmiProtocol.getUsername(), ipmiProtocol.getPassword(), receiveTimeout);
     }
 
     public IpmiConnection connect() throws IOException {
         IpmiSession session = newSession(username, password);
 
-        RmcpPlusOpenSessionResponse rmcpPlusOpenSessionResponse = connection.get(session, new RmcpPlusOpenSessionRequest(), RmcpPlusOpenSessionResponse.class);
-        session.setSystemSessionId(rmcpPlusOpenSessionResponse.systemSessionId);
+        try {
+            RmcpPlusOpenSessionResponse rmcpPlusOpenSessionResponse = connection.get(session, new RmcpPlusOpenSessionRequest(), RmcpPlusOpenSessionResponse.class);
+            session.setSystemSessionId(rmcpPlusOpenSessionResponse.systemSessionId);
 
-        session.generateConsoleRandomNumber();
-        RakpMessage2 rakpMessage2 = connection.get(session, new RakpMessage1(), RakpMessage2.class);
-        session.setSystemRandomNumber(rakpMessage2.systemRandom);
-        session.setSystemGuid(rakpMessage2.systemGuid);
+            session.generateConsoleRandomNumber();
+            RakpMessage2 rakpMessage2 = connection.get(session, new RakpMessage1(), RakpMessage2.class);
+            session.setSystemRandomNumber(rakpMessage2.systemRandom);
+            session.setSystemGuid(rakpMessage2.systemGuid);
 
 
-        session.generateSik();
-        session.setK1(session.generateK(1));
-        session.setK2(session.generateK(2));
-        connection.get(session, new RakpMessage3(), RakpMessage4.class);
+            session.generateSik();
+            session.setK1(session.generateK(1));
+            session.setK2(session.generateK(2));
+            connection.get(session, new RakpMessage3(), RakpMessage4.class);
 
-        session.setConnected(true);
-        return new IpmiConnection(session, connection);
+            session.setConnected(true);
+            return new IpmiConnection(session, connection);
+        } catch (IOException | RuntimeException e) {
+            // A failed handshake used to leave the UDP channel and its selector open forever,
+            // leaking one file descriptor pair per retry until the collector ran out of handles.
+            try {
+                connection.close();
+            } catch (IOException closeFailure) {
+                e.addSuppressed(closeFailure);
+            }
+            throw e;
+        }
+    }
+
+    @Override
+    public void close() throws IOException {
+        connection.close();
     }
 
     public IpmiSession newSession(String username, String password) {

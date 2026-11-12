@@ -40,7 +40,7 @@ import lombok.NoArgsConstructor;
 public class AgentSignalRef {
 
     @NotBlank
-    @Pattern(regexp = "metrics|logs|traces")
+    @Pattern(regexp = "metrics|logs|traces|investigation")
     private String type;
 
     @Size(max = 2048)

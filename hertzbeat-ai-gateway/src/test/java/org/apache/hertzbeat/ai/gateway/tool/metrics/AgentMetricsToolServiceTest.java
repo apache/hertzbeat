@@ -59,6 +59,19 @@ class AgentMetricsToolServiceTest {
         service = new AgentMetricsToolService(appService, monitorService, metricsDataService);
     }
 
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.CsvSource({"15m,true,900s", "1h,false,3600s"})
+    void relativeHistoryPassesTheRequiredFieldAndPreservesSuccessfulEmptyResults(String history, boolean interval, String canonicalHistory) {
+        when(metricsDataService.getMetricHistoryData("127.0.0.1:14601", "port", "port", "up", canonicalHistory, interval))
+                .thenReturn(MetricsHistoryData.builder().values(Map.of()).build());
+        var output = service.metricsHistory("127.0.0.1:14601", "port", "port", "up", history, interval, 100);
+        assertEquals(0, output.get("returnedPoints"));
+        assertEquals(0L, output.get("totalPoints"));
+        assertEquals(canonicalHistory, output.get("history"));
+        verify(metricsDataService).getMetricHistoryData("127.0.0.1:14601", "port", "port", "up", canonicalHistory, interval);
+        verifyNoInteractions(monitorService);
+    }
+
     @Test
     void exactHistoryShouldResolveTheMonitorAndEchoTheObservedScope() {
         stubMonitor();
@@ -112,6 +125,26 @@ class AgentMetricsToolServiceTest {
 
         verify(metricsDataService).getMetricHistoryData("127.0.0.1:9090", "_prometheus_prom-a", "process",
                 "cpu", "1s", true, 1_000L, 2_000L, "4ms");
+    }
+
+    @Test
+    void mixedHistoryModesMustFailBeforeReadingDataWithCompleteContract() {
+        var failure = assertThrows(IllegalArgumentException.class, () -> service.metricsHistory(
+                "127.0.0.1:3306", "mysql", "basic", null, "15m", true, 300,
+                42L, "basic.max_connections", null, null, null));
+        org.junit.jupiter.api.Assertions.assertTrue(failure.getMessage().contains("Do not mix"));
+        org.junit.jupiter.api.Assertions.assertTrue(failure.getMessage().contains("monitorId, metricKey, start, end"));
+        verifyNoInteractions(metricsDataService);
+    }
+
+    @org.junit.jupiter.params.ParameterizedTest
+    @org.junit.jupiter.params.provider.NullAndEmptySource
+    @org.junit.jupiter.params.provider.ValueSource(strings = {" ", "\t"})
+    void relativeHistoryRequiresFieldBeforeDatastoreAccess(String field) {
+        var failure = assertThrows(IllegalArgumentException.class, () -> service.metricsHistory(
+                "127.0.0.1:14601", "port", "port", field, "15m", true, 300));
+        org.junit.jupiter.api.Assertions.assertTrue(failure.getMessage().contains("fieldParameter"));
+        verifyNoInteractions(metricsDataService);
     }
 
     @Test

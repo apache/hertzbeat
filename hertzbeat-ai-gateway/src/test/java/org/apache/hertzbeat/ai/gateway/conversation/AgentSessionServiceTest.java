@@ -80,6 +80,24 @@ class AgentSessionServiceTest {
     private EntityManager entityManager;
 
     @Test
+    void publicTranscriptMustHidePrivatePartsWithoutMutatingStoredEntity() {
+        var service = new AgentSessionService(sessionDao, transcriptEntryDao, sessionKeyBuilder, entityManager);
+        String stored = "{\"role\":\"assistant\",\"modelPartsCiphertext\":\"private-fixture\"}";
+        var entry = AgentTranscriptEntry.builder().id(9L).sessionId(1L).runId(2L).sessionSequence(3L)
+                .messageRole("assistant").payloadJson(stored).gmtCreate(LocalDateTime.of(2026, 1, 1, 0, 0)).build();
+        var pageable = PageRequest.of(0, 10);
+        when(transcriptEntryDao.findBySessionIdOrderBySessionSequenceAsc(1L, pageable))
+                .thenReturn(new PageImpl<>(List.of(entry), pageable, 1));
+        var view = service.findTranscriptEntries(1L, pageable);
+        assertFalse(view.getContent().getFirst().getPayloadJson().contains("private-fixture"));
+        assertFalse(view.getContent().getFirst().getPayloadJson().contains("modelPartsCiphertext"));
+        assertEquals(stored, entry.getPayloadJson());
+        assertEquals(entry.getId(), view.getContent().getFirst().getId());
+        assertEquals(3L, view.getContent().getFirst().getSessionSequence());
+        assertEquals(1, view.getTotalElements());
+    }
+
+    @Test
     void findOwnedSessionShouldScopeUidLookupToEnvelopeActor() {
         AgentSessionService service = new AgentSessionService(
             sessionDao, transcriptEntryDao, sessionKeyBuilder, entityManager);

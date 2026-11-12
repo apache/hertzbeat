@@ -61,8 +61,14 @@ export async function apiFetch(input: RequestInfo | URL, init: RequestInit = {})
  * CSRF policy as ordinary API calls, but without the 30-second response-body
  * deadline used for finite requests. Mutating streams are never replayed.
  */
-export function apiStreamFetch(input: RequestInfo | URL, init: RequestInit = {}) {
-  return fetchHeaders(input, inputDefaults(input, init));
+export type StreamHeaderPhase = 'queued' | 'fetch_started' | 'headers_received';
+
+export function apiStreamFetch(
+  input: RequestInfo | URL,
+  init: RequestInit = {},
+  observe?: (phase: StreamHeaderPhase) => void
+) {
+  return fetchHeaders(input, inputDefaults(input, init), observe);
 }
 
 function isSessionManagementRequest(input: RequestInfo | URL) {
@@ -78,7 +84,13 @@ function requestUrl(input: RequestInfo | URL) {
 
 function inputDefaults(input: RequestInfo | URL, init: RequestInit): RequestInit {
   return input instanceof Request
-    ? { method: input.method, headers: input.headers, credentials: input.credentials, signal: input.signal, ...init }
+    ? {
+        method: input.method,
+        headers: input.headers,
+        credentials: input.credentials,
+        signal: input.signal,
+        ...init
+      }
     : init;
 }
 
@@ -89,7 +101,12 @@ function withBrowserSession(init: RequestInit): RequestInit {
     const csrf = readCookie(CSRF_COOKIE);
     if (csrf) headers.set(CSRF_HEADER, csrf);
   }
-  return { ...init, method, headers, credentials: init.credentials ?? 'same-origin' };
+  return {
+    ...init,
+    method,
+    headers,
+    credentials: init.credentials ?? 'same-origin'
+  };
 }
 
 export function hasBrowserSessionRefreshCoordinator() {
@@ -105,9 +122,18 @@ export function refreshBrowserSessionResult(options?: BrowserSessionRefreshOptio
     .then(
       () =>
         sessionRefreshCoordinator?.(options) ??
-        ({ status: 'uncertain', failure: 'unavailable' } satisfies BrowserSessionRefreshResult)
+        ({
+          status: 'uncertain',
+          failure: 'unavailable'
+        } satisfies BrowserSessionRefreshResult)
     )
-    .catch(() => ({ status: 'uncertain', failure: 'error' }) satisfies BrowserSessionRefreshResult);
+    .catch(
+      () =>
+        ({
+          status: 'uncertain',
+          failure: 'error'
+        }) satisfies BrowserSessionRefreshResult
+    );
 }
 
 /**
@@ -122,12 +148,27 @@ export function registerBrowserSessionRefreshCoordinator(coordinator: BrowserSes
   };
 }
 
-function fetchHeaders(input: RequestInfo | URL, init: RequestInit) {
+function fetchHeaders(input: RequestInfo | URL, init: RequestInit, observe?: (phase: StreamHeaderPhase) => void) {
+  const publish = (phase: StreamHeaderPhase) => {
+    try {
+      observe?.(phase);
+    } catch {
+      /* Diagnostics never control transport. */
+    }
+  };
+  publish('queued');
   return withCookieHeaderAdmission(
     isSessionManagementRequest(input) ? 'exclusive' : 'shared',
-    signal => fetch(input, withBrowserSession({ ...init, signal })),
+    signal => {
+      const prepared = withBrowserSession({ ...init, signal });
+      publish('fetch_started');
+      return fetch(input, prepared);
+    },
     init.signal
-  );
+  ).then(response => {
+    publish('headers_received');
+    return response;
+  });
 }
 
 function fetchWithTimeout(input: RequestInfo | URL, init: RequestInit) {

@@ -16,6 +16,12 @@
  */
 
 import { z } from 'zod';
+import {
+  entityInvestigationSourceSchema,
+  entityInvestigationSourceWireSchema,
+  entityInvestigationTargetWireSchema,
+  incidentTargetWireSchema
+} from './agent-investigation-target-schema';
 
 import {
   agentTopologySchema,
@@ -60,6 +66,7 @@ const metricSignalWireSchema = z
   }));
 
 export const agentSourceTargetSchema = z.union([
+  entityInvestigationSourceSchema,
   z.object({ monitorId: z.number().int().positive(), signal: metricSignalSchema }).strict(),
   z.object({ alertId: z.number().int().positive(), alertType: z.literal('single') }).strict(),
   z.object({ entityId: z.number().int().positive() }).strict(),
@@ -76,6 +83,7 @@ const monitorTargetWireSchema = z
     alertId: z.null().optional(),
     alertType: z.null().optional(),
     collector: z.null().optional(),
+    incident: z.null().optional(),
     service: z
       .object({
         name: z.string().min(1),
@@ -110,6 +118,7 @@ const monitorSourceWireSchema = z
     alertType: z.null().optional(),
     entityId: z.null().optional(),
     collector: z.null().optional(),
+    incident: z.null().optional(),
     signal: metricSignalWireSchema,
     topology: z.null().optional(),
     trace: z.null().optional(),
@@ -128,6 +137,7 @@ const singleAlertTargetWireSchema = z
     alertType: z.literal('single'),
     entityId: z.null().optional(),
     collector: z.null().optional(),
+    incident: z.null().optional(),
     signal: z.null().optional(),
     topology: z.null().optional(),
     trace: z.null().optional(),
@@ -146,6 +156,7 @@ const singleAlertSourceWireSchema = z
     alertType: z.literal('single'),
     entityId: z.null().optional(),
     collector: z.null().optional(),
+    incident: z.null().optional(),
     signal: z.null().optional(),
     topology: z.null().optional(),
     trace: z.null().optional(),
@@ -164,6 +175,7 @@ const entityTargetWireSchema = z
     alertType: z.null().optional(),
     entityId: z.number().int().positive(),
     collector: z.null().optional(),
+    incident: z.null().optional(),
     signal: z.null().optional(),
     topology: z.null().optional(),
     trace: z.null().optional(),
@@ -183,6 +195,7 @@ const entitySourceWireSchema = z
     alertType: z.null().optional(),
     entityId: z.number().int().positive(),
     collector: z.null().optional(),
+    incident: z.null().optional(),
     signal: z.null().optional(),
     topology: z.null().optional(),
     trace: z.null().optional(),
@@ -194,6 +207,7 @@ const entitySourceWireSchema = z
   .transform(value => ({ entityId: value.entityId }));
 
 export const agentSourceTargetWireSchema = z.union([
+  entityInvestigationSourceWireSchema,
   monitorSourceWireSchema,
   singleAlertSourceWireSchema,
   entitySourceWireSchema,
@@ -203,6 +217,8 @@ export const agentSourceTargetWireSchema = z.union([
 ]);
 
 export const agentRunTargetSchema = z.union([
+  entityInvestigationTargetWireSchema,
+  incidentTargetWireSchema,
   monitorTargetWireSchema,
   singleAlertTargetWireSchema,
   entityTargetWireSchema,

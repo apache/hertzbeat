@@ -24,7 +24,9 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import org.apache.hertzbeat.ai.gateway.application.AgentEntityTargetAuthorityService;
+import org.apache.hertzbeat.ai.gateway.application.AgentEntityInvestigationAuthorityService;
 import org.apache.hertzbeat.ai.gateway.application.AgentLogTargetAuthorityService;
+import org.apache.hertzbeat.ai.gateway.application.AgentIncidentTargetAuthorityService;
 import org.apache.hertzbeat.ai.gateway.application.AgentSingleAlertTargetAuthorityService;
 import org.apache.hertzbeat.ai.gateway.application.AgentTopologyTargetAuthorityService;
 import org.apache.hertzbeat.ai.gateway.application.AgentTraceTargetAuthorityService;
@@ -60,6 +62,8 @@ public class AgentTargetToolAuthorizer {
     private final AgentTopologyTargetAuthorityService topologyAuthorityVerifier;
     private final AgentTraceTargetAuthorityService traceAuthorityVerifier;
     private final AgentLogTargetAuthorityService logAuthorityVerifier;
+    private final AgentIncidentTargetAuthorityService incidentAuthorityVerifier;
+    private final AgentEntityInvestigationAuthorityService investigationAuthorityVerifier;
 
     /** Test-only compatibility constructor for legacy target contracts. */
     public AgentTargetToolAuthorizer() {
@@ -97,19 +101,44 @@ public class AgentTargetToolAuthorizer {
                 traceAuthorityVerifier, null);
     }
 
-    @Autowired
     public AgentTargetToolAuthorizer(AgentEntityMonitorMetricAuthorityVerifier authorityVerifier,
                                      AgentSingleAlertTargetAuthorityService alertAuthorityVerifier,
                                      AgentEntityTargetAuthorityService entityAuthorityVerifier,
                                      AgentTopologyTargetAuthorityService topologyAuthorityVerifier,
                                      AgentTraceTargetAuthorityService traceAuthorityVerifier,
                                      AgentLogTargetAuthorityService logAuthorityVerifier) {
+        this(authorityVerifier, alertAuthorityVerifier, entityAuthorityVerifier, topologyAuthorityVerifier,
+                traceAuthorityVerifier, logAuthorityVerifier, null);
+    }
+
+    public AgentTargetToolAuthorizer(AgentEntityMonitorMetricAuthorityVerifier authorityVerifier,
+                                     AgentSingleAlertTargetAuthorityService alertAuthorityVerifier,
+                                     AgentEntityTargetAuthorityService entityAuthorityVerifier,
+                                     AgentTopologyTargetAuthorityService topologyAuthorityVerifier,
+                                     AgentTraceTargetAuthorityService traceAuthorityVerifier,
+                                     AgentLogTargetAuthorityService logAuthorityVerifier,
+                                     AgentIncidentTargetAuthorityService incidentAuthorityVerifier) {
+        this(authorityVerifier, alertAuthorityVerifier, entityAuthorityVerifier, topologyAuthorityVerifier,
+                traceAuthorityVerifier, logAuthorityVerifier, incidentAuthorityVerifier, null);
+    }
+
+    @Autowired
+    public AgentTargetToolAuthorizer(AgentEntityMonitorMetricAuthorityVerifier authorityVerifier,
+                                     AgentSingleAlertTargetAuthorityService alertAuthorityVerifier,
+                                     AgentEntityTargetAuthorityService entityAuthorityVerifier,
+                                     AgentTopologyTargetAuthorityService topologyAuthorityVerifier,
+                                     AgentTraceTargetAuthorityService traceAuthorityVerifier,
+                                     AgentLogTargetAuthorityService logAuthorityVerifier,
+                                     AgentIncidentTargetAuthorityService incidentAuthorityVerifier,
+                                     AgentEntityInvestigationAuthorityService investigationAuthorityVerifier) {
         this.authorityVerifier = authorityVerifier;
         this.alertAuthorityVerifier = alertAuthorityVerifier;
         this.entityAuthorityVerifier = entityAuthorityVerifier;
         this.topologyAuthorityVerifier = topologyAuthorityVerifier;
         this.traceAuthorityVerifier = traceAuthorityVerifier;
         this.logAuthorityVerifier = logAuthorityVerifier;
+        this.incidentAuthorityVerifier = incidentAuthorityVerifier;
+        this.investigationAuthorityVerifier = investigationAuthorityVerifier;
     }
 
     /**
@@ -119,6 +148,12 @@ public class AgentTargetToolAuthorizer {
         AgentTargetRef target = request.getEffectiveTarget();
         if (target == null) {
             return Optional.empty();
+        }
+        if (isInvestigationTarget(target)) {
+            return investigationDenialReason(request, descriptor, target);
+        }
+        if (isIncidentTarget(target)) {
+            return incidentDenialReason(request, descriptor, target);
         }
         if (isCanonicalAlertTarget(target)) {
             return alertCanonicalDenialReason(request, descriptor, target);
@@ -154,10 +189,47 @@ public class AgentTargetToolAuthorizer {
         return allowed ? Optional.empty() : Optional.of(TARGET_DENIAL_REASON);
     }
 
+    private boolean isInvestigationTarget(AgentTargetRef target) {
+        return target != null && ("entity-investigation.v1".equals(target.getVersion())
+                || target.getSignal() != null && "investigation".equals(target.getSignal().getType()));
+    }
+
+    private Optional<String> investigationDenialReason(AgentToolExecutionRequest request,
+                                                       AgentToolDescriptor descriptor, AgentTargetRef target) {
+        boolean allowed = request.getEntryType() == AgentRuntimeEntryType.USER_INPUT
+                && descriptor.getRisk() == AgentToolRisk.READ
+                && investigationAuthorityVerifier != null
+                && investigationAuthorityVerifier.verify(request.getWorkspaceId(), target)
+                && investigationAuthorityVerifier.permits(request.getWorkspaceId(), target,
+                        descriptor.getName(), request.getArguments());
+        return allowed ? Optional.empty() : Optional.of(TARGET_DENIAL_REASON);
+    }
+
+    private boolean isIncidentTarget(AgentTargetRef target) {
+        return target != null && (target.getIncident() != null
+                || AgentIncidentTargetAuthorityService.TARGET_VERSION.equals(target.getVersion()));
+    }
+
+    private Optional<String> incidentDenialReason(AgentToolExecutionRequest request,
+                                                  AgentToolDescriptor descriptor, AgentTargetRef target) {
+        boolean allowed = request.getEntryType() == AgentRuntimeEntryType.ALERT_TRIGGER
+                && descriptor.getRisk() == AgentToolRisk.READ
+                && incidentAuthorityVerifier != null
+                && AgentIncidentTargetAuthorityService.permits(target, descriptor.getName(), request.getArguments())
+                && incidentAuthorityVerifier.verify(request.getWorkspaceId(), target);
+        return allowed ? Optional.empty() : Optional.of(TARGET_DENIAL_REASON);
+    }
+
     /** Rechecks manager authority after a canonical resource handler returns, before ledger completion. */
     public Optional<String> postExecutionDenialReason(AgentToolExecutionRequest request,
                                                        AgentToolDescriptor descriptor) {
         AgentTargetRef target = request.getEffectiveTarget();
+        if (isInvestigationTarget(target)) {
+            return investigationDenialReason(request, descriptor, target);
+        }
+        if (isIncidentTarget(target)) {
+            return incidentDenialReason(request, descriptor, target);
+        }
         if ("alert.get".equals(descriptor.getName()) && isCanonicalAlertTarget(target)) {
             return alertAuthorityVerifier.verify(request.getWorkspaceId(), target)
                     ? Optional.empty() : Optional.of(TARGET_DENIAL_REASON);

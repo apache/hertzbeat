@@ -18,16 +18,11 @@
 package org.apache.hertzbeat.ai.gateway.conversation;
 
 import jakarta.persistence.EntityManager;
-import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import org.apache.hertzbeat.ai.gateway.conversation.persistence.AgentRunDao;
-import org.apache.hertzbeat.ai.gateway.conversation.persistence.AgentSessionDao;
+
 import org.apache.hertzbeat.ai.gateway.contract.AgentTargetRef;
 import org.apache.hertzbeat.ai.gateway.contract.UserInput;
+import org.apache.hertzbeat.ai.gateway.conversation.persistence.AgentRunDao;
+import org.apache.hertzbeat.ai.gateway.conversation.persistence.AgentSessionDao;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEntryType;
 import org.apache.hertzbeat.ai.gateway.text.GatewayText;
 import org.apache.hertzbeat.common.entity.agent.AgentRun;
@@ -38,6 +33,13 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+
+import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * Default run ledger service for Agent Gateway.
@@ -70,6 +72,24 @@ public class AgentRunService {
             return runDao.findBySessionIdAndMessageId(session.getId(), messageId)
                 .orElseThrow(() -> e);
         }
+    }
+
+    /** Called only under the owning session lock after an explicit frozen-plan continuation. */
+    @Transactional
+    public AgentRun createBatchSegment(
+            AgentSession session,
+            UserInput input,
+            AgentRun parent,
+            String rootRunUid,
+            int segment,
+            boolean readOnly) {
+        AgentRun run =
+                buildRun(session, input, input.getMessageId(), AgentRuntimeEntryType.USER_INPUT);
+        run.setBatchRootRunUid(rootRunUid);
+        run.setBatchParentRunUid(parent.getRunUid());
+        run.setBatchSegment(segment);
+        run.setBatchReadOnly(readOnly);
+        return runDao.saveAndFlush(run);
     }
 
     @Transactional

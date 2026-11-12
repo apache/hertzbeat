@@ -83,6 +83,21 @@ params:
     type: password
     # required-true or false
     required: false
+  # field-param field key
+  - field: timeout
+    # name-param field display i18n name
+    name:
+      zh-CN: 超时时间(ms)
+      en-US: Timeout(ms)
+      ja-JP: タイムアウト（ｍｓ）
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[1000,120000]'
+    # required-true or false
+    required: false
+    # default value
+    defaultValue: 5000
 # collect metrics config list
 metrics:
   # metrics - cpu
@@ -166,6 +181,8 @@ metrics:
       username: ^_^username^_^
       # ipmi password
       password: ^_^password^_^
+      # max wait for one ipmi udp response
+      timeout: ^_^timeout^_^
       # ipmi command type: Chassis | Sensor
       type: Chassis
   - name: Sensor
@@ -212,5 +229,7 @@ metrics:
       username: ^_^username^_^
       # ipmi password
       password: ^_^password^_^
+      # max wait for one ipmi udp response
+      timeout: ^_^timeout^_^
       # ipmi command type: Chassis | Sensor
       type: Sensor

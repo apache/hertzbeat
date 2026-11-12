@@ -43,7 +43,7 @@ memory or disk usage without a bound.
 
 ## Build and validate
 
-Go 1.26.9 is pinned in `go.mod`. The Makefile selects that toolchain for
+Go 1.26.10 is pinned in `go.mod`. The Makefile selects that toolchain for
 OCB, cross-platform binaries and release checks; Go can download its verified
 toolchain if it is not cached. GitHub Actions uses the same `go-version-file`.
 The OCB/component release stays at 0.156.0; reviewed dependency overrides in

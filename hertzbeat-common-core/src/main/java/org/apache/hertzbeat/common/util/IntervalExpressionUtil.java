@@ -43,10 +43,12 @@ public final class IntervalExpressionUtil {
     }
 
     /**
-     * CHECK WHETHER THE VALUE IS IN AN INTERVAL RANGE
+     * Check whether a value belongs to a union of intervals. Every interval must
+     * be valid, even when an earlier interval already matches the value.
      * @param numberValue NumericalValue
      * @param expression INTERVAL EXPRESSION
-     * @return true-yes false-no
+     * @return true for a matching valid expression or an absent constraint;
+     *         false for a non-matching or malformed expression
      */
     public static boolean validNumberIntervalExpress(Double numberValue, String expression) {
         if (expression == null || expression.isEmpty()) {
@@ -56,49 +58,35 @@ public final class IntervalExpressionUtil {
             return false;
         }
         try {
-            String[] expressions = expression.split(SPLIT_OR);
+            // Preserve empty terms so trailing operators cannot silently disappear.
+            String[] expressions = expression.split(SPLIT_OR, -1);
+            boolean matches = false;
             for (String expr : expressions) {
-                String[] values = expr.substring(1, expr.length() - 1).split(SPLIT_AND);
-                if (values.length != 2) {
-                    continue;
-                }
-                Double[] doubleValues = new Double[2];
-                if (NEGATIVE.equals(values[0])) {
-                    doubleValues[0] = Double.NEGATIVE_INFINITY;
-                } else {
-                    doubleValues[0] = Double.parseDouble(values[0]);
-                }
-                if (POSITIVE.equals(values[1])) {
-                    doubleValues[1] = Double.POSITIVE_INFINITY;
-                } else {
-                    doubleValues[1] = Double.parseDouble(values[1]);
+                if (expr.length() < 5) {
+                    return false;
                 }
                 String startBracket = expr.substring(0, 1);
                 String endBracket = expr.substring(expr.length() - 1);
-                if (SPLIT_EQU_LEFT.equals(startBracket)) {
-                    if (SPLIT_EQU_RIGHT.equals(endBracket)) {
-                        if (numberValue > doubleValues[0] && numberValue < doubleValues[1]) {
-                            return true;
-                        }
-                    } else if (SPLIT_EQ_RIGHT.equals(endBracket)) {
-                        if (numberValue > doubleValues[0] && numberValue <= doubleValues[1]) {
-                            return true;
-                        }
-                    }
-                } else if (SPLIT_EQ_LEFT.equals(startBracket)) {
-                    if (SPLIT_EQU_RIGHT.equals(endBracket)) {
-                        if (numberValue >= doubleValues[0] && numberValue < doubleValues[1]) {
-                            return true;
-                        }
-                    } else if (SPLIT_EQ_RIGHT.equals(endBracket)) {
-                        if (numberValue >= doubleValues[0] && numberValue <= doubleValues[1]) {
-                            return true;
-                        }
-                    }
+                if ((!SPLIT_EQU_LEFT.equals(startBracket) && !SPLIT_EQ_LEFT.equals(startBracket))
+                        || (!SPLIT_EQU_RIGHT.equals(endBracket) && !SPLIT_EQ_RIGHT.equals(endBracket))) {
+                    return false;
                 }
+                String[] values = expr.substring(1, expr.length() - 1).split(SPLIT_AND, -1);
+                if (values.length != 2) {
+                    return false;
+                }
+                double lower = NEGATIVE.equals(values[0]) ? Double.NEGATIVE_INFINITY : Double.parseDouble(values[0]);
+                double upper = POSITIVE.equals(values[1]) ? Double.POSITIVE_INFINITY : Double.parseDouble(values[1]);
+                if (Double.isNaN(lower) || Double.isNaN(upper) || lower > upper) {
+                    return false;
+                }
+                boolean aboveLower = SPLIT_EQ_LEFT.equals(startBracket) ? numberValue >= lower : numberValue > lower;
+                boolean belowUpper = SPLIT_EQ_RIGHT.equals(endBracket) ? numberValue <= upper : numberValue < upper;
+                // Keep checking subsequent terms instead of accepting a malformed union.
+                matches |= aboveLower && belowUpper;
             }
-            return false;
-        } catch (Exception e) {
+            return matches;
+        } catch (NumberFormatException e) {
             log.debug(e.getMessage(), e);
             return false;
         }

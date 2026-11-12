@@ -17,13 +17,10 @@
 
 package org.apache.hertzbeat.ai.gateway.runtime;
 
-import java.time.Clock;
-import java.time.Instant;
-import java.util.List;
-import java.util.Objects;
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
+import io.micrometer.observation.ObservationRegistry;
+
 import lombok.extern.slf4j.Slf4j;
+
 import org.apache.hertzbeat.ai.gateway.conversation.AgentTranscriptRecorder;
 import org.apache.hertzbeat.ai.gateway.skill.AgentSkillDefinition;
 import org.apache.hertzbeat.ai.gateway.skill.AgentSkillRegistry;
@@ -33,10 +30,18 @@ import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolRegistry;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 import reactor.core.Disposable;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.FluxSink;
 import reactor.core.scheduler.Schedulers;
+
+import java.time.Clock;
+import java.time.Instant;
+import java.util.List;
+import java.util.Objects;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Default Agent Gateway runtime service.
@@ -45,6 +50,13 @@ import reactor.core.scheduler.Schedulers;
 @Service
 public class AgentRuntimeService {
 
+    private AgentBatchService batches;
+
+    @Autowired
+    void configureBatches(AgentBatchService batches) {
+        this.batches = batches;
+    }
+
     private final AgentRuntimeProperties runtimeProperties;
     private final AgentRuntimeContextBuilder contextBuilder;
     private final AgentToolBridge toolBridge;
@@ -52,8 +64,24 @@ public class AgentRuntimeService {
     private final AgentRuntimeControlRegistry controlRegistry;
     private final AgentTranscriptRecorder transcriptRecorder;
     private final AgentGroundingEvidenceVerifier groundingVerifier;
+    private final org.apache.hertzbeat.ai.gateway.conversation.AgentExecutionSummaryService executionSummaries;
     private final Clock clock;
     private final List<AgentSkillDefinition> availableSkills;
+
+    public AgentRuntimeService(AgentRuntimeProperties runtimeProperties,
+                               AgentToolRegistry toolRegistry,
+                               AgentToolExecutionOrchestrator toolExecutionOrchestrator,
+                               ObjectProvider<AgentRuntimeModelClient> modelClientProvider,
+                               AgentRuntimeControlRegistry controlRegistry,
+                               AgentRuntimeApprovalRegistry approvalRegistry,
+                               AgentTranscriptRecorder transcriptRecorder,
+                               AgentGroundingEvidenceVerifier groundingVerifier,
+                               AgentSkillRegistry skillRegistry,
+                               org.apache.hertzbeat.ai.gateway.conversation.AgentExecutionSummaryService executionSummaries) {
+        this(runtimeProperties, toolRegistry, toolExecutionOrchestrator, modelClientProvider, controlRegistry,
+                approvalRegistry, transcriptRecorder, groundingVerifier, skillRegistry, executionSummaries,
+                ObservationRegistry.NOOP);
+    }
 
     @Autowired
     public AgentRuntimeService(AgentRuntimeProperties runtimeProperties,
@@ -64,16 +92,38 @@ public class AgentRuntimeService {
                                AgentRuntimeApprovalRegistry approvalRegistry,
                                AgentTranscriptRecorder transcriptRecorder,
                                AgentGroundingEvidenceVerifier groundingVerifier,
-                               AgentSkillRegistry skillRegistry) {
-        this(runtimeProperties,
-                new AgentRuntimeContextBuilder(Clock.systemUTC(), () -> java.util.UUID.randomUUID().toString()),
-                new AgentToolBridge(toolRegistry, toolExecutionOrchestrator, approvalRegistry),
+                               AgentSkillRegistry skillRegistry,
+                               org.apache.hertzbeat.ai.gateway.conversation.AgentExecutionSummaryService executionSummaries,
+                               ObjectProvider<ObservationRegistry> observations) {
+        this(runtimeProperties, toolRegistry, toolExecutionOrchestrator, modelClientProvider, controlRegistry,
+                approvalRegistry, transcriptRecorder, groundingVerifier, skillRegistry, executionSummaries,
+                observations.getIfAvailable(() -> ObservationRegistry.NOOP));
+    }
+
+    private AgentRuntimeService(AgentRuntimeProperties runtimeProperties,
+                               AgentToolRegistry toolRegistry,
+                               AgentToolExecutionOrchestrator toolExecutionOrchestrator,
+                               ObjectProvider<AgentRuntimeModelClient> modelClientProvider,
+                               AgentRuntimeControlRegistry controlRegistry,
+                               AgentRuntimeApprovalRegistry approvalRegistry,
+                               AgentTranscriptRecorder transcriptRecorder,
+                               AgentGroundingEvidenceVerifier groundingVerifier,
+                               AgentSkillRegistry skillRegistry,
+                               org.apache.hertzbeat.ai.gateway.conversation.AgentExecutionSummaryService executionSummaries,
+                               ObservationRegistry observations) {
+        this(
+                runtimeProperties,
+                new AgentRuntimeContextBuilder(
+                        Clock.systemUTC(), () -> java.util.UUID.randomUUID().toString()),
+                new AgentToolBridge(
+                        toolRegistry, toolExecutionOrchestrator, approvalRegistry, observations),
                 modelClientProvider.getIfUnique(),
                 controlRegistry,
                 transcriptRecorder,
                 groundingVerifier,
                 Clock.systemUTC(),
-                skillRegistry.definitions());
+                skillRegistry.definitions(),
+                Objects.requireNonNull(executionSummaries, "executionSummaries must not be null"));
     }
 
     AgentRuntimeService(AgentRuntimeProperties runtimeProperties,
@@ -96,14 +146,34 @@ public class AgentRuntimeService {
                         AgentGroundingEvidenceVerifier groundingVerifier,
                         Clock clock,
                         List<AgentSkillDefinition> availableSkills) {
-        // Runtime properties and collaborators are fixed at construction; null would defer a composition failure.
-        this.runtimeProperties = Objects.requireNonNull(runtimeProperties, "runtimeProperties must not be null");
-        this.contextBuilder = Objects.requireNonNull(contextBuilder, "contextBuilder must not be null");
+        this(runtimeProperties, contextBuilder, toolBridge, modelClient, controlRegistry, transcriptRecorder,
+                groundingVerifier, clock, availableSkills, null);
+    }
+
+    private AgentRuntimeService(AgentRuntimeProperties runtimeProperties,
+                        AgentRuntimeContextBuilder contextBuilder,
+                        AgentToolBridge toolBridge,
+                        AgentRuntimeModelClient modelClient,
+                        AgentRuntimeControlRegistry controlRegistry,
+                        AgentTranscriptRecorder transcriptRecorder,
+                        AgentGroundingEvidenceVerifier groundingVerifier,
+                        Clock clock,
+                        List<AgentSkillDefinition> availableSkills,
+                        org.apache.hertzbeat.ai.gateway.conversation.AgentExecutionSummaryService executionSummaries) {
+        this.executionSummaries = executionSummaries;
+        // Runtime properties and collaborators are fixed at construction; null would defer a
+        // composition failure.
+        this.runtimeProperties =
+                Objects.requireNonNull(runtimeProperties, "runtimeProperties must not be null");
+        this.contextBuilder =
+                Objects.requireNonNull(contextBuilder, "contextBuilder must not be null");
         this.toolBridge = Objects.requireNonNull(toolBridge, "toolBridge must not be null");
         // The model client is optional because a deployment may omit the provider bean and return a configured error.
         this.modelClient = modelClient;
-        this.controlRegistry = Objects.requireNonNull(controlRegistry, "controlRegistry must not be null");
-        this.transcriptRecorder = Objects.requireNonNull(transcriptRecorder, "transcriptRecorder must not be null");
+        this.controlRegistry =
+                Objects.requireNonNull(controlRegistry, "controlRegistry must not be null");
+        this.transcriptRecorder =
+                Objects.requireNonNull(transcriptRecorder, "transcriptRecorder must not be null");
         this.groundingVerifier = groundingVerifier;
         this.clock = Objects.requireNonNull(clock, "clock must not be null");
         this.availableSkills = List.copyOf(availableSkills);
@@ -135,10 +205,14 @@ public class AgentRuntimeService {
             context = contextBuilder.build(request, config);
             if (groundingVerifier != null) {
                 AgentGroundingEvidenceVerifier.VerifiedHistory verified = groundingVerifier.verifyHistory(
-                        request.getRun(), context.getEffectiveTarget(), context.getChatHistory());
+                        request.getRun(), context.getEffectiveTarget(), context.getChatHistory(), context.getWorkspaceId());
                 context = context.withVerifiedChatHistory(verified);
             }
-            if (modelClient == null) {
+            if (batches != null) {
+                context =
+                        batches.contextForSegment(context, request.getSession(), request.getRun());
+            }
+            if (modelClient == null && context.batchContinuation() == null) {
                 publishStarted(publisher, context);
                 publishTerminalEvent(publisher, context, AgentRuntimeEventType.ERROR,
                         "Agent Gateway runtime model client is not configured.");
@@ -149,7 +223,26 @@ public class AgentRuntimeService {
             control = AgentRuntimeControl.forContext(context, clock);
             controlRef.set(control);
             controlRegistration = controlRegistry.register(control);
-            new AgentRuntimeLoop(config, modelClient, toolBridge, clock, availableSkills)
+            if (batches != null) {
+                control.operationGuard(() -> batches.requireRunning(request.getRun()));
+                control.beforeOperation();
+            }
+            new AgentRuntimeLoop(
+                            config,
+                            modelClient == null
+                                    ? (modelRequest, modelControl, deltas) -> {
+                                        throw new IllegalStateException(
+                                                "A batch continuation must not invoke a model");
+                                    }
+                                    : modelClient,
+                            toolBridge,
+                            clock,
+                            availableSkills,
+                            () ->
+                                    executionSummaries == null
+                                            ? org.apache.hertzbeat.ai.gateway.conversation
+                                                    .AgentExecutionSummary.unavailable()
+                                            : executionSummaries.summarize(request.getRun()))
                     .run(context, control, publisher, runSink);
             completeStream(sink);
         } catch (AgentRuntimeStoppedException exception) {
@@ -164,7 +257,8 @@ public class AgentRuntimeService {
                     traceId, AgentToolCompletionIndeterminateException.MESSAGE, Instant.now(clock)));
             completeStream(sink);
         } catch (RuntimeException exception) {
-            log.debug("Agent Gateway runtime stream invocation failed", exception);
+            log.warn("Agent Gateway runtime stream invocation failed for run {}", request.getRun().getRunUid(),
+                    exception);
             publishTerminalEvent(publisher, context, AgentRuntimeEventType.ERROR,
                     "Agent Gateway runtime failed: " + exception.getMessage());
             completeStream(sink);
@@ -173,7 +267,8 @@ public class AgentRuntimeService {
                 signalFatalFailure(sink, error);
                 throw error;
             }
-            log.debug("Agent Gateway runtime stream invocation failed with a non-fatal error");
+            log.warn("Agent Gateway runtime stream invocation failed with a non-fatal error for run {}",
+                    request.getRun().getRunUid());
             publishTerminalEvent(publisher, context, AgentRuntimeEventType.ERROR,
                     "Agent Gateway runtime failed.");
             completeStream(sink);

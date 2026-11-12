@@ -15,4 +15,4 @@
 
 module github.com/apache/hertzbeat/hertzbeat-otel-runtime
 
-go 1.26.9
+go 1.26.10

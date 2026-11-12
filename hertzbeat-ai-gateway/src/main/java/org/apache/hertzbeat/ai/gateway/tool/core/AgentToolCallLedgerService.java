@@ -17,15 +17,11 @@
 
 package org.apache.hertzbeat.ai.gateway.tool.core;
 
-import java.time.LocalDateTime;
-import java.util.Locale;
-import java.util.Objects;
-import java.util.Optional;
 import org.apache.hertzbeat.ai.gateway.contract.GatewayEnvelope;
-import org.apache.hertzbeat.ai.gateway.identity.AgentActor;
 import org.apache.hertzbeat.ai.gateway.identity.ActorSupport;
-import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeTextSanitizer;
+import org.apache.hertzbeat.ai.gateway.identity.AgentActor;
 import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeEntryType;
+import org.apache.hertzbeat.ai.gateway.runtime.AgentRuntimeTextSanitizer;
 import org.apache.hertzbeat.ai.gateway.text.GatewaySecretRedactor;
 import org.apache.hertzbeat.ai.gateway.text.GatewayText;
 import org.apache.hertzbeat.ai.gateway.tool.core.persistence.AgentToolCallDao;
@@ -35,9 +31,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
-/**
- * Default run-centric tool call ledger service.
- */
+import java.time.LocalDateTime;
+import java.util.Locale;
+import java.util.Objects;
+import java.util.Optional;
+
+/** Default run-centric tool call ledger service. */
 @Service
 public class AgentToolCallLedgerService {
 
@@ -46,24 +45,51 @@ public class AgentToolCallLedgerService {
     private static final String APPROVAL_NOT_FOUND = "Agent tool approval not found";
 
     private final AgentToolCallDao toolCallDao;
+    private final java.util.function.Supplier<AgentToolRegistry> registry;
+    private final AgentApprovalActorVerifier actorVerifier;
 
     public AgentToolCallLedgerService(AgentToolCallDao toolCallDao) {
+        this(toolCallDao, () -> null, null);
+    }
+
+    @org.springframework.beans.factory.annotation.Autowired
+    public AgentToolCallLedgerService(
+            AgentToolCallDao toolCallDao,
+            org.springframework.beans.factory.ObjectProvider<AgentToolRegistry> registry,
+            AgentApprovalActorVerifier actorVerifier) {
+        this(toolCallDao, registry::getObject, actorVerifier);
+    }
+
+    AgentToolCallLedgerService(
+            AgentToolCallDao toolCallDao,
+            java.util.function.Supplier<AgentToolRegistry> registry,
+            AgentApprovalActorVerifier actorVerifier) {
         this.toolCallDao = toolCallDao;
+        this.registry = registry;
+        this.actorVerifier = actorVerifier;
     }
 
     @Transactional
-    public AgentToolCall recordToolDenied(AgentToolExecutionRequest request, AgentToolDescriptor descriptor, AgentPolicyResult policy) {
+    public AgentToolCall recordToolDenied(
+            AgentToolExecutionRequest request,
+            AgentToolDescriptor descriptor,
+            AgentPolicyResult policy) {
         AgentToolCall toolCall = baseToolCall(request, descriptor, policy);
         toolCall.setStatus(AgentToolStatus.DENIED.name());
         toolCall.setApprovalStatus(AgentApprovalStatus.NOT_REQUIRED.name());
-        toolCall.setErrorMessage(GatewayText.requireBounded(
-                AgentRuntimeTextSanitizer.sanitizeAndLimit(policy.getReason(), ERROR_LIMIT),
-                ERROR_LIMIT, "tool policy reason"));
+        toolCall.setErrorMessage(
+                GatewayText.requireBounded(
+                        AgentRuntimeTextSanitizer.sanitizeAndLimit(policy.getReason(), ERROR_LIMIT),
+                        ERROR_LIMIT,
+                        "tool policy reason"));
         return toolCallDao.save(toolCall);
     }
 
     @Transactional
-    public AgentToolCall recordToolStarted(AgentToolExecutionRequest request, AgentToolDescriptor descriptor, AgentPolicyResult policy) {
+    public AgentToolCall recordToolStarted(
+            AgentToolExecutionRequest request,
+            AgentToolDescriptor descriptor,
+            AgentPolicyResult policy) {
         AgentToolCall toolCall = baseToolCall(request, descriptor, policy);
         toolCall.setStatus(AgentToolStatus.RUNNING.name());
         toolCall.setApprovalStatus(AgentApprovalStatus.NOT_REQUIRED.name());
@@ -71,8 +97,11 @@ public class AgentToolCallLedgerService {
     }
 
     @Transactional
-    public AgentToolCall recordApprovedToolResumed(AgentToolExecutionRequest request, AgentToolDescriptor descriptor,
-                                                   AgentPolicyResult policy) {
+    public AgentToolCall recordApprovedToolResumed(
+            AgentToolExecutionRequest request,
+            AgentToolDescriptor descriptor,
+            AgentPolicyResult policy) {
+        requireCurrentApprovalActor(request.getActor(), descriptor);
         AgentToolCall toolCall = approvedPendingToolCall(request, descriptor);
         String canonicalArgs = safeArgumentsJson(request);
         toolCall.setStatus(AgentToolStatus.RUNNING.name());
@@ -80,7 +109,8 @@ public class AgentToolCallLedgerService {
         toolCall.setPolicyDecision(policy.getDecision().name());
         toolCall.setExposure(descriptor.getExposure().name());
         toolCall.setInputJson(canonicalArgs);
-        toolCall.setInputHash(AgentToolPayloadHasher.normalizedArgumentsHash(request.getArguments()));
+        toolCall.setInputHash(
+                AgentToolPayloadHasher.normalizedArgumentsHash(request.getArguments()));
         toolCall.setApprovalStatus(AgentApprovalStatus.APPROVED.name());
         toolCall.setResultOutput(null);
         toolCall.setElapsedMs(null);
@@ -89,26 +119,34 @@ public class AgentToolCallLedgerService {
     }
 
     @Transactional
-    public AgentToolCall recordToolWaitingApproval(AgentToolExecutionRequest request, AgentToolDescriptor descriptor,
-                                                   AgentPolicyResult policy) {
+    public AgentToolCall recordToolWaitingApproval(
+            AgentToolExecutionRequest request,
+            AgentToolDescriptor descriptor,
+            AgentPolicyResult policy) {
         AgentToolCall toolCall = baseToolCall(request, descriptor, policy);
         toolCall.setStatus(AgentToolStatus.WAITING_APPROVAL.name());
         toolCall.setApprovalId("agp_" + SnowFlakeIdGenerator.generateId());
         toolCall.setApprovalStatus(AgentApprovalStatus.PENDING.name());
-        toolCall.setApprovalExpiresAt(LocalDateTime.now().plusMinutes(DEFAULT_APPROVAL_EXPIRY_MINUTES));
+        toolCall.setApprovalExpiresAt(
+                LocalDateTime.now().plusMinutes(DEFAULT_APPROVAL_EXPIRY_MINUTES));
         return toolCallDao.save(toolCall);
     }
 
     @Transactional
-    public AgentToolCall validateToolExecutionApproval(AgentToolExecutionRequest request,
-                                                       AgentToolDescriptor descriptor) {
+    public AgentToolCall validateToolExecutionApproval(
+            AgentToolExecutionRequest request, AgentToolDescriptor descriptor) {
         String approvalId = request.getApprovalId();
         // Approval resume must target one existing approval row before using its lifecycle fields.
         if (!StringUtils.hasText(approvalId)) {
             throw new IllegalArgumentException("Agent tool approval id is required");
         }
-        AgentToolCall toolCall = toolCallDao.findByApprovalId(approvalId)
-            .orElseThrow(() -> new IllegalArgumentException("Agent tool approval not found"));
+        AgentToolCall toolCall =
+                toolCallDao
+                        .findByApprovalId(approvalId)
+                        .orElseThrow(
+                                () ->
+                                        new IllegalArgumentException(
+                                                "Agent tool approval not found"));
         String mismatch = approvalExecutionMismatch(toolCall, request, descriptor);
         if (mismatch != null) {
             throw new IllegalStateException(mismatch);
@@ -121,48 +159,75 @@ public class AgentToolCallLedgerService {
     }
 
     @Transactional
-    public AgentToolCall decideApproval(String approvalId, GatewayEnvelope envelope,
-                                        AgentRuntimeEntryType originEntryType,
-                                        AgentApprovalDecision decision) {
+    public AgentToolCall decideApproval(
+            String approvalId,
+            GatewayEnvelope envelope,
+            AgentRuntimeEntryType originEntryType,
+            AgentApprovalDecision decision) {
         AgentActor approvingActor = envelope.getActor();
         requireChangeCapableActor(approvingActor, "Approval decision");
-        AgentToolCall toolCall = toolCallDao.findOwnedApprovalForUpdate(
-                        approvalId, envelope.getWorkspaceId(), envelope.getChannelId(), approvingActor.getType(),
-                        approvingActor.getId(), originEntryType.name())
-                .orElseThrow(() -> new IllegalArgumentException(APPROVAL_NOT_FOUND));
-        return decide(toolCall, approvingActor, decision,
+        AgentToolCall toolCall =
+                toolCallDao
+                        .findOwnedApprovalForUpdate(
+                                approvalId,
+                                envelope.getWorkspaceId(),
+                                envelope.getChannelId(),
+                                approvingActor.getType(),
+                                approvingActor.getId(),
+                                originEntryType.name())
+                        .orElseThrow(() -> new IllegalArgumentException(APPROVAL_NOT_FOUND));
+        requireApprovalCapability(approvingActor, toolCall);
+        return decide(
+                toolCall,
+                approvingActor,
+                decision,
                 decision == AgentApprovalDecision.APPROVED
-                        ? AgentApprovalStatus.APPROVED : AgentApprovalStatus.REJECTED,
+                        ? AgentApprovalStatus.APPROVED
+                        : AgentApprovalStatus.REJECTED,
                 decision == AgentApprovalDecision.APPROVED ? null : AgentToolStatus.DENIED);
     }
 
     @Transactional(readOnly = true)
-    public void requireApprovalOwner(String approvalId, GatewayEnvelope envelope,
-                                     AgentRuntimeEntryType originEntryType) {
+    public void requireApprovalOwner(
+            String approvalId, GatewayEnvelope envelope, AgentRuntimeEntryType originEntryType) {
         AgentActor approvingActor = envelope.getActor();
         requireChangeCapableActor(approvingActor, "Approval decision");
-        if (!toolCallDao.existsOwnedApproval(approvalId, envelope.getWorkspaceId(), envelope.getChannelId(),
-                approvingActor.getType(), approvingActor.getId(), originEntryType.name())) {
+        if (!toolCallDao.existsOwnedApproval(
+                approvalId,
+                envelope.getWorkspaceId(),
+                envelope.getChannelId(),
+                approvingActor.getType(),
+                approvingActor.getId(),
+                originEntryType.name())) {
             throw new IllegalArgumentException(APPROVAL_NOT_FOUND);
         }
     }
 
     @Transactional
-    public AgentToolCall terminalizeUnconsumedApproval(String approvalId, GatewayEnvelope envelope,
-                                                       AgentRuntimeEntryType originEntryType,
-                                                       AgentApprovalDecision decision) {
+    public AgentToolCall terminalizeUnconsumedApproval(
+            String approvalId,
+            GatewayEnvelope envelope,
+            AgentRuntimeEntryType originEntryType,
+            AgentApprovalDecision decision) {
         AgentActor approvingActor = envelope.getActor();
         requireChangeCapableActor(approvingActor, "Approval decision");
-        AgentToolCall toolCall = toolCallDao.findOwnedApprovalForUpdate(
-                        approvalId, envelope.getWorkspaceId(), envelope.getChannelId(), approvingActor.getType(),
-                        approvingActor.getId(), originEntryType.name())
-                .orElseThrow(() -> new IllegalArgumentException(APPROVAL_NOT_FOUND));
+        AgentToolCall toolCall =
+                toolCallDao
+                        .findOwnedApprovalForUpdate(
+                                approvalId,
+                                envelope.getWorkspaceId(),
+                                envelope.getChannelId(),
+                                approvingActor.getType(),
+                                approvingActor.getId(),
+                                originEntryType.name())
+                        .orElseThrow(() -> new IllegalArgumentException(APPROVAL_NOT_FOUND));
         if (decision == AgentApprovalDecision.APPROVED
                 && (AgentToolStatus.WAITING_APPROVAL.name().equals(toolCall.getStatus())
-                    || AgentToolStatus.RUNNING.name().equals(toolCall.getStatus()))
+                        || AgentToolStatus.RUNNING.name().equals(toolCall.getStatus()))
                 && AgentApprovalStatus.APPROVED.name().equals(toolCall.getApprovalStatus())) {
             toolCall.setApprovalStatus(AgentApprovalStatus.EXPIRED.name());
-            toolCall.setApprovalReason("Approval runtime was no longer active before execution resumed.");
+            toolCall.setApprovalReason(
+                    "Approval runtime was no longer active before execution resumed.");
             toolCall.setStatus(AgentToolStatus.DENIED.name());
             toolCall.setErrorMessage("Agent tool approval runtime was no longer active.");
             return toolCallDao.save(toolCall);
@@ -171,10 +236,15 @@ public class AgentToolCallLedgerService {
     }
 
     @Transactional
-    public AgentToolCall failApprovedToolBeforeExecution(AgentToolCall candidate, String errorMessage,
-                                                         long elapsedMs) {
-        AgentToolCall toolCall = toolCallDao.findApprovalForRuntimeResume(candidate.getApprovalId())
-                .orElseThrow(() -> new IllegalArgumentException("Approved Agent tool approval was not found"));
+    public AgentToolCall failApprovedToolBeforeExecution(
+            AgentToolCall candidate, String errorMessage, long elapsedMs) {
+        AgentToolCall toolCall =
+                toolCallDao
+                        .findApprovalForRuntimeResume(candidate.getApprovalId())
+                        .orElseThrow(
+                                () ->
+                                        new IllegalArgumentException(
+                                                "Approved Agent tool approval was not found"));
         if (AgentToolStatus.RUNNING.name().equals(toolCall.getStatus())
                 && AgentApprovalStatus.APPROVED.name().equals(toolCall.getApprovalStatus())) {
             return failToolCall(toolCall, errorMessage, elapsedMs);
@@ -183,15 +253,18 @@ public class AgentToolCallLedgerService {
     }
 
     @Transactional
-    public AgentToolCall completeToolCall(AgentToolCall toolCall, AgentToolOutput output, long elapsedMs) {
+    public AgentToolCall completeToolCall(
+            AgentToolCall toolCall, AgentToolOutput output, long elapsedMs) {
         toolCall.setStatus(output.getStatus().name());
         toolCall.setResultOutput(AgentRuntimeTextSanitizer.redact(output.getModelContent()));
         if (AgentToolStatus.SUCCEEDED.equals(output.getStatus())) {
             toolCall.setErrorMessage(null);
         } else {
-            // Handler failure messages are persisted in the ledger, so redact secrets and bound the stored/API text.
-            String safeErrorMessage = AgentRuntimeTextSanitizer.sanitizeAndLimit(output.getErrorMessage(),
-                ERROR_LIMIT);
+            // Handler failure messages are persisted in the ledger, so redact secrets and bound the
+            // stored/API text.
+            String safeErrorMessage =
+                    AgentRuntimeTextSanitizer.sanitizeAndLimit(
+                            output.getErrorMessage(), ERROR_LIMIT);
             toolCall.setErrorMessage(safeErrorMessage);
         }
         toolCall.setElapsedMs(elapsedMs);
@@ -201,32 +274,79 @@ public class AgentToolCallLedgerService {
     @Transactional
     public AgentToolCall failToolCall(AgentToolCall toolCall, String errorMessage, long elapsedMs) {
         toolCall.setStatus(AgentToolStatus.FAILED.name());
-        // Runtime exception messages are persisted in the ledger, so redact secrets and bound the stored/API text.
-        String safeErrorMessage = AgentRuntimeTextSanitizer.sanitizeAndLimit(errorMessage, ERROR_LIMIT);
+        // Runtime exception messages are persisted in the ledger, so redact secrets and bound the
+        // stored/API text.
+        String safeErrorMessage =
+                AgentRuntimeTextSanitizer.sanitizeAndLimit(errorMessage, ERROR_LIMIT);
         toolCall.setErrorMessage(safeErrorMessage);
         toolCall.setElapsedMs(elapsedMs);
         return toolCallDao.save(toolCall);
+    }
+
+    /** Runtime-owned expiry transition; a read endpoint never calls this method. */
+    @Transactional
+    public void expireWaitingApproval(String approvalId, String toolCallId, String runUid) {
+        AgentToolCall row =
+                toolCallDao
+                        .findApprovalForRuntimeResume(approvalId)
+                        .orElseThrow(() -> new IllegalArgumentException(APPROVAL_NOT_FOUND));
+        if (!Objects.equals(row.getRunUid(), runUid)
+                || !Objects.equals(row.getToolCallId(), toolCallId)) {
+            throw new IllegalStateException("Approval runtime scope does not match");
+        }
+        if (AgentApprovalStatus.PENDING.name().equals(row.getApprovalStatus())
+                && AgentToolStatus.WAITING_APPROVAL.name().equals(row.getStatus())
+                && isExpired(row, LocalDateTime.now())) {
+            expire(row, LocalDateTime.now());
+        }
+    }
+
+    /** Only the runtime's cancelled wait may terminalize a still undecided approval. */
+    @Transactional
+    public boolean cancelWaitingApproval(String approvalId, String toolCallId, String runUid) {
+        AgentToolCall row = toolCallDao.findApprovalForRuntimeResume(approvalId)
+                .orElseThrow(() -> new IllegalArgumentException(APPROVAL_NOT_FOUND));
+        if (!Objects.equals(row.getRunUid(), runUid)
+                || !Objects.equals(row.getToolCallId(), toolCallId)) {
+            throw new IllegalStateException("Approval runtime scope does not match");
+        }
+        if (!AgentApprovalStatus.PENDING.name().equals(row.getApprovalStatus())
+                || !AgentToolStatus.WAITING_APPROVAL.name().equals(row.getStatus())) {
+            return false;
+        }
+        row.setStatus(AgentToolStatus.DENIED.name());
+        row.setApprovalStatus(AgentApprovalStatus.REJECTED.name());
+        row.setApprovalDecidedAt(LocalDateTime.now());
+        row.setApprovalReason("Run cancelled while waiting for approval; tool was not executed.");
+        row.setErrorMessage("CANCELLED_BEFORE_APPROVAL_NOT_EXECUTED");
+        row.setResultOutput("CANCELLED_BEFORE_APPROVAL_NOT_EXECUTED");
+        toolCallDao.save(row);
+        return true;
     }
 
     public Optional<AgentToolCall> findApproval(String approvalId) {
         return toolCallDao.findByApprovalId(approvalId);
     }
 
-    private AgentToolCall baseToolCall(AgentToolExecutionRequest request, AgentToolDescriptor descriptor, AgentPolicyResult policy) {
+    private AgentToolCall baseToolCall(
+            AgentToolExecutionRequest request,
+            AgentToolDescriptor descriptor,
+            AgentPolicyResult policy) {
         String canonicalArgs = safeArgumentsJson(request);
         return AgentToolCall.builder()
-            .toolCallId(GatewayText.requireBounded(request.getToolCallId(), 128, "tool call id"))
-            .runId(request.getRunId())
-            .sessionId(request.getRunSessionId())
-            .runUid(request.getRunUid())
-            .sessionUid(request.getSessionUid())
-            .toolName(descriptor.getName())
-            .exposure(descriptor.getExposure().name())
-            .risk(policy.getRisk().name())
-            .policyDecision(policy.getDecision().name())
-            .inputJson(canonicalArgs)
-            .inputHash(AgentToolPayloadHasher.normalizedArgumentsHash(request.getArguments()))
-            .build();
+                .toolCallId(
+                        GatewayText.requireBounded(request.getToolCallId(), 128, "tool call id"))
+                .runId(request.getRunId())
+                .sessionId(request.getRunSessionId())
+                .runUid(request.getRunUid())
+                .sessionUid(request.getSessionUid())
+                .toolName(descriptor.getName())
+                .exposure(descriptor.getExposure().name())
+                .risk(policy.getRisk().name())
+                .policyDecision(policy.getDecision().name())
+                .inputJson(canonicalArgs)
+                .inputHash(AgentToolPayloadHasher.normalizedArgumentsHash(request.getArguments()))
+                .build();
     }
 
     private String safeArgumentsJson(AgentToolExecutionRequest request) {
@@ -234,20 +354,32 @@ public class AgentToolCallLedgerService {
                 GatewaySecretRedactor.redactMap(request.getArguments()));
     }
 
-    private AgentToolCall approvedPendingToolCall(AgentToolExecutionRequest request, AgentToolDescriptor descriptor) {
+    private AgentToolCall approvedPendingToolCall(
+            AgentToolExecutionRequest request, AgentToolDescriptor descriptor) {
         String approvalId = request.getApprovalId();
         // Approval resume must target one existing approval row before mutating it to RUNNING.
         if (!StringUtils.hasText(approvalId)) {
             throw new IllegalArgumentException("Approved Agent tool approval id is required");
         }
-        AgentToolCall toolCall = toolCallDao.findApprovalForRuntimeResume(approvalId)
-            .orElseThrow(() -> new IllegalArgumentException("Approved Agent tool approval was not found"));
+        AgentToolCall toolCall =
+                toolCallDao
+                        .findApprovalForRuntimeResume(approvalId)
+                        .orElseThrow(
+                                () ->
+                                        new IllegalArgumentException(
+                                                "Approved Agent tool approval was not found"));
         verifyApprovedPendingToolCall(request, descriptor, toolCall);
         return toolCall;
     }
 
-    private void verifyApprovedPendingToolCall(AgentToolExecutionRequest request, AgentToolDescriptor descriptor,
-                                               AgentToolCall toolCall) {
+    private void verifyApprovedPendingToolCall(
+            AgentToolExecutionRequest request,
+            AgentToolDescriptor descriptor,
+            AgentToolCall toolCall) {
+        if (isExpired(toolCall, LocalDateTime.now())) {
+            throw new IllegalStateException(
+                    "Approved tool execution expired before it was resumed");
+        }
         if (!AgentApprovalStatus.APPROVED.name().equals(request.getApprovalStatus())) {
             throw new IllegalStateException("Agent tool call approval has not been validated");
         }
@@ -263,9 +395,12 @@ public class AgentToolCallLedgerService {
         }
     }
 
-    private AgentToolCall decide(AgentToolCall toolCall, AgentActor approvingActor,
-                                 AgentApprovalDecision decision, AgentApprovalStatus approvalStatus,
-                                 AgentToolStatus terminalStatus) {
+    private AgentToolCall decide(
+            AgentToolCall toolCall,
+            AgentActor approvingActor,
+            AgentApprovalDecision decision,
+            AgentApprovalStatus approvalStatus,
+            AgentToolStatus terminalStatus) {
         LocalDateTime now = LocalDateTime.now();
         if (isExpired(toolCall, now)) {
             expire(toolCall, now);
@@ -279,35 +414,50 @@ public class AgentToolCallLedgerService {
         toolCall.setApprovalReason(null);
         if (terminalStatus != null) {
             toolCall.setStatus(terminalStatus.name());
-            toolCall.setErrorMessage("Agent tool approval " + decision.name().toLowerCase(Locale.ROOT));
+            toolCall.setErrorMessage(
+                    "Agent tool approval " + decision.name().toLowerCase(Locale.ROOT));
         }
         return toolCallDao.save(toolCall);
     }
 
-    private String approvalExecutionMismatch(AgentToolCall toolCall, AgentToolExecutionRequest request,
-                                             AgentToolDescriptor descriptor) {
+    private String approvalExecutionMismatch(
+            AgentToolCall toolCall,
+            AgentToolExecutionRequest request,
+            AgentToolDescriptor descriptor) {
+        if (AgentApprovalStatus.APPROVED.name().equals(toolCall.getApprovalStatus())
+                && (!ActorSupport.hasIdentity(request.getActor())
+                        || !Objects.equals(
+                                toolCall.getApprovalActorType(), request.getActor().getType())
+                        || !Objects.equals(
+                                toolCall.getApprovalActorId(), request.getActor().getId()))) {
+            return "Approval actor does not match the original execution actor";
+        }
         if (!Objects.equals(toolCall.getApprovalId(), request.getApprovalId())) {
             return "Approval ID does not match";
         }
         if (request.getToolCallId() != null
-            && !Objects.equals(toolCall.getToolCallId(), request.getToolCallId())) {
+                && !Objects.equals(toolCall.getToolCallId(), request.getToolCallId())) {
             return "Tool-call UID does not match approval";
         }
         if (!AgentPolicyDecision.REQUIRE_APPROVAL.name().equals(toolCall.getPolicyDecision())) {
             return "Tool call was not created by an approval-required policy decision";
         }
-        boolean terminalApproval = AgentToolStatus.DENIED.name().equals(toolCall.getStatus())
-            && (AgentApprovalStatus.REJECTED.name().equals(toolCall.getApprovalStatus())
-            || AgentApprovalStatus.EXPIRED.name().equals(toolCall.getApprovalStatus()));
-        if (!AgentToolStatus.WAITING_APPROVAL.name().equals(toolCall.getStatus()) && !terminalApproval) {
+        boolean terminalApproval =
+                AgentToolStatus.DENIED.name().equals(toolCall.getStatus())
+                        && (AgentApprovalStatus.REJECTED.name().equals(toolCall.getApprovalStatus())
+                                || AgentApprovalStatus.EXPIRED
+                                        .name()
+                                        .equals(toolCall.getApprovalStatus()));
+        if (!AgentToolStatus.WAITING_APPROVAL.name().equals(toolCall.getStatus())
+                && !terminalApproval) {
             return "Tool call is not waiting for approval";
         }
         if (!Objects.equals(toolCall.getRunId(), request.getRunId())
-            || !Objects.equals(toolCall.getRunUid(), request.getRunUid())) {
+                || !Objects.equals(toolCall.getRunUid(), request.getRunUid())) {
             return "Tool-call run context does not match";
         }
         if (!Objects.equals(toolCall.getSessionId(), request.getRunSessionId())
-            || !Objects.equals(toolCall.getSessionUid(), request.getSessionUid())) {
+                || !Objects.equals(toolCall.getSessionUid(), request.getSessionUid())) {
             return "Tool-call session context does not match";
         }
         if (!Objects.equals(toolCall.getToolName(), descriptor.getName())) {
@@ -325,39 +475,79 @@ public class AgentToolCallLedgerService {
 
     private void requirePending(AgentToolCall toolCall) {
         if (!AgentToolStatus.WAITING_APPROVAL.name().equals(toolCall.getStatus())
-            || !AgentApprovalStatus.PENDING.name().equals(toolCall.getApprovalStatus())) {
+                || !AgentApprovalStatus.PENDING.name().equals(toolCall.getApprovalStatus())) {
             throw new IllegalStateException("Agent tool approval is not pending");
         }
     }
 
     private boolean isExpired(AgentToolCall toolCall, LocalDateTime now) {
-        return toolCall.getApprovalExpiresAt() != null && !toolCall.getApprovalExpiresAt().isAfter(now);
+        return toolCall.getApprovalExpiresAt() != null
+                && !toolCall.getApprovalExpiresAt().isAfter(now);
     }
 
     private void expire(AgentToolCall toolCall, LocalDateTime now) {
         String status = toolCall.getApprovalStatus();
         if (!AgentApprovalStatus.PENDING.name().equals(status)
-            && !AgentApprovalStatus.APPROVED.name().equals(status)) {
+                && !AgentApprovalStatus.APPROVED.name().equals(status)) {
             return;
         }
         toolCall.setApprovalStatus(AgentApprovalStatus.EXPIRED.name());
         toolCall.setApprovalDecidedAt(now);
-        toolCall.setApprovalReason(AgentApprovalStatus.PENDING.name().equals(status)
-            ? "Approval expired before a decision was recorded."
-            : "Approved tool execution expired before it was resumed.");
+        toolCall.setApprovalReason(
+                AgentApprovalStatus.PENDING.name().equals(status)
+                        ? "Approval expired before a decision was recorded."
+                        : "Approved tool execution expired before it was resumed.");
         toolCall.setStatus(AgentToolStatus.DENIED.name());
         toolCall.setErrorMessage("Agent tool approval expired.");
         toolCallDao.save(toolCall);
     }
 
-    private void requireChangeCapableActor(AgentActor actor, String operation) {
-        // Approval decisions mutate tool execution state, so this boundary requires an authenticated actor.
-        if (!ActorSupport.hasIdentity(actor)) {
-            throw new IllegalStateException(operation + " requires a trusted actor");
+    public boolean canDecide(AgentActor actor, AgentToolDescriptor descriptor) {
+        if (!ActorSupport.hasIdentity(actor)
+                || !ActorSupport.TYPE_USER.equals(actor.getType())
+                || descriptor == null
+                || actor.getRoles() == null
+                || actorVerifier == null
+                || !actorVerifier.isCurrent(actor)
+                || AgentToolResourceAuthorizer.denialReason(actor, descriptor).isPresent()) {
+            return false;
         }
-        // Only admins may change approval state.
-        if (!actor.getRoles().contains(ActorSupport.ROLE_ADMIN)) {
-            throw new IllegalStateException(operation + " requires a change-capable actor");
+        return descriptor.getRisk() == AgentToolRisk.CHANGE
+                        && (actor.getRoles().contains(ActorSupport.ROLE_USER)
+                                || actor.getRoles().contains(ActorSupport.ROLE_ADMIN))
+                || descriptor.getRisk() == AgentToolRisk.DANGEROUS
+                        && actor.getRoles().contains(ActorSupport.ROLE_ADMIN);
+    }
+
+    public void requireCurrentApprovalActor(AgentActor actor, AgentToolDescriptor descriptor) {
+        if (!canDecide(actor, descriptor)) {
+            throw new IllegalStateException(
+                    "Approval requires the current owner role and resource permission");
+        }
+    }
+
+    private void requireApprovalCapability(AgentActor actor, AgentToolCall toolCall) {
+        AgentToolRegistry currentRegistry = registry.get();
+        AgentToolDescriptor descriptor =
+                currentRegistry == null
+                        ? null
+                        : currentRegistry
+                                .find(toolCall.getToolName())
+                                .map(AgentToolRegistry.RegisteredTool::descriptor)
+                                .orElse(null);
+        if (descriptor == null || !descriptor.getRisk().name().equals(toolCall.getRisk())) {
+            throw new IllegalStateException("Approval tool policy is no longer available");
+        }
+        requireCurrentApprovalActor(actor, descriptor);
+    }
+
+    private void requireChangeCapableActor(AgentActor actor, String operation) {
+        if (!ActorSupport.hasIdentity(actor)
+                || !ActorSupport.TYPE_USER.equals(actor.getType())
+                || actor.getRoles() == null
+                || !(actor.getRoles().contains(ActorSupport.ROLE_ADMIN)
+                        || actor.getRoles().contains(ActorSupport.ROLE_USER))) {
+            throw new IllegalStateException(operation + " requires a trusted change-capable owner");
         }
     }
 }

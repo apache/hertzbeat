@@ -1,0 +1,591 @@
+{
+  "source": "SELECT-only sanitized projection of actual run_695235214023936,26 group calls; no raw logs or credentials",
+  "calls": [
+    {
+      "toolCallId": "call_2f171d121c904bdcaa5e4a14",
+      "runUid": "run_695235214023936",
+      "toolName": "logs.group_by_stats",
+      "status": "FAILED",
+      "arguments": {
+        "q": {
+          "end": 1792211959660,
+          "groupBy": "severity",
+          "severityCategory": "error",
+          "start": 1792211059660
+        }
+      },
+      "errorCode": "observability_query_context_invalid"
+    },
+    {
+      "toolCallId": "call_7c17ccae0a414f73b3289656",
+      "runUid": "run_695235214023936",
+      "toolName": "logs.group_by_stats",
+      "status": "SUCCEEDED",
+      "arguments": {
+        "q": {
+          "end": 1792211959660,
+          "groupBy": "service.name",
+          "start": 1792211059660
+        }
+      },
+      "errorCode": null,
+      "observation": {
+        "groupBy": "service.name",
+        "groups": [
+          {
+            "value": "codex-exec-server",
+            "count": 109
+          },
+          {
+            "value": "HertzBeat",
+            "count": 90
+          },
+          {
+            "value": "node_repl",
+            "count": 48
+          },
+          {
+            "value": "codex-app-server",
+            "count": 7
+          }
+        ]
+      }
+    },
+    {
+      "toolCallId": "call_c13171a0b30a4cf89b82e681",
+      "runUid": "run_695235214023936",
+      "toolName": "logs.group_by_stats",
+      "status": "SUCCEEDED",
+      "arguments": {
+        "q": {
+          "end": 1792211959660,
+          "groupBy": "severity",
+          "start": 1792211059660
+        }
+      },
+      "errorCode": null,
+      "observation": {
+        "groupBy": "severity",
+        "groups": [
+          {
+            "value": "INFO",
+            "count": 195
+          },
+          {
+            "value": "unknown",
+            "count": 48
+          },
+          {
+            "value": "WARN",
+            "count": 10
+          },
+          {
+            "value": "ERROR",
+            "count": 1
+          }
+        ]
+      }
+    },
+    {
+      "toolCallId": "call_45a86b9b94d1417ab1a332ed",
+      "runUid": "run_695235214023936",
+      "toolName": "logs.group_by_stats",
+      "status": "SUCCEEDED",
+      "arguments": {
+        "q": {
+          "end": 1792211959660,
+          "groupBy": "service.name",
+          "severityText": "ERROR",
+          "start": 1792211059660
+        }
+      },
+      "errorCode": null,
+      "observation": {
+        "groupBy": "service.name",
+        "groups": [
+          {
+            "value": "HertzBeat",
+            "count": 1
+          }
+        ]
+      }
+    },
+    {
+      "toolCallId": "call_d6d647ba0c924eacbb87c946",
+      "runUid": "run_695235214023936",
+      "toolName": "logs.group_by_stats",
+      "status": "SUCCEEDED",
+      "arguments": {
+        "q": {
+          "end": 1792211959660,
+          "groupBy": "service.name",
+          "severityText": "WARN",
+          "start": 1792211059660
+        }
+      },
+      "errorCode": null,
+      "observation": {
+        "groupBy": "service.name",
+        "groups": [
+          {
+            "value": "HertzBeat",
+            "count": 10
+          }
+        ]
+      }
+    },
+    {
+      "toolCallId": "call_f1a29f496d3d4c3fb3d8f226",
+      "runUid": "run_695235214023936",
+      "toolName": "logs.group_by_stats",
+      "status": "SUCCEEDED",
+      "arguments": {
+        "q": {
+          "end": 1792211959660,
+          "groupBy": "severity",
+          "search": "error",
+          "start": 1792211059660
+        }
+      },
+      "errorCode": null,
+      "observation": {
+        "groupBy": "severity",
+        "groups": [
+          {
+            "value": "WARN",
+            "count": 1
+          }
+        ]
+      }
+    },
+    {
+      "toolCallId": "call_9a58fcb3e8194d5ea5be90e8",
+      "runUid": "run_695235214023936",
+      "toolName": "logs.group_by_stats",
+      "status": "SUCCEEDED",
+      "arguments": {
+        "q": {
+          "end": 1792211959660,
+          "groupBy": "service.name",
+          "search": "error",
+          "start": 1792211059660
+        }
+      },
+      "errorCode": null,
+      "observation": {
+        "groupBy": "service.name",
+        "groups": [
+          {
+            "value": "HertzBeat",
+            "count": 1
+          }
+        ]
+      }
+    },
+    {
+      "toolCallId": "call_3b3dee725a484b27ac522b52",
+      "runUid": "run_695235214023936",
+      "toolName": "logs.group_by_stats",
+      "status": "SUCCEEDED",
+      "arguments": {
+        "q": {
+          "end": 1792211959660,
+          "groupBy": "service.name",
+          "search": "exception",
+          "severityText": "ERROR",
+          "start": 1792211059660
+        }
+      },
+      "errorCode": null,
+      "observation": {
+        "groupBy": "service.name",
+        "groups": []
+      }
+    },
+    {
+      "toolCallId": "call_0bfa2ac6862d4a2aba3d6028",
+      "runUid": "run_695235214023936",
+      "toolName": "logs.group_by_stats",
+      "status": "SUCCEEDED",
+      "arguments": {
+        "q": {
+          "end": 1792211959660,
+          "groupBy": "service.name",
+          "search": "fail",
+          "severityText": "ERROR",
+          "start": 1792211059660
+        }
+      },
+      "errorCode": null,
+      "observation": {
+        "groupBy": "service.name",
+        "groups": []
+      }
+    },
+    {
+      "toolCallId": "call_be311445238744259f16cd06",
+      "runUid": "run_695235214023936",
+      "toolName": "logs.group_by_stats",
+      "status": "SUCCEEDED",
+      "arguments": {
+        "q": {
+          "end": 1792211959660,
+          "groupBy": "service.name",
+          "search": "timeout",
+          "severityText": "ERROR",
+          "start": 1792211059660
+        }
+      },
+      "errorCode": null,
+      "observation": {
+        "groupBy": "service.name",
+        "groups": []
+      }
+    },
+    {
+      "toolCallId": "call_d7ec4cf7d9784de3973edd11",
+      "runUid": "run_695235214023936",
+      "toolName": "logs.group_by_stats",
+      "status": "SUCCEEDED",
+      "arguments": {
+        "q": {
+          "end": 1792211959660,
+          "groupBy": "service.name",
+          "search": "denied",
+          "severityText": "ERROR",
+          "start": 1792211059660
+        }
+      },
+      "errorCode": null,
+      "observation": {
+        "groupBy": "service.name",
+        "groups": []
+      }
+    },
+    {
+      "toolCallId": "call_a13c90e4e3bf4f42bcc752ff",
+      "runUid": "run_695235214023936",
+      "toolName": "logs.group_by_stats",
+      "status": "SUCCEEDED",
+      "arguments": {
+        "q": {
+          "end": 1792211959660,
+          "groupBy": "service.name",
+          "search": "refused",
+          "severityText": "ERROR",
+          "start": 1792211059660
+        }
+      },
+      "errorCode": null,
+      "observation": {
+        "groupBy": "service.name",
+        "groups": []
+      }
+    },
+    {
+      "toolCallId": "call_a86d9148d6b94ca19ac782ba",
+      "runUid": "run_695235214023936",
+      "toolName": "logs.group_by_stats",
+      "status": "SUCCEEDED",
+      "arguments": {
+        "q": {
+          "end": 1792211959660,
+          "groupBy": "service.name",
+          "search": "connect",
+          "severityText": "ERROR",
+          "start": 1792211059660
+        }
+      },
+      "errorCode": null,
+      "observation": {
+        "groupBy": "service.name",
+        "groups": []
+      }
+    },
+    {
+      "toolCallId": "call_285ba1df159c4b6ab71b3025",
+      "runUid": "run_695235214023936",
+      "toolName": "logs.group_by_stats",
+      "status": "SUCCEEDED",
+      "arguments": {
+        "q": {
+          "end": 1792211959660,
+          "groupBy": "service.name",
+          "severityText": "WARN",
+          "start": 1792211059660
+        }
+      },
+      "errorCode": null,
+      "observation": {
+        "groupBy": "service.name",
+        "groups": [
+          {
+            "value": "HertzBeat",
+            "count": 10
+          }
+        ]
+      }
+    },
+    {
+      "toolCallId": "call_c05d566156c0420ab18d9702",
+      "runUid": "run_695235214023936",
+      "toolName": "logs.group_by_stats",
+      "status": "SUCCEEDED",
+      "arguments": {
+        "q": {
+          "end": 1792211959660,
+          "groupBy": "severity",
+          "search": "ERROR",
+          "start": 1792211059660
+        }
+      },
+      "errorCode": null,
+      "observation": {
+        "groupBy": "severity",
+        "groups": []
+      }
+    },
+    {
+      "toolCallId": "call_ac953030d36b416bbc8e1cb1",
+      "runUid": "run_695235214023936",
+      "toolName": "logs.group_by_stats",
+      "status": "SUCCEEDED",
+      "arguments": {
+        "q": {
+          "end": 1792211959660,
+          "groupBy": "attribute:http.route",
+          "start": 1792211059660
+        }
+      },
+      "errorCode": null,
+      "observation": {
+        "groupBy": "attribute:http.route",
+        "groups": [
+          {
+            "value": "unknown",
+            "count": 254
+          }
+        ]
+      }
+    },
+    {
+      "toolCallId": "call_2cc832c69cc24200a8ab8c89",
+      "runUid": "run_695235214023936",
+      "toolName": "logs.group_by_stats",
+      "status": "SUCCEEDED",
+      "arguments": {
+        "q": {
+          "end": 1792211959660,
+          "groupBy": "resource:service.version",
+          "start": 1792211059660
+        }
+      },
+      "errorCode": null,
+      "observation": {
+        "groupBy": "resource:service.version",
+        "groups": [
+          {
+            "value": "0.162.0-alpha.17.2",
+            "count": 116
+          },
+          {
+            "value": "unknown",
+            "count": 90
+          },
+          {
+            "value": "0.1.0",
+            "count": 48
+          }
+        ]
+      }
+    },
+    {
+      "toolCallId": "call_74b151bf39af41ea8bf99432",
+      "runUid": "run_695235214023936",
+      "toolName": "logs.group_by_stats",
+      "status": "SUCCEEDED",
+      "arguments": {
+        "q": {
+          "end": 1792211959660,
+          "groupBy": "service.name",
+          "search": "error",
+          "severityText": "WARN",
+          "start": 1792211059660
+        }
+      },
+      "errorCode": null,
+      "observation": {
+        "groupBy": "service.name",
+        "groups": [
+          {
+            "value": "HertzBeat",
+            "count": 1
+          }
+        ]
+      }
+    },
+    {
+      "toolCallId": "call_4d043c3ecba648ccaed01052",
+      "runUid": "run_695235214023936",
+      "toolName": "logs.group_by_stats",
+      "status": "SUCCEEDED",
+      "arguments": {
+        "q": {
+          "end": 1792211959660,
+          "groupBy": "service.name",
+          "search": "database",
+          "severityText": "ERROR",
+          "start": 1792211059660
+        }
+      },
+      "errorCode": null,
+      "observation": {
+        "groupBy": "service.name",
+        "groups": []
+      }
+    },
+    {
+      "toolCallId": "call_b083e326bb2d402ead5bf7d8",
+      "runUid": "run_695235214023936",
+      "toolName": "logs.group_by_stats",
+      "status": "SUCCEEDED",
+      "arguments": {
+        "q": {
+          "end": 1792211959660,
+          "groupBy": "service.name",
+          "search": "sql",
+          "severityText": "ERROR",
+          "start": 1792211059660
+        }
+      },
+      "errorCode": null,
+      "observation": {
+        "groupBy": "service.name",
+        "groups": []
+      }
+    },
+    {
+      "toolCallId": "call_438d70580ce747a2af656340",
+      "runUid": "run_695235214023936",
+      "toolName": "logs.group_by_stats",
+      "status": "SUCCEEDED",
+      "arguments": {
+        "q": {
+          "end": 1792211959660,
+          "groupBy": "service.name",
+          "search": "metric",
+          "severityText": "ERROR",
+          "start": 1792211059660
+        }
+      },
+      "errorCode": null,
+      "observation": {
+        "groupBy": "service.name",
+        "groups": []
+      }
+    },
+    {
+      "toolCallId": "call_d60c4ddbd2e4435c97e74fc5",
+      "runUid": "run_695235214023936",
+      "toolName": "logs.group_by_stats",
+      "status": "SUCCEEDED",
+      "arguments": {
+        "q": {
+          "end": 1792211959660,
+          "groupBy": "service.name",
+          "search": "error",
+          "start": 1792211059660
+        }
+      },
+      "errorCode": null,
+      "observation": {
+        "groupBy": "service.name",
+        "groups": [
+          {
+            "value": "HertzBeat",
+            "count": 1
+          }
+        ]
+      }
+    },
+    {
+      "toolCallId": "call_16bc41ae2eba4655bc343961",
+      "runUid": "run_695235214023936",
+      "toolName": "logs.group_by_stats",
+      "status": "SUCCEEDED",
+      "arguments": {
+        "q": {
+          "end": 1792211959660,
+          "groupBy": "service.name",
+          "search": "warn",
+          "start": 1792211059660
+        }
+      },
+      "errorCode": null,
+      "observation": {
+        "groupBy": "service.name",
+        "groups": []
+      }
+    },
+    {
+      "toolCallId": "call_3bb0ca7c9ad84eb8b3d7202f",
+      "runUid": "run_695235214023936",
+      "toolName": "logs.group_by_stats",
+      "status": "SUCCEEDED",
+      "arguments": {
+        "q": {
+          "end": 1792211959660,
+          "groupBy": "service.name",
+          "search": "HertzBeat",
+          "severityText": "ERROR",
+          "start": 1792211059660
+        }
+      },
+      "errorCode": null,
+      "observation": {
+        "groupBy": "service.name",
+        "groups": []
+      }
+    },
+    {
+      "toolCallId": "call_fa21d3b9a9d446c4bbe2c485",
+      "runUid": "run_695235214023936",
+      "toolName": "logs.group_by_stats",
+      "status": "SUCCEEDED",
+      "arguments": {
+        "q": {
+          "end": 1792211959660,
+          "groupBy": "service.name",
+          "search": "collect",
+          "severityText": "ERROR",
+          "start": 1792211059660
+        }
+      },
+      "errorCode": null,
+      "observation": {
+        "groupBy": "service.name",
+        "groups": []
+      }
+    },
+    {
+      "toolCallId": "call_8371923d31b94039a29e8f81",
+      "runUid": "run_695235214023936",
+      "toolName": "logs.group_by_stats",
+      "status": "SUCCEEDED",
+      "arguments": {
+        "q": {
+          "end": 1792211959660,
+          "groupBy": "service.name",
+          "search": "monitor",
+          "severityText": "ERROR",
+          "start": 1792211059660
+        }
+      },
+      "errorCode": null,
+      "observation": {
+        "groupBy": "service.name",
+        "groups": []
+      }
+    }
+  ]
+}

@@ -96,6 +96,10 @@ class AgentTopologyCanonicalAdmissionIntegrationTest {
         when(entityWorkspaceQueryService.findEntityById("workspace-a", 42L))
                 .thenReturn(Optional.of(entity("degraded")));
         AgentRunAdmission replay = admissionService.admit(command("message-1", exactScope()));
+        // A distinct new message may run only after the previously replayed run is terminal.
+        var completed = runDao.findById(first.run().getId()).orElseThrow();
+        completed.setStatus(org.apache.hertzbeat.ai.gateway.conversation.AgentRunStatus.SUCCEEDED.name());
+        runDao.saveAndFlush(completed);
         AgentRunAdmission next = admissionService.admit(command("message-2", exactScope()));
 
         assertEquals(AgentRunAdmission.Decision.REPLAY_ACTIVE, replay.decision());

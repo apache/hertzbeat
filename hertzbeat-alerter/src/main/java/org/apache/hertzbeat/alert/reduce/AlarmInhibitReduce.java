@@ -209,12 +209,23 @@ public class AlarmInhibitReduce implements DisposableBean {
             return false;
         }
         try {
+            // A resolved source alert must stop inhibiting immediately rather than lingering until TTL expiry.
+            // Evict before the empty-rules shortcut so stale entries cannot come back if rules are re-enabled later.
+            for (var alert : groupAlert.getAlerts()) {
+                if (alert != null && CommonConstants.ALERT_STATUS_RESOLVED.equals(alert.getStatus())) {
+                    evictSourceAlert(groupAlert.getWorkspaceId(), alert);
+                }
+            }
+
             if (inhibitRules.isEmpty()) {
                 return alarmSilenceReduce.silenceAlarm(groupAlert);
             }
 
-            // Process each individual alert
+            // Cache firing source alerts
             for (var alert : groupAlert.getAlerts()) {
+                if (alert == null || CommonConstants.ALERT_STATUS_RESOLVED.equals(alert.getStatus())) {
+                    continue;
+                }
                 for (AlertInhibit rule : inhibitRules.values()) {
                     if (isSourceAlert(alert, rule)) {
                         cacheSourceAlert(groupAlert.getWorkspaceId(), alert, rule);
@@ -344,6 +355,25 @@ public class AlarmInhibitReduce implements DisposableBean {
         );
         ruleCache.put(alert.getFingerprint(), entry);
         cleanupExpiredEntries(ruleCache);
+    }
+
+    /**
+     * Remove a resolved alert from the source cache of every rule in its workspace.
+     * Eviction is keyed by fingerprint only, so it still applies if the rule's source labels changed meanwhile.
+     * @param workspaceId Workspace of the alert
+     * @param alert Resolved alert
+     */
+    private void evictSourceAlert(String workspaceId, SingleAlert alert) {
+        String fingerprint = alert.getFingerprint();
+        if (fingerprint == null) {
+            return;
+        }
+        String workspace = requireWorkspace(workspaceId);
+        sourceAlertCache.forEach((key, ruleCache) -> {
+            if (workspace.equals(key.workspaceId())) {
+                ruleCache.remove(fingerprint);
+            }
+        });
     }
 
     /**

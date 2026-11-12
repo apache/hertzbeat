@@ -87,6 +87,7 @@ final class AgentRuntimeTokenEstimator {
             return 0L;
         }
         long tokens = MESSAGE_OVERHEAD_TOKENS;
+        tokens += estimateText(message.getModelPartsCiphertext());
         tokens += estimateText(message.getRole() == null ? null : message.getRole().wireValue());
         tokens += estimateText(message.getToolName());
         tokens += estimateText(message.getToolCallId());
