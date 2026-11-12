@@ -112,7 +112,7 @@ function SelectedHistoryHeader({
         chart={chart}
         actions={actions}
         investigationSignals={state.investigationSignals}
-        image={['available', 'degraded'].includes(state.historyAvailability.kind) ? image : undefined}
+        image={image}
       />
     </header>
   );

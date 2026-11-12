@@ -16,32 +16,17 @@
  */
 
 import { LineChart } from 'echarts/charts';
-import {
-  DataZoomComponent,
-  GridComponent,
-  LegendComponent,
-  ToolboxComponent,
-  TooltipComponent
-} from 'echarts/components';
+import { DataZoomComponent, GridComponent, LegendComponent, TooltipComponent } from 'echarts/components';
 import * as echarts from 'echarts/core';
 import { CanvasRenderer } from 'echarts/renderers';
 
-echarts.use([
-  LineChart,
-  DataZoomComponent,
-  GridComponent,
-  LegendComponent,
-  ToolboxComponent,
-  TooltipComponent,
-  CanvasRenderer
-]);
+echarts.use([LineChart, DataZoomComponent, GridComponent, LegendComponent, TooltipComponent, CanvasRenderer]);
 
 type TimeSeriesChartSeries = { name: string; points: [number, number][] };
 export type TimeSeriesChartRenderInput = {
   title: string;
   unit?: string | undefined;
   series: TimeSeriesChartSeries[];
-  saveImageTitle?: string | undefined;
   presentation?: 'area' | 'line' | 'soft-area' | 'monitor-history' | undefined;
 };
 export type TimeSeriesChartRuntime = {
@@ -80,8 +65,7 @@ export function createTimeSeriesChart(
       return chart.getDataURL({
         type: 'png',
         pixelRatio: 2,
-        backgroundColor: chartColors(element).background,
-        excludeComponents: ['toolbox']
+        backgroundColor: chartColors(element).background
       });
     },
     dispose: () => {
@@ -105,24 +89,11 @@ export function buildTimeSeriesChartOption(
     textStyle: { color: colors.text },
     tooltip: chartTooltip(colors, monitorHistory),
     legend: chartLegend(showLegend, colors),
-    toolbox: input.saveImageTitle
-      ? {
-          top: showLegend ? 32 : 6,
-          right: 8,
-          feature: {
-            saveAsImage: {
-              title: input.saveImageTitle,
-              name: input.title,
-              backgroundColor: colors.background
-            }
-          }
-        }
-      : undefined,
     grid: {
       left: monitorHistory ? 8 : 38,
       right: monitorHistory ? 16 : 24,
       top: chartTop(showLegend, input.unit, monitorHistory),
-      bottom: monitorHistory ? 20 : input.saveImageTitle ? 92 : 48,
+      bottom: monitorHistory ? 20 : 48,
       containLabel: true
     },
     xAxis: timeAxis(input.series, colors, monitorHistory),
@@ -133,10 +104,7 @@ export function buildTimeSeriesChartOption(
         zoomOnMouseWheel: true,
         moveOnMouseMove: monitorHistory,
         moveOnMouseWheel: false
-      },
-      ...(input.saveImageTitle
-        ? [{ type: 'slider' as const, height: 30, bottom: 18, borderColor: colors.border, showDetail: false }]
-        : [])
+      }
     ],
     series: chartSeries(input.series, seriesColors, input.presentation)
   };

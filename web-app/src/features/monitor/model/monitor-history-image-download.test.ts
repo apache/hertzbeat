@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { MonitorHistoryChart } from './monitor-detail-model';
 import { monitorHistoryImageFilename, saveMonitorHistoryImage } from './monitor-history-image-download';
 
@@ -30,17 +30,27 @@ const chart: MonitorHistoryChart = {
 
 describe('monitor history image download', () => {
   beforeEach(() => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-12T08:12:34.567Z'));
     download.mockReset();
   });
+  afterEach(() => vi.useRealTimers());
   it('uses the existing download boundary with PNG bytes and the metric/range/mode filename', () => {
     saveMonitorHistoryImage('data:image/png;base64,iVBORw0KGgo=', chart);
     const artifact = download.mock.calls[0]![0];
-    expect(artifact.filename).toBe('hertzbeat-summary.responseTime-30m-raw.png');
+    expect(artifact.filename).toBe('hertzbeat-summary.responseTime-30m-raw-20261112T081234567Z.png');
     expect(artifact.data.type).toBe('image/png');
     expect(artifact.data.size).toBe(8);
     expect(monitorHistoryImageFilename({ ...chart, history: '6h', interval: true })).toBe(
-      'hertzbeat-summary.responseTime-6h-aggregated.png'
+      'hertzbeat-summary.responseTime-6h-aggregated-20261112T081234567Z.png'
     );
+  });
+  it('distinguishes repeated exports of the same metric with a portable UTC timestamp', () => {
+    const first = monitorHistoryImageFilename(chart);
+    vi.advanceTimersByTime(1);
+    const second = monitorHistoryImageFilename(chart);
+    expect(second).not.toBe(first);
+    expect(second).toBe('hertzbeat-summary.responseTime-30m-raw-20261112T081234568Z.png');
   });
   it('keeps filenames portable and bounded without modifying the metric identity', () => {
     const key = '../unsafe/metric:<field>?\\name*' + 'x'.repeat(300);

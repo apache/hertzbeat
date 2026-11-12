@@ -45,8 +45,7 @@ describe('time series PNG export', () => {
     expect(chart.getDataURL).toHaveBeenCalledWith({
       type: 'png',
       pixelRatio: 2,
-      backgroundColor: '#ffffff',
-      excludeComponents: ['toolbox']
+      backgroundColor: '#ffffff'
     });
     expect(chart.setOption).not.toHaveBeenCalled();
     element.style.setProperty('--hb-bg-raised', '#11151c');

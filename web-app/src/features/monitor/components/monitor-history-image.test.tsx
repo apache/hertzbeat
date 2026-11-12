@@ -21,7 +21,7 @@ import { I18nextProvider } from 'react-i18next';
 import { afterEach, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest';
 import { i18n, initializeI18n, loadLocale } from '@/core/i18n/i18n';
 import type { MonitorHistoryChart } from '../model/monitor-detail-model';
-import { HistoryChartEvidence, type HistoryChartImage } from './monitor-history-chart';
+import { HistoryAvailabilityBoundary, HistoryChartEvidence, type HistoryChartImage } from './monitor-history-chart';
 import { MonitorHistoryImageButton } from './monitor-history-image-button';
 
 const mocks = vi.hoisted(() => ({
@@ -45,12 +45,22 @@ const chart: MonitorHistoryChart = {
   interval: false,
   result: { kind: 'ready', rows: [{ name: 'origin', points: [[1000, 12]] }] }
 };
-function Harness({ value, title = value.metric.key }: { value: MonitorHistoryChart; title?: string }) {
+function Harness({
+  value,
+  title = value.metric.key,
+  availability = { kind: 'available' }
+}: {
+  value: MonitorHistoryChart;
+  title?: string;
+  availability?: Parameters<typeof HistoryAvailabilityBoundary>[0]['availability'];
+}) {
   const [image, setImage] = useState<HistoryChartImage>();
   return (
     <I18nextProvider i18n={i18n}>
       <MonitorHistoryImageButton chart={value} image={image} />
-      <HistoryChartEvidence chart={value} title={title} onImageReady={setImage} />
+      <HistoryAvailabilityBoundary availability={availability}>
+        <HistoryChartEvidence chart={value} title={title} onImageReady={setImage} />
+      </HistoryAvailabilityBoundary>
     </I18nextProvider>
   );
 }
@@ -119,6 +129,22 @@ describe('monitor history image action', () => {
     expect(mocks.save).toHaveBeenCalledWith(expect.any(String), chart);
     expect(mocks.create).toHaveBeenCalledOnce();
   });
+  it.each(['loading', 'unavailable', 'unknown', 'error'] as const)(
+    'retires the image when storage becomes %s and enables export again after recovery',
+    async kind => {
+      const view = render(<Harness value={chart} />);
+      await waitFor(() => expect(button()).toBeEnabled());
+      view.rerender(<Harness value={chart} availability={{ kind }} />);
+      expect(button()).toBeDisabled();
+      fireEvent.click(button());
+      expect(mocks.save).not.toHaveBeenCalled();
+      expect(mocks.dispose).toHaveBeenCalledOnce();
+      view.rerender(<Harness value={chart} availability={{ kind: 'degraded' }} />);
+      await waitFor(() => expect(button()).toBeEnabled());
+      fireEvent.click(button());
+      expect(mocks.save).toHaveBeenCalledOnce();
+    }
+  );
   it.each(['loading', 'empty', 'error', 'unavailable', 'unsupported'] as const)('does not export %s evidence', kind => {
     render(<Harness value={{ ...chart, result: { kind, rows: [] } }} />);
     fireEvent.click(button());

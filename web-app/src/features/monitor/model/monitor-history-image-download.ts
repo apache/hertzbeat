@@ -20,7 +20,8 @@ import type { MonitorHistoryChart } from './monitor-detail-model';
 
 export function monitorHistoryImageFilename(chart: MonitorHistoryChart) {
   const metric = chart.metric.key.replace(/[^\p{L}\p{N}._-]+/gu, '_').slice(0, 120) || 'metric';
-  return `hertzbeat-${metric}-${chart.history}-${chart.interval ? 'aggregated' : 'raw'}.png`;
+  const timestamp = new Date().toISOString().replace(/[-:.]/g, '');
+  return `hertzbeat-${metric}-${chart.history}-${chart.interval ? 'aggregated' : 'raw'}-${timestamp}.png`;
 }
 
 export function saveMonitorHistoryImage(dataUrl: string, chart: MonitorHistoryChart) {
