@@ -153,6 +153,23 @@ public class AlertDefineExcelImExportServiceTest {
         }
     }
 
+    @Test
+    public void testParseImportKeepsNumericCellValueAsPlainText() throws IOException {
+
+        // a purely numeric name / expr typed by hand in Excel is stored as a numeric cell
+        sheet.getRow(1).createCell(0).setCellValue(1001);
+        sheet.getRow(1).createCell(2).setCellValue(12345678901D);
+
+        try (ByteArrayInputStream inputStream = new ByteArrayInputStream(toByteArray(workbook))) {
+            List<ExportAlertDefineDTO> result = alertDefineExcelImExportService.parseImport(inputStream);
+
+            assertEquals(1, result.size());
+            AlertDefineDTO alertDefineDTO = result.get(0).getAlertDefine();
+            assertEquals("1001", alertDefineDTO.getName());
+            assertEquals("12345678901", alertDefineDTO.getExpr());
+        }
+    }
+
     private byte[] toByteArray(Workbook workbook) throws IOException {
 
         try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
