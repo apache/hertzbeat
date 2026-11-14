@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.ai.config;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
@@ -30,6 +31,7 @@ import org.apache.hertzbeat.common.entity.dto.ModelProviderConfig;
 import org.apache.hertzbeat.common.entity.manager.GeneralConfig;
 import org.apache.hertzbeat.common.util.JsonUtil;
 import org.junit.jupiter.api.Test;
+import org.springframework.ai.openai.OpenAiChatOptions;
 import org.springframework.boot.test.context.runner.ApplicationContextRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.support.GenericApplicationContext;
@@ -127,6 +129,65 @@ class LlmConfigTest {
                     assertTrue(context.containsBean(LlmConfig.OPEN_AI_CHAT_CLIENT_BEAN_NAME));
                     assertNull(context.getStartupFailure());
                 });
+    }
+
+    @Test
+    void buildChatOptionsSetsTemperatureForStandardModels() {
+        ModelProviderConfig config = new ModelProviderConfig();
+        config.setApiKey("sk-test");
+        config.setModel("gpt-4o");
+
+        OpenAiChatOptions options = LlmConfig.buildChatOptions(config);
+        assertEquals(0.3, options.getTemperature());
+
+        config.setModel("deepseek-chat");
+        options = LlmConfig.buildChatOptions(config);
+        assertEquals(0.3, options.getTemperature());
+    }
+
+    @Test
+    void buildChatOptionsOmitsTemperatureForReasoningModels() {
+        ModelProviderConfig config = new ModelProviderConfig();
+        config.setApiKey("sk-test");
+
+        config.setModel("deepseek-reasoner");
+        OpenAiChatOptions options = LlmConfig.buildChatOptions(config);
+        assertNull(options.getTemperature());
+
+        config.setModel("deepseek-ai/deepseek-reasoner");
+        options = LlmConfig.buildChatOptions(config);
+        assertNull(options.getTemperature());
+
+        config.setModel("o1");
+        options = LlmConfig.buildChatOptions(config);
+        assertNull(options.getTemperature());
+
+        config.setModel("o1-mini");
+        options = LlmConfig.buildChatOptions(config);
+        assertNull(options.getTemperature());
+
+        config.setModel("o3-mini");
+        options = LlmConfig.buildChatOptions(config);
+        assertNull(options.getTemperature());
+
+        config.setModel("deepseek-r1");
+        options = LlmConfig.buildChatOptions(config);
+        assertNull(options.getTemperature());
+    }
+
+    @Test
+    void isReasoningModelIdentifiesModelsCorrectly() {
+        assertTrue(LlmConfig.isReasoningModel("deepseek-reasoner"));
+        assertTrue(LlmConfig.isReasoningModel("deepseek-ai/deepseek-reasoner"));
+        assertTrue(LlmConfig.isReasoningModel("o1"));
+        assertTrue(LlmConfig.isReasoningModel("o1-preview"));
+        assertTrue(LlmConfig.isReasoningModel("o3-mini"));
+        assertTrue(LlmConfig.isReasoningModel("deepseek-r1"));
+        assertFalse(LlmConfig.isReasoningModel("deepseek-chat"));
+        assertFalse(LlmConfig.isReasoningModel("gpt-5"));
+        assertFalse(LlmConfig.isReasoningModel("glm-4.6"));
+        assertFalse(LlmConfig.isReasoningModel(""));
+        assertFalse(LlmConfig.isReasoningModel(null));
     }
 
     private static GeneralConfig providerConfig(String apiKey) {
