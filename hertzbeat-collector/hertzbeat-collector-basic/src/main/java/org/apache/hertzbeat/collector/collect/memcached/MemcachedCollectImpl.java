@@ -34,6 +34,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
+import org.apache.hertzbeat.collector.util.CollectUtil;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.MemcachedProtocol;
@@ -50,6 +51,7 @@ public class MemcachedCollectImpl extends AbstractCollect {
     private static final String STATS_SETTINGS = "stats settings";
     private static final String STATS_SIZES = "stats sizes";
     private static final String STATS_END_RSP = "END";
+    private static final int DEFAULT_TIMEOUT = 10_000;
 
     @Override
     public void preCheck(Metrics metrics) throws IllegalArgumentException {
@@ -69,7 +71,11 @@ public class MemcachedCollectImpl extends AbstractCollect {
         try {
             socket = new Socket();
             SocketAddress socketAddress = new InetSocketAddress(memcachedHost, Integer.parseInt(memcachedPort));
-            socket.connect(socketAddress);
+            // Without an explicit timeout a dropped SYN or a silent peer blocks until the OS-level
+            // TCP timeout, holding the collection worker for minutes.
+            int timeout = CollectUtil.getTimeout(memcachedProtocol.getTimeout(), DEFAULT_TIMEOUT);
+            socket.connect(socketAddress, timeout);
+            socket.setSoTimeout(timeout);
             if (socket.isConnected()) {
                 long responseTime = System.currentTimeMillis() - startTime;
                 PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
