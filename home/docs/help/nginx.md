@@ -123,6 +123,7 @@ If you want to monitor information in 'Nginx' with this monitoring type, you nee
 | Monitoring name     | Identify the name of this monitoring. The name needs to be unique                                                                                                         |
 | Port                | Port provided by Nginx                                                                                                                                                    |
 | Timeout             | Allow collection response time                                                                                                                                            |
+| Status URL          | The URL path of the Nginx stub status endpoint, default is `/nginx-status`                                                                                                 |
 | Collection interval | Interval time of monitor periodic data collection, unit: second, and the minimum interval that can be set is 30 seconds                                                   |
 | Whether to detect   | Whether to detect and check the availability of monitoring before adding monitoring. Adding and modifying operations will continue only after the detection is successful |
 | Description remarks | For more information about identifying and describing this monitoring, users can note information here                                                                    |

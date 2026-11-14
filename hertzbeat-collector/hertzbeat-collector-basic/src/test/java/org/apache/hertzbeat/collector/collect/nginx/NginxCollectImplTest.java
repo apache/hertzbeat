@@ -48,6 +48,7 @@ import org.apache.http.protocol.HttpContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
@@ -257,6 +258,140 @@ public class NginxCollectImplTest {
                 }
             }
 
+        }
+    }
+
+    @Test
+    public void testAvailableCollectDefaultUrl() throws IOException {
+        NginxProtocol nginxProtocol = NginxProtocol.builder()
+                .host("127.0.0.1")
+                .port("8080")
+                .timeout("6000")
+                .build();
+
+        try (MockedStatic<CommonHttpClient> mockedStatic = Mockito.mockStatic(CommonHttpClient.class)) {
+            mockedStatic.when(CommonHttpClient::getHttpClient).thenReturn(client);
+            ArgumentCaptor<HttpUriRequest> argumentCaptor = ArgumentCaptor.forClass(HttpUriRequest.class);
+            Mockito.when(client.execute(argumentCaptor.capture(), Mockito.any(HttpContext.class)))
+                    .thenReturn(mockHttpResponse);
+
+            StatusLine statusLine = new BasicStatusLine(new ProtocolVersion("http", 1, 1), 200, "OK");
+            Mockito.when(mockHttpResponse.getStatusLine()).thenReturn(statusLine);
+            String response = """
+                    Active connections: 2\s
+                    server accepts handled requests
+                     5 5 5\s
+                    Reading: 0 Writing: 1 Waiting: 1\s
+                    """;
+            HttpEntity entity = new CustomHttpEntity(response, ContentType.create("text/plain", "UTF-8"));
+            Mockito.when(mockHttpResponse.getEntity()).thenReturn(entity);
+
+            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+            Metrics metrics = new Metrics();
+            metrics.setName("available");
+            List<String> aliasField = new ArrayList<>();
+            aliasField.add("responseTime");
+            metrics.setAliasFields(aliasField);
+            List<Metrics.Field> fields = new ArrayList<>();
+            fields.add(Metrics.Field.builder().field("responseTime").type(TYPE_STRING).build());
+            metrics.setFields(fields);
+            metrics.setNginx(nginxProtocol);
+
+            nginxCollect.preCheck(metrics);
+            nginxCollect.collect(builder, metrics);
+
+            assertEquals(CollectRep.Code.SUCCESS, builder.getCode());
+            assertEquals("http://127.0.0.1:8080/nginx-status", argumentCaptor.getValue().getURI().toString());
+        }
+    }
+
+    @Test
+    public void testAvailableCollectCustomUrl() throws IOException {
+        NginxProtocol nginxProtocol = NginxProtocol.builder()
+                .host("127.0.0.1")
+                .port("8080")
+                .timeout("6000")
+                .url("/custom-status")
+                .build();
+
+        try (MockedStatic<CommonHttpClient> mockedStatic = Mockito.mockStatic(CommonHttpClient.class)) {
+            mockedStatic.when(CommonHttpClient::getHttpClient).thenReturn(client);
+            ArgumentCaptor<HttpUriRequest> argumentCaptor = ArgumentCaptor.forClass(HttpUriRequest.class);
+            Mockito.when(client.execute(argumentCaptor.capture(), Mockito.any(HttpContext.class)))
+                    .thenReturn(mockHttpResponse);
+
+            StatusLine statusLine = new BasicStatusLine(new ProtocolVersion("http", 1, 1), 200, "OK");
+            Mockito.when(mockHttpResponse.getStatusLine()).thenReturn(statusLine);
+            String response = """
+                    Active connections: 2\s
+                    server accepts handled requests
+                     5 5 5\s
+                    Reading: 0 Writing: 1 Waiting: 1\s
+                    """;
+            HttpEntity entity = new CustomHttpEntity(response, ContentType.create("text/plain", "UTF-8"));
+            Mockito.when(mockHttpResponse.getEntity()).thenReturn(entity);
+
+            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+            Metrics metrics = new Metrics();
+            metrics.setName("available");
+            List<String> aliasField = new ArrayList<>();
+            aliasField.add("responseTime");
+            metrics.setAliasFields(aliasField);
+            List<Metrics.Field> fields = new ArrayList<>();
+            fields.add(Metrics.Field.builder().field("responseTime").type(TYPE_STRING).build());
+            metrics.setFields(fields);
+            metrics.setNginx(nginxProtocol);
+
+            nginxCollect.preCheck(metrics);
+            nginxCollect.collect(builder, metrics);
+
+            assertEquals(CollectRep.Code.SUCCESS, builder.getCode());
+            assertEquals("http://127.0.0.1:8080/custom-status", argumentCaptor.getValue().getURI().toString());
+        }
+    }
+
+    @Test
+    public void testAvailableCollectCustomUrlWithoutLeadingSlashAndWhitespace() throws IOException {
+        NginxProtocol nginxProtocol = NginxProtocol.builder()
+                .host("127.0.0.1")
+                .port("8080")
+                .timeout("6000")
+                .url("  custom-status  ")
+                .build();
+
+        try (MockedStatic<CommonHttpClient> mockedStatic = Mockito.mockStatic(CommonHttpClient.class)) {
+            mockedStatic.when(CommonHttpClient::getHttpClient).thenReturn(client);
+            ArgumentCaptor<HttpUriRequest> argumentCaptor = ArgumentCaptor.forClass(HttpUriRequest.class);
+            Mockito.when(client.execute(argumentCaptor.capture(), Mockito.any(HttpContext.class)))
+                    .thenReturn(mockHttpResponse);
+
+            StatusLine statusLine = new BasicStatusLine(new ProtocolVersion("http", 1, 1), 200, "OK");
+            Mockito.when(mockHttpResponse.getStatusLine()).thenReturn(statusLine);
+            String response = """
+                    Active connections: 2\s
+                    server accepts handled requests
+                     5 5 5\s
+                    Reading: 0 Writing: 1 Waiting: 1\s
+                    """;
+            HttpEntity entity = new CustomHttpEntity(response, ContentType.create("text/plain", "UTF-8"));
+            Mockito.when(mockHttpResponse.getEntity()).thenReturn(entity);
+
+            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+            Metrics metrics = new Metrics();
+            metrics.setName("available");
+            List<String> aliasField = new ArrayList<>();
+            aliasField.add("responseTime");
+            metrics.setAliasFields(aliasField);
+            List<Metrics.Field> fields = new ArrayList<>();
+            fields.add(Metrics.Field.builder().field("responseTime").type(TYPE_STRING).build());
+            metrics.setFields(fields);
+            metrics.setNginx(nginxProtocol);
+
+            nginxCollect.preCheck(metrics);
+            nginxCollect.collect(builder, metrics);
+
+            assertEquals(CollectRep.Code.SUCCESS, builder.getCode());
+            assertEquals("http://127.0.0.1:8080/custom-status", argumentCaptor.getValue().getURI().toString());
         }
     }
 
