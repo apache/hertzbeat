@@ -306,7 +306,36 @@ public class AlarmInhibitReduce implements DisposableBean {
             return false;
         }
         return requiredLabels.entrySet().stream()
-                .allMatch(entry -> entry.getValue().equals(alertLabels.get(entry.getKey())));
+                .allMatch(entry -> matchLabelValue(alertLabels.get(entry.getKey()), entry.getValue()));
+    }
+
+    /**
+     * Check if an alert label value matches the required rule label pattern.
+     * Supports exact match, comma or pipe-separated multiple values (e.g. "warning|critical", "warning, critical"),
+     * and regular expressions.
+     */
+    private boolean matchLabelValue(String alertValue, String requiredValue) {
+        if (alertValue == null || requiredValue == null) {
+            return false;
+        }
+        if (requiredValue.equals(alertValue)) {
+            return true;
+        }
+        if (requiredValue.contains("|") || requiredValue.contains(",")) {
+            for (String candidate : requiredValue.split("[,|]")) {
+                if (candidate.trim().equals(alertValue)) {
+                    return true;
+                }
+            }
+        }
+        try {
+            if (alertValue.matches(requiredValue)) {
+                return true;
+            }
+        } catch (Exception ignored) {
+            // Not a valid regex pattern; handled by exact/token matching above
+        }
+        return false;
     }
 
     /**
