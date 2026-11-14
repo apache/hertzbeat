@@ -37,6 +37,7 @@ import org.apache.hertzbeat.common.queue.CommonDataQueue;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -379,31 +380,30 @@ public class CommonDispatcher implements MetricsTaskDispatch, CollectDataDispatc
         }
     }
 
-    private void dispatchCollectDataListLocked(Timeout timeout, Metrics metrics, List<CollectRep.MetricsData> metricsDataList,
-                                              WheelTimerTask timerJob, Job job) {
+    private void dispatchCollectDataListLocked(Timeout timeout, Metrics metrics,
+                                               List<CollectRep.MetricsData> metricsDataList, WheelTimerTask timerJob, Job job) {
         MetricsTime metricsTime = claimResult(String.valueOf(job.getId()), timeout, metrics);
         if (metricsTime == null || timeout.isCancelled() || timerJob.isCancelled()) {
             return;
         }
+
+        List<CollectRep.MetricsData> results =
+            metricsDataList == null ? Collections.emptyList() : metricsDataList;
+
         if (metricsCollector != null) {
             long duration = System.currentTimeMillis() - metricsTime.getStartTime();
-            // For a list, we consider it a success if at least one item is successful.
-            boolean isSuccess = metricsDataList.stream().anyMatch(item -> item.getCode() == CollectRep.Code.SUCCESS);
+            boolean isSuccess = results.stream()
+                .anyMatch(item -> item.getCode() == CollectRep.Code.SUCCESS);
             metricsCollector.recordCollectMetrics(job, duration, isSuccess ? "success" : "fail");
         }
+
         if (job.isCyclic()) {
-            // The collection and execution of all task of this job are completed.
-            // The periodic task pushes the task to the time wheel again.
-            // First, determine the execution time of the task and the task collection interval.
             if (!timeout.isCancelled()) {
                 timerDispatch.cyclicJob(timerJob);
             }
-            // it is an asynchronous periodic cyclic task, directly response the collected data
-            metricsDataList.forEach(commonDataQueue::sendMetricsData);
+            results.forEach(commonDataQueue::sendMetricsData);
         } else {
-            // The collection and execution of all metrics of this job are completed
-            // and the result listener is notified of the combination of all metrics data
-            timerDispatch.responseSyncJobData(job.getId(), metricsDataList);
+            timerDispatch.responseSyncJobData(job.getId(), results);
         }
     }
 
