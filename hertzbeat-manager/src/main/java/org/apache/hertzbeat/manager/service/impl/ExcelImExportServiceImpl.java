@@ -22,6 +22,7 @@ import static org.apache.hertzbeat.common.constants.ExportFileConstants.ExcelFil
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -169,9 +170,13 @@ public class ExcelImExportServiceImpl extends AbstractImExportServiceImpl{
         if (cell == null) {
             return null;
         }
-        return switch (cell.getCellType()) {
+        // a formula cell is read by the type of its cached result
+        CellType cellType = cell.getCellType() == CellType.FORMULA
+                ? cell.getCachedFormulaResultType() : cell.getCellType();
+        return switch (cellType) {
             case STRING -> cell.getStringCellValue();
-            case NUMERIC -> String.valueOf(cell.getNumericCellValue());
+            case NUMERIC -> BigDecimal.valueOf(cell.getNumericCellValue()).stripTrailingZeros().toPlainString();
+            case BOOLEAN -> String.valueOf(cell.getBooleanCellValue());
             default -> null;
         };
     }
