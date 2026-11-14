@@ -23,7 +23,13 @@ import org.springframework.lang.NonNull;
 
 
 /**
- * Real-time data reading class
+ * Real-time data reading class.
+ *
+ * <p>Reader ownership: each non-null {@link CollectRep.MetricsData} returned by
+ * {@link #getCurrentMetricsData} is a reader-owned snapshot. Callers must
+ * {@link CollectRep.MetricsData#close()} it when finished. Implementations must not
+ * expose a live cache reference that can be closed by a concurrent {@code saveData}
+ * replacement while the caller still reads it.
  */
 public interface RealTimeDataReader {
 
@@ -36,14 +42,14 @@ public interface RealTimeDataReader {
      * query real-time last metrics data
      * @param monitorId monitorId
      * @param metric metric name
-     * @return metrics data
+     * @return reader-owned metrics snapshot, or {@code null} when absent; caller closes it
      */
     CollectRep.MetricsData getCurrentMetricsData(@NonNull Long monitorId, @NonNull String metric);
 
     /**
      * query real-time last metrics data
      * @param monitorId monitor id
-     * @return metrics data
+     * @return reader-owned metrics snapshots; caller closes each entry
      */
     List<CollectRep.MetricsData> getCurrentMetricsData(@NonNull Long monitorId);
 

@@ -29,7 +29,19 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 
 /**
- * Store and collect real-time data - memory
+ * Store and collect real-time data - memory.
+ *
+ * <p>Ownership / lifetime contract for Arrow {@link CollectRep.MetricsData}:
+ * <ul>
+ *   <li>{@link #saveData} retains an independent copy in the cache. The caller (dispatch)
+ *       still owns the input instance and may close it after {@code saveData} returns.</li>
+ *   <li>On replace, the previous <em>cached</em> instance is closed immediately. That close
+ *       must not affect in-flight readers.</li>
+ *   <li>{@link #getCurrentMetricsData} returns a reader-owned snapshot (deep copy). Callers
+ *       such as monitor-detail builders must {@link CollectRep.MetricsData#close()} the
+ *       returned instance when finished. Holding a snapshot across a later {@code saveData}
+ *       replacement is safe.</li>
+ * </ul>
  */
 @Component
 @ConditionalOnProperty(prefix = "warehouse.real-time.memory", name = "enabled", havingValue = "true", matchIfMissing = true)
@@ -56,37 +68,60 @@ public class MemoryDataStorage extends AbstractRealTimeDataStorage {
     @Override
     public CollectRep.MetricsData getCurrentMetricsData(@NonNull Long monitorId, @NonNull String metric) {
         Map<String, CollectRep.MetricsData> metricsDataMap = monitorMetricsDataMap.computeIfAbsent(monitorId, key -> new ConcurrentHashMap<>(METRICS_SIZE));
-        return metricsDataMap.get(metric);
+        return snapshotOrNull(metricsDataMap.get(metric));
     }
 
     @Override
     public List<CollectRep.MetricsData> getCurrentMetricsData(@NonNull Long monitorId) {
         Map<String, CollectRep.MetricsData> metricsDataMap = monitorMetricsDataMap.computeIfAbsent(monitorId, key -> new ConcurrentHashMap<>(METRICS_SIZE));
-        return new ArrayList<>(metricsDataMap.values());
+        List<CollectRep.MetricsData> snapshots = new ArrayList<>(metricsDataMap.size());
+        for (CollectRep.MetricsData cached : metricsDataMap.values()) {
+            CollectRep.MetricsData snapshot = snapshotOrNull(cached);
+            if (snapshot != null) {
+                snapshots.add(snapshot);
+            }
+        }
+        return snapshots;
     }
 
     @Override
     public void saveData(CollectRep.MetricsData metricsData) {
-        Long monitorId = metricsData.getId();
-        String metrics = metricsData.getMetrics();
         if (metricsData.getCode() != CollectRep.Code.SUCCESS) {
-            metricsData.close();
             return;
         }
+        Long monitorId = metricsData.getId();
+        String metrics = metricsData.getMetrics();
+        CollectRep.MetricsData retained = CollectRep.MetricsData.newBuilder(metricsData).build();
         Map<String, CollectRep.MetricsData> metricsDataMap =
                 monitorMetricsDataMap.computeIfAbsent(monitorId, key -> new ConcurrentHashMap<>(METRICS_SIZE));
-
-        CollectRep.MetricsData oldMetricsData = metricsDataMap.get(metrics);
+        CollectRep.MetricsData oldMetricsData = metricsDataMap.put(metrics, retained);
         if (oldMetricsData != null) {
             oldMetricsData.close();
         }
-        metricsDataMap.put(metrics, metricsData);
     }
 
     @Override
     public void destroy() {
-        if (monitorMetricsDataMap != null) {
-            monitorMetricsDataMap.clear();
+        if (monitorMetricsDataMap == null) {
+            return;
         }
+        for (Map<String, CollectRep.MetricsData> metricsDataMap : monitorMetricsDataMap.values()) {
+            if (metricsDataMap == null) {
+                continue;
+            }
+            for (CollectRep.MetricsData metricsData : metricsDataMap.values()) {
+                if (metricsData != null) {
+                    metricsData.close();
+                }
+            }
+        }
+        monitorMetricsDataMap.clear();
+    }
+
+    private static CollectRep.MetricsData snapshotOrNull(CollectRep.MetricsData cached) {
+        if (cached == null) {
+            return null;
+        }
+        return CollectRep.MetricsData.newBuilder(cached).build();
     }
 }

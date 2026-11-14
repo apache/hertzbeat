@@ -335,9 +335,11 @@ public final class CollectRep {
         public void close() {
             if (table != null) {
                 table.close();
+                table = null;
             }
             if (allocator != null) {
                 allocator.close();
+                allocator = null;
             }
         }
 
