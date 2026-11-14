@@ -38,6 +38,7 @@ type MonitorMetricWorkbenchResultInput = {
   hasMoreRealtimeGroups: boolean;
   historyAvailability: MonitorMetricWorkbenchController['state']['historyAvailability'];
   historyCharts: MonitorMetricWorkbenchController['state']['historyCharts'];
+  historyGroupSelection?: MonitorMetricWorkbenchController['state']['historyGroupSelection'];
   selectedHistoryChart?: MonitorMetricWorkbenchController['state']['selectedHistoryChart'];
   investigation: MonitorMetricWorkbenchController['state']['investigation'];
   investigationSignals: SignalKind[];
@@ -57,6 +58,8 @@ type MonitorMetricWorkbenchResultInput = {
   setHistoryChartMode: MonitorMetricWorkbenchController['actions']['setHistoryChartMode'];
   refreshHistoryChart: MonitorMetricWorkbenchController['actions']['refreshHistoryChart'];
   loadMoreHistoryCharts: MonitorMetricWorkbenchController['actions']['loadMoreHistoryCharts'];
+  setHistoryGroups?: MonitorMetricWorkbenchController['actions']['setHistoryGroups'];
+  setHistoryCollapsedGroups?: MonitorMetricWorkbenchController['actions']['setHistoryCollapsedGroups'];
   openInvestigationSignal: MonitorMetricWorkbenchController['actions']['openInvestigationSignal'];
   refresh: () => void;
 };
@@ -83,6 +86,7 @@ function buildWorkbenchState(input: MonitorMetricWorkbenchResultInput): MonitorM
     hasMoreRealtimeGroups: input.hasMoreRealtimeGroups,
     historyAvailability: input.historyAvailability,
     historyCharts: input.historyCharts,
+    historyGroupSelection: input.historyGroupSelection,
     selectedHistoryChart: input.selectedHistoryChart,
     investigation: input.investigation,
     investigationSignals: input.investigationSignals,
@@ -106,6 +110,8 @@ function buildWorkbenchActions(input: MonitorMetricWorkbenchResultInput): Monito
     setHistoryChartMode: input.setHistoryChartMode,
     refreshHistoryChart: input.refreshHistoryChart,
     loadMoreHistoryCharts: input.loadMoreHistoryCharts,
+    setHistoryGroups: input.setHistoryGroups,
+    setHistoryCollapsedGroups: input.setHistoryCollapsedGroups,
     openInvestigationSignal: input.openInvestigationSignal,
     refresh: input.refresh,
     layout: input.layoutActions

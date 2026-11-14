@@ -1756,6 +1756,11 @@
     "failed": "监控操作失败。"
   },
   "monitorMetrics": {
+    "historyGroupsTitle": "历史图表分组",
+    "expandAllGroups": "展开全部指标组",
+    "collapseAllGroups": "折叠全部指标组",
+    "expandGroup": "展开 {{group}}",
+    "collapseGroup": "折叠 {{group}}",
     "title": "指标检查",
     "description": "无需离开监控详情即可查看当前值与历史数据。",
     "loading": "正在加载指标数据…",

@@ -155,6 +155,7 @@ export type MonitorMetricWorkbenchController = {
     hasMoreRealtimeGroups: boolean;
     historyAvailability: MonitorHistoryAvailability;
     historyCharts: MonitorHistoryChart[];
+    historyGroupSelection?: { sourceKey: string; names: string[]; selected: string[]; collapsed: string[] } | undefined;
     selectedHistoryChart?: MonitorHistoryChart | undefined;
     investigation: MonitorInvestigationViewState;
     investigationSignals: SignalKind[];
@@ -177,6 +178,8 @@ export type MonitorMetricWorkbenchController = {
     refreshHistoryChart: (metricKey: string) => void;
     openInvestigationSignal: (signal: SignalKind) => void;
     loadMoreHistoryCharts: () => void;
+    setHistoryGroups?: ((groups: string[]) => void) | undefined;
+    setHistoryCollapsedGroups?: ((groups: string[]) => void) | undefined;
     refresh: () => void;
     layout: MonitorMetricLayoutActions;
   };
