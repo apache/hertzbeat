@@ -55,6 +55,14 @@ public interface SingleAlertDao extends JpaRepository<SingleAlert, Long>, JpaSpe
      */
     List<SingleAlert> querySingleAlertsByWorkspaceIdAndStatus(String workspaceId, String status);
 
+    /**
+     * Query alerts by status across workspaces.
+     * @param status status firing or resolved
+     * @return alerts
+     */
+    @Query("select alert from SingleAlert alert where alert.status = :status")
+    List<SingleAlert> querySingleAlertsByStatus(@Param("status") String status);
+
     Optional<SingleAlert> findByWorkspaceIdAndId(String workspaceId, Long id);
 
     List<SingleAlert> findAllByWorkspaceIdAndIdIn(String workspaceId, List<Long> ids);
