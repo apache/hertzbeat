@@ -363,6 +363,77 @@ class PeriodicAlertRuleSchedulerTest {
         }
     }
 
+    @Test
+    void updateScheduleWhenRuleDisabledShouldNotSchedule() {
+        AlertDefine rule = AlertDefine.builder()
+                .id(20L)
+                .name("disabled-rule")
+                .type(METRIC_ALERT_THRESHOLD_TYPE_PERIODIC)
+                .period(1)
+                .enable(false)
+                .build();
+
+        scheduler.updateSchedule(rule);
+
+        @SuppressWarnings("unchecked")
+        java.util.Map<Long, ?> scheduledTasks = (java.util.Map<Long, ?>) ReflectionTestUtils.getField(scheduler, "scheduledTasks");
+        assertFalse(scheduledTasks.containsKey(20L));
+    }
+
+    @Test
+    void updateScheduleWhenRuleToggledToDisabledShouldCancelSchedule() {
+        AlertDefine rule = metricRule(21L);
+        scheduler.updateSchedule(rule);
+
+        @SuppressWarnings("unchecked")
+        java.util.Map<Long, ?> scheduledTasks = (java.util.Map<Long, ?>) ReflectionTestUtils.getField(scheduler, "scheduledTasks");
+        assertTrue(scheduledTasks.containsKey(21L));
+
+        rule.setEnable(false);
+        scheduler.updateSchedule(rule);
+
+        assertFalse(scheduledTasks.containsKey(21L));
+    }
+
+    @Test
+    void updateScheduleWhenPeriodNullOrInvalidShouldNotThrowAndNotSchedule() {
+        AlertDefine nullPeriodRule = AlertDefine.builder()
+                .id(22L)
+                .name("null-period-rule")
+                .type(METRIC_ALERT_THRESHOLD_TYPE_PERIODIC)
+                .period(null)
+                .enable(true)
+                .build();
+
+        scheduler.updateSchedule(nullPeriodRule);
+
+        AlertDefine zeroPeriodRule = AlertDefine.builder()
+                .id(23L)
+                .name("zero-period-rule")
+                .type(METRIC_ALERT_THRESHOLD_TYPE_PERIODIC)
+                .period(0)
+                .enable(true)
+                .build();
+
+        scheduler.updateSchedule(zeroPeriodRule);
+
+        AlertDefine negativePeriodRule = AlertDefine.builder()
+                .id(24L)
+                .name("negative-period-rule")
+                .type(METRIC_ALERT_THRESHOLD_TYPE_PERIODIC)
+                .period(-5)
+                .enable(true)
+                .build();
+
+        scheduler.updateSchedule(negativePeriodRule);
+
+        @SuppressWarnings("unchecked")
+        java.util.Map<Long, ?> scheduledTasks = (java.util.Map<Long, ?>) ReflectionTestUtils.getField(scheduler, "scheduledTasks");
+        assertFalse(scheduledTasks.containsKey(22L));
+        assertFalse(scheduledTasks.containsKey(23L));
+        assertFalse(scheduledTasks.containsKey(24L));
+    }
+
     private AlertDefine metricRule(Long id) {
         return AlertDefine.builder()
                 .id(id)
