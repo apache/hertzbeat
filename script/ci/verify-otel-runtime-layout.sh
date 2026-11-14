@@ -36,9 +36,9 @@ for required_file in $required_files; do
   fi
 done
 
-if ! grep -Fqx 'go 1.26.10' "$runtime_dir/go.mod" \
+if ! grep -Fqx 'go 1.26.11' "$runtime_dir/go.mod" \
     || ! grep -Fq 'export GOTOOLCHAIN := go$(GO_VERSION)' "$runtime_dir/Makefile"; then
-  echo "runtime builds must select the reviewed Go 1.26.10 toolchain" >&2
+  echo "runtime builds must select the reviewed Go 1.26.11 toolchain" >&2
   exit 1
 fi
 
