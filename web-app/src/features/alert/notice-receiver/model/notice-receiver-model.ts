@@ -91,6 +91,7 @@ export function createNoticeReceiverDraft(): NoticeReceiverDraft {
     wpushToken: '',
     wpushChannel: '',
     wpushTopicCode: '',
+    teamsWebHookUrl: '',
     configuredSecrets: [],
     clearSecrets: []
   };

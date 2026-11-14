@@ -77,5 +77,7 @@ public class NoticeReceiverOptions {
     private String wpushToken;
     private String wpushChannel;
     private String wpushTopicCode;
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    private String teamsWebHookUrl;
     private Set<String> clearSecrets = new LinkedHashSet<>();
 }
