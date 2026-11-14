@@ -301,22 +301,23 @@ class TargetJdbcCleanupLaneTest {
     @Test
     void closeStartsExactRetainedCleanupAndKeepsItRetryableUntilSuccess() throws Exception {
         Connection connection = mock(Connection.class);
-        CountDownLatch closed = new CountDownLatch(1);
         doThrow(new SQLException("private retained cleanup"))
-                .doAnswer(ignored -> {
-                    closed.countDown();
-                    return null;
-                })
+                .doNothing()
                 .when(connection).close();
-        TargetJdbcCleanupLane lane = lane();
-        lane.poison(connection);
+        // Complete the first failure before retrying so the assertions do not depend on worker scheduling.
+        try (TargetJdbcCleanupLane lane = new TargetJdbcCleanupLane(inlineWorker(), Runnable::run)) {
+            lane.poison(connection);
 
-        lane.close();
+            lane.close();
 
-        assertCleanupRequired(() -> lane.retry(deadline()));
-        lane.retry(deadline());
-        assertThat(closed.await(5, TimeUnit.SECONDS)).isTrue();
-        verify(connection, times(2)).close();
+            verify(connection).close();
+            assertThat(lane.acquisitionFailure()).isEqualTo(TargetJdbcConnectionErrorCode.CLEANUP_REQUIRED);
+
+            lane.retry(deadline());
+
+            verify(connection, times(2)).close();
+            assertThat(lane.acquisitionFailure()).isEqualTo(TargetJdbcConnectionErrorCode.FACTORY_CLOSED);
+        }
     }
 
     @Test
