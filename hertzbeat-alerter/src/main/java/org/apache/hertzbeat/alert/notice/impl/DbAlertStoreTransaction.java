@@ -71,9 +71,36 @@ class DbAlertStoreTransaction {
             mergeGroupAlert(groupAlert, existGroupAlert, alertFingerprints);
         }
         groupAlert.setAlertFingerprints(alertFingerprints.stream().toList());
+        refreshGroupStatus(workspaceId, groupAlert);
         GroupAlert savedGroupAlert = groupAlertDao.save(groupAlert);
         savedGroupAlert.setAlerts(groupAlert.getAlerts());
         return savedGroupAlert;
+    }
+
+    /**
+     * Reload every persisted member of the group before the aggregate status is written, so a
+     * recovery of one member can never flip a group whose other members are still firing. Only an
+     * incoming resolved group pays for the extra member query; the firing path stays untouched.
+     */
+    private void refreshGroupStatus(String workspaceId, GroupAlert groupAlert) {
+        if (!CommonConstants.ALERT_STATUS_RESOLVED.equals(groupAlert.getStatus())) {
+            return;
+        }
+        List<String> alertFingerprints = groupAlert.getAlertFingerprints();
+        if (alertFingerprints == null || alertFingerprints.isEmpty()) {
+            return;
+        }
+        List<SingleAlert> persistedAlerts = singleAlertDao.findSingleAlertsByWorkspaceIdAndFingerprintIn(
+                workspaceId, alertFingerprints);
+        if (persistedAlerts == null || persistedAlerts.isEmpty()) {
+            return;
+        }
+        boolean hasFiringAlert = persistedAlerts.stream()
+                .anyMatch(alert -> CommonConstants.ALERT_STATUS_FIRING.equals(alert.getStatus()));
+        groupAlert.setStatus(hasFiringAlert
+                ? CommonConstants.ALERT_STATUS_FIRING
+                : CommonConstants.ALERT_STATUS_RESOLVED);
+        groupAlert.setAlerts(persistedAlerts);
     }
 
     private static void mergeSingleAlert(SingleAlert incoming, SingleAlert persisted) {
