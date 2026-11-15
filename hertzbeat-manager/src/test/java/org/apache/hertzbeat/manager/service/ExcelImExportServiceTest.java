@@ -90,6 +90,45 @@ class ExcelImExportServiceTest {
     }
 
     @Test
+    public void testParseImportKeepsHandEditedCellValues() throws IOException {
+
+        Workbook workbook = new XSSFWorkbook();
+        var sheet = workbook.createSheet();
+        sheet.createRow(0).createCell(0).setCellValue("name");
+        // cells typed by hand in Excel are stored as numeric / boolean cells rather than strings
+        Object[][] params = {{"port", 3306D}, {"timeout", 6000D}, {"big", 12345678901D},
+            {"ratio", 0.5D}, {"zero", 0D}, {"ssl", true}, {"host", "127.0.0.1"}};
+        for (int i = 0; i < params.length; i++) {
+            var row = sheet.createRow(i + 1);
+            if (i == 0) {
+                row.createCell(0).setCellValue("Monitor1");
+                row.createCell(1).setCellValue("mysql");
+                row.createCell(2).setCellValue("127.0.0.1");
+            }
+            row.createCell(11).setCellValue((String) params[i][0]);
+            row.createCell(12).setCellValue(0);
+            var valueCell = row.createCell(13);
+            if (params[i][1] instanceof Double number) {
+                valueCell.setCellValue(number);
+            } else if (params[i][1] instanceof Boolean bool) {
+                valueCell.setCellValue(bool);
+            } else {
+                valueCell.setCellValue((String) params[i][1]);
+            }
+        }
+
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        workbook.write(bos);
+        ByteArrayInputStream bis = new ByteArrayInputStream(bos.toByteArray());
+
+        List<AbstractImExportServiceImpl.ExportMonitorDTO> result = excelImExportService.parseImport(bis);
+        assertEquals(1, result.size());
+        List<String> values = result.get(0).getParams().stream()
+                .map(AbstractImExportServiceImpl.ParamDTO::getValue).toList();
+        assertEquals(List.of("3306", "6000", "12345678901", "0.5", "0", "true", "127.0.0.1"), values);
+    }
+
+    @Test
     public void testWriteOs() throws IOException {
 
         AbstractImExportServiceImpl.MonitorDTO monitorDTO = new AbstractImExportServiceImpl.MonitorDTO();
