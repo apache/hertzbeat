@@ -46,7 +46,7 @@ export function MonitorSignalAlerts({ state }: { state: MonitorInvestigationView
 }
 
 function ReadyAlerts({ previews, total }: { previews: MonitorAlertPreview[]; total: number }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const notRecorded = t('monitorSignals.alerts.notRecorded');
   return (
     <div className={styles.readyBody}>
@@ -59,7 +59,7 @@ function ReadyAlerts({ previews, total }: { previews: MonitorAlertPreview[]; tot
               <Tag>{alert.severity?.toUpperCase() ?? notRecorded}</Tag>
             </div>
             <span>{alert.status}</span>
-            <small>{alertTime(alert.activeAt, notRecorded)}</small>
+            <small>{alertTime(alert.activeAt, notRecorded, i18n.resolvedLanguage)}</small>
           </li>
         ))}
       </ul>
@@ -67,6 +67,6 @@ function ReadyAlerts({ previews, total }: { previews: MonitorAlertPreview[]; tot
   );
 }
 
-function alertTime(value: number | null, notRecorded: string) {
-  return value == null ? notRecorded : (formatMonitorTimestamp(value) ?? notRecorded);
+function alertTime(value: number | null, notRecorded: string, locale?: string) {
+  return value == null ? notRecorded : (formatMonitorTimestamp(value, undefined, locale) ?? notRecorded);
 }
