@@ -124,6 +124,7 @@ class WeComRobotAlertNotifyHandlerImplTest {
         assertThrows(AlertNoticeException.class,
                 () -> weComRobotAlertNotifyHandler.send(receiver, template, groupAlert));
     }
+
     @Test
     void splitMarkdownPreservesUnicodeAndRespectsByteLimit() {
         String content = "中文告警😀\n".repeat(800) + "长".repeat(1800);
