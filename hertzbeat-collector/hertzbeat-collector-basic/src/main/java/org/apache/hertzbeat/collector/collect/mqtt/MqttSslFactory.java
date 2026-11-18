@@ -39,6 +39,7 @@ import java.security.Security;
 import java.security.cert.Certificate;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
+import java.nio.charset.StandardCharsets;
 import java.util.Collection;
 
 /**
@@ -59,7 +60,7 @@ public class MqttSslFactory {
             Certificate[] chain = null;
             if (mqttProtocol.getClientCert() != null && !mqttProtocol.getClientCert().isEmpty()) {
                 String formatClientCert = CertificateFormatter.formatCertificateChain(mqttProtocol.getClientCert());
-                try (InputStream certIn = new ByteArrayInputStream(formatClientCert.getBytes())) {
+                try (InputStream certIn = new ByteArrayInputStream(formatClientCert.getBytes(StandardCharsets.UTF_8))) {
                     CertificateFactory cf = CertificateFactory.getInstance("X.509");
                     Collection<? extends Certificate> certs = cf.generateCertificates(certIn);
                     chain = certs.toArray(new Certificate[0]);
@@ -170,7 +171,7 @@ public class MqttSslFactory {
 
 
         if (caCertPem != null && !caCertPem.isEmpty()) {
-            try (InputStream caIn = new ByteArrayInputStream(caCertPem.getBytes())) {
+            try (InputStream caIn = new ByteArrayInputStream(caCertPem.getBytes(StandardCharsets.UTF_8))) {
                 CertificateFactory cf = CertificateFactory.getInstance("X.509");
                 Collection<? extends Certificate> customCerts = cf.generateCertificates(caIn);
 

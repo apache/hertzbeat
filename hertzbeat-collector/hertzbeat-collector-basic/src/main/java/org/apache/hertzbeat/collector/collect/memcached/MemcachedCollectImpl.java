@@ -26,6 +26,7 @@ import java.net.Socket;
 import java.net.SocketAddress;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -69,11 +70,13 @@ public class MemcachedCollectImpl extends AbstractCollect {
         try {
             socket = new Socket();
             SocketAddress socketAddress = new InetSocketAddress(memcachedHost, Integer.parseInt(memcachedPort));
-            socket.connect(socketAddress);
+            int timeout = parseTimeoutMillis(memcachedProtocol.getTimeout());
+            socket.connect(socketAddress, timeout);
+            socket.setSoTimeout(timeout);
             if (socket.isConnected()) {
                 long responseTime = System.currentTimeMillis() - startTime;
                 PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream(), StandardCharsets.UTF_8));
                 // Send a command to collect statistics
                 Map<String, String> resultMap = new HashMap<>(128);
                 parseCmdResponse(resultMap, in, out, STATS);
@@ -153,6 +156,18 @@ public class MemcachedCollectImpl extends AbstractCollect {
         }
     }
 
+
+    private static int parseTimeoutMillis(String timeout) {
+        try {
+            int millis = Integer.parseInt(timeout);
+            if (millis > 0) {
+                return millis;
+            }
+        } catch (NumberFormatException ignored) {
+            // fall through to the default
+        }
+        return 5000;
+    }
 
     @Override
     public String supportProtocol() {

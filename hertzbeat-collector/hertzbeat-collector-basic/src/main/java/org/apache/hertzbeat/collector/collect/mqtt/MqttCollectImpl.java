@@ -41,6 +41,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.util.Assert;
 import org.springframework.util.StopWatch;
 
+import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CountDownLatch;
@@ -207,7 +208,7 @@ public class MqttCollectImpl extends AbstractCollect {
             public void messageArrived(String arrivedTopic, MqttMessage message) {
 
                 if (topic.equals(arrivedTopic)) {
-                    messageHolder.append(new String(message.getPayload()));
+                    messageHolder.append(new String(message.getPayload(), StandardCharsets.UTF_8));
                     latch.countDown();
                 }
             }
@@ -247,7 +248,7 @@ public class MqttCollectImpl extends AbstractCollect {
 
     private String testPublish(MqttAsyncClient client, String topic, String message) {
         try {
-            MqttMessage mqttMessage = new MqttMessage(message.getBytes());
+            MqttMessage mqttMessage = new MqttMessage(message.getBytes(StandardCharsets.UTF_8));
             mqttMessage.setQos(1);
 
             IMqttToken pubToken = client.publish(topic, mqttMessage);

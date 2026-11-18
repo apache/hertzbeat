@@ -103,6 +103,36 @@ public class ImapCollectImpl extends AbstractCollect {
         }
     }
 
+    static Map<String, String> parseStatusResponse(String reply, String folderName) {
+        Map<String, String> resultsMap = new HashMap<>();
+        if (reply == null) {
+            return resultsMap;
+        }
+        String[] response = reply.split("\\s+|\\(|\\)");
+        for (int i = 0; i < response.length; i++) {
+            switch (response[i]) {
+                case MESSAGES:
+                    if (i + 1 < response.length) {
+                        resultsMap.put(folderName + totalMessageCount, response[i + 1]);
+                    }
+                    break;
+                case RECENT:
+                    if (i + 1 < response.length) {
+                        resultsMap.put(folderName + recentMessageCount, response[i + 1]);
+                    }
+                    break;
+                case UNSEEN:
+                    if (i + 1 < response.length) {
+                        resultsMap.put(folderName + unseenMessageCount, response[i + 1]);
+                    }
+                    break;
+                default:
+                    break;
+            }
+        }
+        return resultsMap;
+    }
+
     @Override
     public String supportProtocol() {
         return DispatchConstants.PROTOCOL_IMAP;
@@ -142,22 +172,7 @@ public class ImapCollectImpl extends AbstractCollect {
         Map<String, String> resultsMap = new HashMap<>();
         resultsMap.put(RESPONSETIME, String.valueOf(responseTime));
         imapClient.sendCommand(STATUS + " \"" + CollectUtil.stringEncodeUtf7String(folderName, UTF_7_X) + "\" " + STATUS_COMMAND);
-        String[] response = imapClient.getReplyString().split("\\s+|\\(|\\)");
-        for (int i = 0; i < response.length; i++) {
-            switch (response[i]) {
-                case MESSAGES:
-                    resultsMap.put(folderName + totalMessageCount, response[i + 1]);
-                    break;
-                case RECENT:
-                    resultsMap.put(folderName + recentMessageCount, response[i + 1]);
-                    break;
-                case UNSEEN:
-                    resultsMap.put(folderName + unseenMessageCount, response[i + 1]);
-                    break;
-                default:
-                    break;
-            }
-        }
+        resultsMap.putAll(parseStatusResponse(imapClient.getReplyString(), folderName));
 
         CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
         for (String field : aliasFields) {
