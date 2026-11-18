@@ -208,20 +208,22 @@ public class HttpSdCollectImpl extends AbstractCollect {
 
         // uri encode, default true
         boolean enableUrlEncoding = Boolean.parseBoolean(httpSdProtocol.getEnableUrlEncoding());
+        // Keep the reusable protocol unchanged so later collections do not encode the URL again.
+        String url = httpSdProtocol.getUrl();
         if (enableUrlEncoding) {
             // if the url contains parameters directly
-            if (httpSdProtocol.getUrl().contains("?")) {
-                String path = httpSdProtocol.getUrl().substring(0, httpSdProtocol.getUrl().indexOf("?"));
-                String query = httpSdProtocol.getUrl().substring(httpSdProtocol.getUrl().indexOf("?") + 1);
-                httpSdProtocol.setUrl(UriUtils.encodePath(path, "UTF-8") + "?" + UriUtils.encodeQuery(query, "UTF-8"));
+            if (url.contains("?")) {
+                String path = url.substring(0, url.indexOf("?"));
+                String query = url.substring(url.indexOf("?") + 1);
+                url = UriUtils.encodePath(path, "UTF-8") + "?" + UriUtils.encodeQuery(query, "UTF-8");
             } else {
-                httpSdProtocol.setUrl(UriUtils.encodePath(httpSdProtocol.getUrl(), "UTF-8"));
+                url = UriUtils.encodePath(url, "UTF-8");
             }
         }
 
         // set uri
         try {
-            requestBuilder.setUri(httpSdProtocol.getUrl());
+            requestBuilder.setUri(url);
         } catch (IllegalArgumentException e) {
             log.warn("Invalid URI with illegal characters: {}. User has disabled URL encoding, not applying any encoding.", httpSdProtocol.getUrl());
             throw e;
