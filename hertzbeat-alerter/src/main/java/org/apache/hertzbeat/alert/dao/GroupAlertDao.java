@@ -40,6 +40,14 @@ public interface GroupAlertDao extends JpaRepository<GroupAlert, Long>, JpaSpeci
      */
     GroupAlert findByWorkspaceIdAndGroupKey(String workspaceId, String groupKey);
 
+    /**
+     * Query group alerts by status across workspaces.
+     * @param status status firing or resolved
+     * @return group alerts
+     */
+    @Query("select alert from GroupAlert alert where alert.status = :status")
+    List<GroupAlert> queryGroupAlertsByStatus(@Param("status") String status);
+
     Optional<GroupAlert> findByWorkspaceIdAndId(String workspaceId, Long id);
 
     /**
