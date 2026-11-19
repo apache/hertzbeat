@@ -23,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.util.List;
+import org.apache.hertzbeat.collector.constants.CollectorConstants;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
@@ -30,6 +31,8 @@ import org.apache.hertzbeat.common.entity.job.protocol.ScriptProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 /**
  * Test case for {@link ScriptCollectImpl}
@@ -220,6 +223,54 @@ public class ScriptCollectImplTest {
             assertEquals(CollectRep.Code.FAIL, builder.getCode());
             assertTrue(builder.getMsg().contains("code: 2"));
         });
+    }
+
+    @Test
+    void collectMultiRowWithHeaderOnly() {
+        ScriptProtocol scriptProtocol = ScriptProtocol.builder()
+                .charset("utf-8")
+                .parseType("multiRow")
+                .scriptTool("bash")
+                .scriptCommand("printf '  PID COMMAND\\n'")
+                .build();
+        Metrics metrics = Metrics.builder().script(scriptProtocol).aliasFields(List.of("pid", "command")).build();
+
+        scriptCollect.collect(builder, metrics);
+
+        assertEquals(0, builder.getValuesCount());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "  PID COMMAND\n12345 java\n 42 bash\n7\n",
+        "PID COMMAND\n 12345 java\n42 bash\n 7\n",
+        "\tPID\tCOMMAND\r\n12345\tjava\r\n\t42\tbash\r\n7\r\n",
+        "PID COMMAND\n12345 java\n42 bash\n7\n",
+        "  PID COMMAND  \n12345 java  \n 42 bash\t\n7  \n"
+    })
+    void collectMultiRowPreservesColumnsWithPadding(String output) {
+        ScriptProtocol scriptProtocol = ScriptProtocol.builder()
+                .charset("utf-8")
+                .parseType("multiRow")
+                .scriptTool("bash")
+                .scriptCommand("printf '%s' '" + output + "'")
+                .build();
+        Metrics metrics = Metrics.builder()
+                .script(scriptProtocol)
+                .aliasFields(List.of("command", "PID", "missing", CollectorConstants.RESPONSE_TIME))
+                .build();
+
+        scriptCollect.collect(builder, metrics);
+
+        assertEquals(CollectRep.Code.SUCCESS, builder.getCode(), builder.getMsg());
+        assertEquals(3, builder.getValuesCount());
+        assertEquals(List.of("java", "12345", CommonConstants.NULL_VALUE), builder.getValues(0).getColumnsList().subList(0, 3));
+        assertEquals(List.of("bash", "42", CommonConstants.NULL_VALUE), builder.getValues(1).getColumnsList().subList(0, 3));
+        assertEquals(List.of(CommonConstants.NULL_VALUE, "7", CommonConstants.NULL_VALUE), builder.getValues(2).getColumnsList().subList(0, 3));
+        for (CollectRep.ValueRow row : builder.getValuesList()) {
+            assertEquals(4, row.getColumnsCount());
+            assertTrue(Long.parseLong(row.getColumns(3)) >= 0);
+        }
     }
 
     @Test

@@ -22,7 +22,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.when;
 
+import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
+import java.net.InetSocketAddress;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -50,6 +53,8 @@ import org.apache.http.protocol.HttpContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
@@ -191,6 +196,55 @@ class HttpSdCollectImplTest {
 
             assertEquals(0, builder.getValuesCount());
         }
+    }
+
+    @Test
+    void testRepeatedCollectionWithEncodedUrl() throws IOException {
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        server.createContext("/service discovery", exchange -> {
+            byte[] response = "[{\"target\":[\"192.168.1.10:8080\"]}]".getBytes(StandardCharsets.UTF_8);
+            boolean expectedQuery = "group=production%20servers".equals(exchange.getRequestURI().getRawQuery());
+            exchange.sendResponseHeaders(expectedQuery ? 200 : 400, response.length);
+            try (var output = exchange.getResponseBody()) {
+                output.write(response);
+            }
+        });
+        server.start();
+        try {
+            String url = "http://127.0.0.1:" + server.getAddress().getPort()
+                    + "/service discovery?group=production servers";
+            httpProtocol.setUrl(url);
+            httpProtocol.setEnableUrlEncoding("true");
+            httpProtocol.setTimeout("3000");
+
+            for (int i = 0; i < 3; i++) {
+                builder = CollectRep.MetricsData.newBuilder();
+                httpSdCollectImpl.collect(builder, metrics);
+
+                assertEquals(1, builder.getValuesCount(), builder.getMsg());
+                assertEquals(List.of("192.168.1.10", "8080"), builder.getValues(0).getColumnsList());
+            }
+            assertEquals(url, httpProtocol.getUrl());
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @ParameterizedTest
+    @CsvSource({
+        "true, http://localhost/service discovery, http://localhost/service%20discovery",
+        "true, http://localhost/services?group=production servers, http://localhost/services?group=production%20servers",
+        "true, http://localhost/services, http://localhost/services",
+        "false, http://localhost/service%20discovery?group=production%20servers, http://localhost/service%20discovery?group=production%20servers"
+    })
+    void testCreateHttpRequestPreservesUrl(String enableEncoding, String url, String expectedUrl) {
+        httpProtocol.setUrl(url);
+        httpProtocol.setEnableUrlEncoding(enableEncoding);
+
+        for (int i = 0; i < 3; i++) {
+            assertEquals(expectedUrl, httpSdCollectImpl.createHttpRequest(httpProtocol).getURI().toString());
+        }
+        assertEquals(url, httpProtocol.getUrl());
     }
 
     @Test
