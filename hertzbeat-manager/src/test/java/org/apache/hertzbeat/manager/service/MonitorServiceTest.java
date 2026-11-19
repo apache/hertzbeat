@@ -22,6 +22,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
@@ -1425,6 +1426,108 @@ class MonitorServiceTest {
 
         assertEquals("unknow", monitor.getInstance());
         assertEquals("unknow", job.getMetadata().get(CommonConstants.LABEL_INSTANCE));
+    }
+
+    @Test
+    void modifyMonitorServiceDiscoveryWithOmittedScrapeAndParams() {
+        long monitorId = 100L;
+        Monitor monitor = Monitor.builder()
+                .id(monitorId)
+                .intervals(10)
+                .app("jvm")
+                .name("jvm-discovery")
+                .status(CommonConstants.MONITOR_UP_CODE)
+                .build();
+        Monitor existing = Monitor.builder()
+                .id(monitorId)
+                .jobId(55L)
+                .intervals(10)
+                .app("jvm")
+                .scrape("nacos_sd")
+                .name("jvm-discovery")
+                .instance("unknow")
+                .status(CommonConstants.MONITOR_UP_CODE)
+                .build();
+        List<Param> params = List.of(
+                Param.builder().field("__nacos_sd_host__").paramValue("10.0.0.1").build(),
+                Param.builder().field("__nacos_sd_port__").paramValue("8848").build()
+        );
+        Job job = new Job();
+        when(monitorDao.findById(monitorId)).thenReturn(Optional.of(existing));
+        when(appService.getAppDefine("nacos_sd")).thenReturn(job);
+        when(collectJobScheduling.updateAsyncCollectJob(job)).thenReturn(56L);
+
+        assertDoesNotThrow(() -> monitorService.modifyMonitor(monitor, params, null, null));
+
+        assertEquals("nacos_sd", monitor.getScrape());
+        assertEquals("unknow", monitor.getInstance());
+        assertTrue(job.isSd());
+        assertEquals(55L, job.getId());
+        assertEquals(56L, monitor.getJobId());
+        assertEquals("unknow", job.getMetadata().get(CommonConstants.LABEL_INSTANCE));
+        assertEquals("jvm-discovery", job.getMetadata().get(CommonConstants.LABEL_INSTANCE_NAME));
+    }
+
+    @Test
+    void modifyMonitorServiceDiscoveryPreservesJobIdWhenPaused() {
+        long monitorId = 101L;
+        Monitor monitor = Monitor.builder()
+                .id(monitorId)
+                .intervals(10)
+                .app("jvm")
+                .name("jvm-paused")
+                .build();
+        Monitor existing = Monitor.builder()
+                .id(monitorId)
+                .jobId(77L)
+                .intervals(10)
+                .app("jvm")
+                .scrape("nacos_sd")
+                .name("jvm-paused")
+                .instance("unknow")
+                .status(CommonConstants.MONITOR_PAUSED_CODE)
+                .build();
+        List<Param> params = List.of();
+        when(monitorDao.findById(monitorId)).thenReturn(Optional.of(existing));
+
+        assertDoesNotThrow(() -> monitorService.modifyMonitor(monitor, params, null, null));
+
+        assertEquals("nacos_sd", monitor.getScrape());
+        assertEquals(77L, monitor.getJobId());
+        assertEquals(CommonConstants.MONITOR_PAUSED_CODE, monitor.getStatus());
+        verify(monitorDao).save(monitor);
+    }
+
+    @Test
+    void validateModifyServiceDiscoveryWithoutHostPort() {
+        long monitorId = 102L;
+        MonitorDto dto = new MonitorDto();
+        dto.setMonitor(Monitor.builder()
+                .id(monitorId)
+                .name("sd-monitor")
+                .app("jvm")
+                .intervals(10)
+                .build());
+        dto.setParams(List.of(
+                Param.builder().field("__nacos_sd_host__").paramValue("127.0.0.1").build()
+        ));
+        Monitor existing = Monitor.builder()
+                .id(monitorId)
+                .name("sd-monitor")
+                .app("jvm")
+                .scrape("nacos_sd")
+                .build();
+        when(monitorDao.findById(monitorId)).thenReturn(Optional.of(existing));
+        when(appService.getAppParamDefines("jvm")).thenReturn(List.of(
+                newParamDefine("host", "host", true),
+                newParamDefine("port", "number", true)
+        ));
+        when(appService.getAppParamDefines("nacos_sd")).thenReturn(List.of(
+                newParamDefine("__nacos_sd_host__", "text", true)
+        ));
+
+        assertDoesNotThrow(() -> monitorService.validate(dto, true));
+        assertEquals("nacos_sd", dto.getMonitor().getScrape());
     }
 
     @Test
