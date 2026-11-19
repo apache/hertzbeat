@@ -36,6 +36,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Flux;
 
 import java.util.Collections;
@@ -155,9 +157,14 @@ public class ConversationServiceImpl implements ConversationService {
             .doOnError(error -> log.error("Error in streaming chat for conversation {}: {}", currentConversationId,
                 error.getMessage(), error))
             .onErrorResume(error -> {
+                String errorMsg = error.getMessage();
+                if (error instanceof WebClientResponseException webClientResponseException
+                        && StringUtils.hasText(webClientResponseException.getResponseBodyAsString())) {
+                    errorMsg = webClientResponseException.getResponseBodyAsString();
+                }
                 ChatResponseChunk errorResponse = ChatResponseChunk.builder()
                     .conversationId(currentConversationId)
-                    .response("An error occurred: " + error.getMessage())
+                    .response("An error occurred: " + errorMsg)
                     .userMessageId(finalChatMessage.getId())
                     .build();
                 return Flux.just(ServerSentEvent.builder(errorResponse)

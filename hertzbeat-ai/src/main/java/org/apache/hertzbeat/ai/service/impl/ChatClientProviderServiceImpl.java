@@ -53,6 +53,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.ApplicationContext;
 import org.springframework.util.StringUtils;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import reactor.core.publisher.Flux;
 
 import java.io.IOException;
@@ -141,7 +142,16 @@ public class ChatClientProviderServiceImpl implements ChatClientProviderService 
                 .stream()
                 .content()
                 .doOnComplete(() -> log.info("Streaming completed for conversation: {}", context.getConversationId()))
-                .doOnError(error -> log.error("Error in streaming chat: {}", error.getMessage(), error));
+                .doOnError(error -> {
+                    if (error instanceof WebClientResponseException webClientResponseException) {
+                        log.error("Error in streaming chat: {} - Response body: {}",
+                                webClientResponseException.getMessage(),
+                                webClientResponseException.getResponseBodyAsString(),
+                                webClientResponseException);
+                    } else {
+                        log.error("Error in streaming chat: {}", error.getMessage(), error);
+                    }
+                });
 
         } catch (Exception e) {
             log.error("Error setting up streaming chat: {}", e.getMessage(), e);
