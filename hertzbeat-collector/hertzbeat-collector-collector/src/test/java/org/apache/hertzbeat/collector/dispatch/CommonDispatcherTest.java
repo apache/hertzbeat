@@ -45,6 +45,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -332,6 +333,33 @@ class CommonDispatcherTest {
         dispatcher.dispatchCollectData(timeout, current("prometheus"), List.of(success("duplicate")));
         verify(timerDispatch, times(2)).cyclicJob(task);
         verify(dataQueue, times(2)).sendMetricsData(any());
+        assertTrue(pending.isEmpty());
+    }
+
+    @Test
+    void prometheusNullResultDoesNotThrowAndCompletesRound() {
+        Metrics prometheus = metric("prometheus", 0);
+        prometheus.setPrometheus(new PrometheusProtocol());
+        start(prometheus);
+
+        assertDoesNotThrow(
+            () -> dispatcher.dispatchCollectData(timeout, current("prometheus"), (List<CollectRep.MetricsData>) null));
+
+        verify(timerDispatch, times(1)).cyclicJob(task);
+        assertTrue(pending.isEmpty());
+    }
+
+    @Test
+    void prometheusEmptyResultCompletesRoundWithoutExportingData() {
+        Metrics prometheus = metric("prometheus", 0);
+        prometheus.setPrometheus(new PrometheusProtocol());
+        start(prometheus);
+
+        assertDoesNotThrow(
+            () -> dispatcher.dispatchCollectData(timeout, current("prometheus"), Collections.emptyList()));
+
+        verify(timerDispatch, times(1)).cyclicJob(task);
+        verify(dataQueue, never()).sendMetricsData(any());
         assertTrue(pending.isEmpty());
     }
 
