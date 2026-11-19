@@ -26,7 +26,10 @@ import org.apache.hertzbeat.warehouse.store.realtime.AbstractRealTimeDataStorage
 import org.springframework.stereotype.Service;
 
 /**
- * warehouse service impl
+ * warehouse service impl.
+ *
+ * <p>{@link #queryMonitorMetricsData} returns reader-owned snapshots from realtime storage.
+ * Callers must close each {@link CollectRep.MetricsData} when finished.
  */
 @Service
 @Slf4j

@@ -639,10 +639,18 @@ public class MonitorServiceImpl implements MonitorService {
             if (DispatchConstants.PROTOCOL_PROMETHEUS.equalsIgnoreCase(monitor.getApp())
                     || monitor.getType() == CommonConstants.MONITOR_TYPE_PUSH_AUTO_CREATE) {
                 List<CollectRep.MetricsData> metricsDataList = warehouseService.queryMonitorMetricsData(id);
-                metricsInfos = metricsDataList.stream()
-                        .map(t -> MetricsInfo.builder().name(t.getMetrics())
-                                .favorited(favoritedMetrics.contains(t.getMetrics())).build())
-                        .collect(Collectors.toList());
+                try {
+                    metricsInfos = metricsDataList.stream()
+                            .map(t -> MetricsInfo.builder().name(t.getMetrics())
+                                    .favorited(favoritedMetrics.contains(t.getMetrics())).build())
+                            .collect(Collectors.toList());
+                } finally {
+                    for (CollectRep.MetricsData metricsData : metricsDataList) {
+                        if (metricsData != null) {
+                            metricsData.close();
+                        }
+                    }
+                }
                 monitorDto.setGrafanaDashboard(dashboardService.getDashboardByMonitorId(id));
             } else {
                 boolean isStatic = CommonConstants.SCRAPE_STATIC.equals(monitor.getScrape())
