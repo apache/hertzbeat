@@ -480,6 +480,42 @@ class HttpCollectImplTest {
     }
 
     @Test
+    void parseResponseByJsonPathKeepsBooleanScalarResult() throws Exception {
+        Method parseMethod = HttpCollectImpl.class.getDeclaredMethod(
+                "parseResponseByJsonPath",
+                String.class,
+                List.class,
+                HttpProtocol.class,
+                CollectRep.MetricsData.Builder.class,
+                Long.class);
+        parseMethod.setAccessible(true);
+
+        // parseScript pointing directly at a boolean leaf
+        HttpProtocol http = HttpProtocol.builder()
+                .parseType(DispatchConstants.PARSE_JSON_PATH)
+                .parseScript("$.status.healthy")
+                .build();
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+        parseMethod.invoke(httpCollectImpl, "{\"status\":{\"healthy\":false}}",
+                Lists.newArrayList("healthy", "responseTime"), http, builder, 12L);
+        assertEquals(1, builder.getValuesCount());
+        assertEquals("false", builder.getValues(0).getColumns(0));
+        assertEquals("12", builder.getValues(0).getColumns(1));
+
+        // parseScript matching several boolean leaves yields one row each
+        http = HttpProtocol.builder()
+                .parseType(DispatchConstants.PARSE_JSON_PATH)
+                .parseScript("$.items[*].ok")
+                .build();
+        builder = CollectRep.MetricsData.newBuilder();
+        parseMethod.invoke(httpCollectImpl, "{\"items\":[{\"ok\":true},{\"ok\":false}]}",
+                Lists.newArrayList("ok"), http, builder, 12L);
+        assertEquals(2, builder.getValuesCount());
+        assertEquals("true", builder.getValues(0).getColumns(0));
+        assertEquals("false", builder.getValues(1).getColumns(0));
+    }
+
+    @Test
     void testParsePromQlLabelValue() throws Exception {
         // Create Prometheus format test data
         String prometheusData = """
