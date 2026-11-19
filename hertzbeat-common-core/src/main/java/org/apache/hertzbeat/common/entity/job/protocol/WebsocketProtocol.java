@@ -49,6 +49,11 @@ public class WebsocketProtocol implements CommonRequestProtocol, Protocol {
      */
     private String path;
 
+    /**
+     * (Optional) connect and read timeout in milliseconds
+     */
+    private String timeout;
+
     @Override
     public boolean isInvalid() {
         if (!validateIpDomain(host) || !validPort(port)) {
