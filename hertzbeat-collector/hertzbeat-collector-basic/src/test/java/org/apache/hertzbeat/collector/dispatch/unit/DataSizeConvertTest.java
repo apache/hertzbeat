@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import java.util.Locale;
 import org.apache.hertzbeat.collector.dispatch.unit.impl.DataSizeConvert;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -64,6 +65,19 @@ class DataSizeConvertTest {
         assertFalse(convert.checkUnit("INVALID"));
         assertFalse(convert.checkUnit(null));
         assertFalse(convert.checkUnit(""));
+    }
+
+    @Test
+    void testLocaleIndependentUnits() {
+        Locale previous = Locale.getDefault();
+        try {
+            Locale.setDefault(new Locale("tr", "TR"));
+            assertTrue(convert.checkUnit("Mi"));
+            assertTrue(convert.checkUnit("Ki"));
+            assertEquals("1", convert.convert("1024", "Ki", "Mi"));
+        } finally {
+            Locale.setDefault(previous);
+        }
     }
 
 }
