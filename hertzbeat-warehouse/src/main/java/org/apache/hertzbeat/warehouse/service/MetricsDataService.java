@@ -78,4 +78,26 @@ public interface MetricsDataService {
      */
     MetricsHistoryData getMetricHistoryData(String instance, String app, String metrics, String metric,
                                             String history, Boolean interval, Long start, Long end, String step);
+
+    /**
+     * Queries historical data for a specified metric of a monitor, matching the series by monitor id
+     * when the history storage supports it and by instance otherwise.
+     *
+     * @param monitorId Monitor Id, falls back to the instance based query when null
+     * @param instance  Instance e.g. ip:port or ip or domain
+     * @param app       Monitor Type
+     * @param metrics   Metrics Name
+     * @param metric    Metrics Field Name
+     * @param history   Query Historical Time Period
+     * @param interval  aggregate data calc
+     * @param start     Query start time in milliseconds
+     * @param end       Query end time in milliseconds
+     * @param step      Query step, for example 60s or 5m
+     * @return metrics history data
+     */
+    default MetricsHistoryData getMetricHistoryData(Long monitorId, String instance, String app, String metrics,
+                                                    String metric, String history, Boolean interval, Long start,
+                                                    Long end, String step) {
+        return getMetricHistoryData(instance, app, metrics, metric, history, interval, start, end, step);
+    }
 }

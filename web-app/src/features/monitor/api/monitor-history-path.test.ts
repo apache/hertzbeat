@@ -35,7 +35,7 @@ describe('monitor history path', () => {
     };
 
     expect(buildHistoryMetricPath(monitor, metric, '30m', false)).toBe(
-      '/api/monitor/example.com%3A9090/metric?app=_prometheus_node.prod.example&metrics=system&metric=cpu_usage&history=30m&interval=false'
+      '/api/monitor/example.com%3A9090/metric?app=_prometheus_node.prod.example&metrics=system&metric=cpu_usage&history=30m&interval=false&monitorId=7'
     );
   });
 });
