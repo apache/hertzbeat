@@ -2892,7 +2892,8 @@
       "larkApp": "Lark app",
       "ntfy": "Ntfy",
       "unknown": "Unknown",
-      "wpush": "WPUSH"
+      "wpush": "WPUSH",
+      "teams": "Microsoft Teams"
     },
     "larkReceiveTypes": {
       "0": "User",
@@ -2935,7 +2936,8 @@
       "ntfyToken": "Ntfy token",
       "wpushToken": "WPUSH API key",
       "wpushChannel": "WPUSH channel",
-      "wpushTopicCode": "WPUSH topic code"
+      "wpushTopicCode": "WPUSH topic code",
+      "teamsWebHookUrl": "Microsoft Teams Workflows webhook URL"
     }
   },
   "noticeTemplates": {
