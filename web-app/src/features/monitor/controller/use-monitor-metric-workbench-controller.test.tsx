@@ -268,6 +268,54 @@ describe('useMonitorMetricWorkbenchController', () => {
     expect(view.result.current.controller.state.hasMoreRealtimeGroups).toBe(false);
   });
 
+  it('filters history groups before applying the six-chart lazy window', async () => {
+    api.loadMonitorMetricCatalog.mockResolvedValue(numericCatalog(8));
+    const view = renderController(monitor(), [], '/monitors/7');
+    await waitFor(() => expect(view.result.current.controller.state.historyCharts).toHaveLength(6));
+    act(() => view.result.current.controller.actions.setHistoryGroups?.(['group-8']));
+    expect(view.result.current.controller.state.historyCharts.map(chart => chart.metric.key)).toEqual([
+      'group-8.value'
+    ]);
+    expect(view.result.current.controller.state.hasMoreHistoryCharts).toBe(false);
+    expect(api.loadHistoryMetric).not.toHaveBeenCalled();
+    act(() => view.result.current.controller.actions.activateHistoryChart('group-8.value'));
+    await waitFor(() => expect(api.loadHistoryMetric).toHaveBeenCalledTimes(1));
+  });
+
+  it('keeps collapsed groups outside the history budget and supports an empty filter', async () => {
+    api.loadMonitorMetricCatalog.mockResolvedValue(numericCatalog(8));
+    const view = renderController(monitor(), [], '/monitors/7');
+    await waitFor(() => expect(view.result.current.controller.state.historyCharts).toHaveLength(6));
+    act(() => view.result.current.controller.actions.setHistoryCollapsedGroups?.(['group-1', 'group-2']));
+    expect(view.result.current.controller.state.historyCharts.map(chart => chart.metric.group)).toEqual([
+      'group-3',
+      'group-4',
+      'group-5',
+      'group-6',
+      'group-7',
+      'group-8'
+    ]);
+    act(() => view.result.current.controller.actions.setHistoryGroups?.([]));
+    expect(view.result.current.controller.state.historyCharts).toEqual([]);
+    expect(view.result.current.controller.state.hasMoreHistoryCharts).toBe(false);
+  });
+
+  it('preserves group filters and folds after refreshing the same monitor', async () => {
+    api.loadMonitorMetricCatalog.mockResolvedValue(numericCatalog(8));
+    const view = renderController(monitor(), [], '/monitors/7');
+    await waitFor(() => expect(view.result.current.controller.state.historyCharts).toHaveLength(6));
+    act(() => {
+      view.result.current.controller.actions.setHistoryGroups?.(['group-7', 'group-8']);
+      view.result.current.controller.actions.setHistoryCollapsedGroups?.(['group-7']);
+    });
+    act(() => view.result.current.controller.actions.refresh());
+    await waitFor(() =>
+      expect(view.result.current.controller.state.historyGroupSelection?.selected).toEqual(['group-7', 'group-8'])
+    );
+    expect(view.result.current.controller.state.historyGroupSelection?.collapsed).toEqual(['group-7']);
+    expect(view.result.current.controller.state.historyCharts.map(chart => chart.metric.group)).toEqual(['group-8']);
+  });
+
   it('loads history charts in six-item pages only after each chart enters the viewport', async () => {
     api.loadMonitorMetricCatalog.mockResolvedValue(numericCatalog(8));
     const view = renderController(monitor(), [], '/monitors/7');

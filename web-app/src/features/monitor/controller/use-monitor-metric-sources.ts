@@ -39,7 +39,8 @@ export function useMonitorMetricSources(input: {
     monitorId: monitor?.id,
     definitions: selection.definitions,
     defaultHistory: selection.history,
-    runtimeStatus
+    runtimeStatus,
+    focusedMetricKey: selection.metric?.key
   });
   const queries = useMonitorMetricData({
     monitor,
