@@ -28,6 +28,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -60,6 +62,9 @@ class NtfyAlertNotifyHandlerImplTest {
     private RestTemplate restTemplate;
 
     @Mock
+    private RestTemplate notificationRestTemplate;
+
+    @Mock
     private AlerterProperties alerterProperties;
 
     @Mock
@@ -87,6 +92,10 @@ class NtfyAlertNotifyHandlerImplTest {
         lenient().when(alerterProperties.getNtfyDefaultServerUrl()).thenReturn("https://ntfy.sh");
         lenient().when(alerterProperties.getConsoleUrl()).thenReturn("https://console.hertzbeat.com");
         lenient().when(bundle.getString("alerter.notify.title")).thenReturn("HertzBeat Alert");
+        // Allowlist the hosts used by the success tests so they stay deterministic
+        // (no real DNS resolution, no dependence on the CI network)
+        lenient().when(alerterProperties.getInternalUrlAllowlist())
+                .thenReturn(Arrays.asList("ntfy.example.com", "ntfy.sh"));
     }
 
     @Test
@@ -99,13 +108,13 @@ class NtfyAlertNotifyHandlerImplTest {
         GroupAlert alert = buildGroupAlert("firing", "critical");
 
         ResponseEntity<String> responseEntity = new ResponseEntity<>("{\"id\":\"abc123\"}", HttpStatus.OK);
-        when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(String.class)))
+        when(notificationRestTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(String.class)))
                 .thenReturn(responseEntity);
 
         ntfyHandler.send(receiver, template, alert);
 
         ArgumentCaptor<String> urlCaptor = ArgumentCaptor.forClass(String.class);
-        verify(restTemplate).postForEntity(urlCaptor.capture(), any(HttpEntity.class), eq(String.class));
+        verify(notificationRestTemplate).postForEntity(urlCaptor.capture(), any(HttpEntity.class), eq(String.class));
         assertEquals("https://ntfy.example.com/hertzbeat-alerts", urlCaptor.getValue());
     }
 
@@ -115,14 +124,14 @@ class NtfyAlertNotifyHandlerImplTest {
         GroupAlert alert = buildGroupAlert("firing", "warning");
 
         ResponseEntity<String> responseEntity = new ResponseEntity<>("{}", HttpStatus.OK);
-        when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(String.class)))
+        when(notificationRestTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(String.class)))
                 .thenReturn(responseEntity);
 
         ntfyHandler.send(receiver, template, alert);
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<HttpEntity<String>> entityCaptor = ArgumentCaptor.forClass(HttpEntity.class);
-        verify(restTemplate).postForEntity(anyString(), entityCaptor.capture(), eq(String.class));
+        verify(notificationRestTemplate).postForEntity(anyString(), entityCaptor.capture(), eq(String.class));
         assertEquals("Bearer tk_testtoken123", entityCaptor.getValue().getHeaders().getFirst("Authorization"));
     }
 
@@ -132,13 +141,13 @@ class NtfyAlertNotifyHandlerImplTest {
         GroupAlert alert = buildGroupAlert("firing", "info");
 
         ResponseEntity<String> responseEntity = new ResponseEntity<>("{}", HttpStatus.OK);
-        when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(String.class)))
+        when(notificationRestTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(String.class)))
                 .thenReturn(responseEntity);
 
         ntfyHandler.send(receiver, template, alert);
 
         ArgumentCaptor<String> urlCaptor = ArgumentCaptor.forClass(String.class);
-        verify(restTemplate).postForEntity(urlCaptor.capture(), any(HttpEntity.class), eq(String.class));
+        verify(notificationRestTemplate).postForEntity(urlCaptor.capture(), any(HttpEntity.class), eq(String.class));
         assertEquals("https://ntfy.sh/hertzbeat-alerts", urlCaptor.getValue());
     }
 
@@ -147,7 +156,7 @@ class NtfyAlertNotifyHandlerImplTest {
         GroupAlert alert = buildGroupAlert("firing", "critical");
 
         ResponseEntity<String> responseEntity = new ResponseEntity<>("error", HttpStatus.INTERNAL_SERVER_ERROR);
-        when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(String.class)))
+        when(notificationRestTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(String.class)))
                 .thenReturn(responseEntity);
 
         assertThrows(AlertNoticeException.class, () -> ntfyHandler.send(receiver, template, alert));
@@ -157,7 +166,7 @@ class NtfyAlertNotifyHandlerImplTest {
     void testSendNetworkError() {
         GroupAlert alert = buildGroupAlert("firing", "warning");
 
-        when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(String.class)))
+        when(notificationRestTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(String.class)))
                 .thenThrow(new org.springframework.web.client.ResourceAccessException("Connection refused"));
 
         assertThrows(AlertNoticeException.class, () -> ntfyHandler.send(receiver, template, alert));
@@ -228,14 +237,14 @@ class NtfyAlertNotifyHandlerImplTest {
         GroupAlert alert = buildGroupAlert("firing", "critical");
 
         ResponseEntity<String> responseEntity = new ResponseEntity<>("{}", HttpStatus.OK);
-        when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(String.class)))
+        when(notificationRestTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(String.class)))
                 .thenReturn(responseEntity);
 
         ntfyHandler.send(receiver, template, alert);
 
         @SuppressWarnings("unchecked")
         ArgumentCaptor<HttpEntity<String>> entityCaptor = ArgumentCaptor.forClass(HttpEntity.class);
-        verify(restTemplate).postForEntity(anyString(), entityCaptor.capture(), eq(String.class));
+        verify(notificationRestTemplate).postForEntity(anyString(), entityCaptor.capture(), eq(String.class));
 
         HttpEntity<String> captured = entityCaptor.getValue();
         assertEquals("5", captured.getHeaders().getFirst("Priority"));
@@ -250,14 +259,43 @@ class NtfyAlertNotifyHandlerImplTest {
         GroupAlert alert = buildGroupAlert("firing", "info");
 
         ResponseEntity<String> responseEntity = new ResponseEntity<>("{}", HttpStatus.OK);
-        when(restTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(String.class)))
+        when(notificationRestTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(String.class)))
                 .thenReturn(responseEntity);
 
         ntfyHandler.send(receiver, template, alert);
 
         ArgumentCaptor<String> urlCaptor = ArgumentCaptor.forClass(String.class);
-        verify(restTemplate).postForEntity(urlCaptor.capture(), any(HttpEntity.class), eq(String.class));
+        verify(notificationRestTemplate).postForEntity(urlCaptor.capture(), any(HttpEntity.class), eq(String.class));
         assertEquals("https://ntfy.example.com/hertzbeat-alerts", urlCaptor.getValue());
+    }
+
+    @Test
+    void testSendRejectsInternalAddressWithoutAllowlist() {
+        // localhost is not in the allowlist here -> rejected before any HTTP call
+        lenient().when(alerterProperties.getInternalUrlAllowlist()).thenReturn(Collections.emptyList());
+        receiver.setNtfyServerUrl("http://localhost:8080");
+        GroupAlert alert = buildGroupAlert("firing", "info");
+
+        assertThrows(AlertNoticeException.class, () -> ntfyHandler.send(receiver, template, alert));
+    }
+
+    @Test
+    void testSendAllowsInternalAddressViaAllowlist() {
+        // Administrator explicitly allows the self-hosted ntfy endpoint
+        lenient().when(alerterProperties.getInternalUrlAllowlist())
+                .thenReturn(Collections.singletonList("localhost"));
+        receiver.setNtfyServerUrl("http://localhost:8080");
+        GroupAlert alert = buildGroupAlert("firing", "info");
+
+        ResponseEntity<String> responseEntity = new ResponseEntity<>("{}", HttpStatus.OK);
+        when(notificationRestTemplate.postForEntity(anyString(), any(HttpEntity.class), eq(String.class)))
+                .thenReturn(responseEntity);
+
+        ntfyHandler.send(receiver, template, alert);
+
+        ArgumentCaptor<String> urlCaptor = ArgumentCaptor.forClass(String.class);
+        verify(notificationRestTemplate).postForEntity(urlCaptor.capture(), any(HttpEntity.class), eq(String.class));
+        assertEquals("http://localhost:8080/hertzbeat-alerts", urlCaptor.getValue());
     }
 
     private GroupAlert buildGroupAlert(String status, String severity) {

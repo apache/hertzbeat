@@ -18,18 +18,20 @@
 package org.apache.hertzbeat.alert.notice.impl;
 
 import java.net.URI;
+import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.hertzbeat.alert.notice.AlertNoticeException;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
+import org.apache.hertzbeat.common.util.InternalUrlValidator;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 
 /**
  * Send alarm information through WebHookAlter
@@ -37,6 +39,13 @@ import org.springframework.stereotype.Component;
 @Component
 @Slf4j
 final class WebHookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
+
+    /**
+     * RestTemplate that never follows redirects: URL validation only covers the
+     * initial request, so following redirects could bypass the SSRF guard.
+     */
+    @Resource(name = "notificationRestTemplate")
+    private RestTemplate notificationRestTemplate;
 
     @Override
     public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, GroupAlert alert) {
@@ -57,6 +66,14 @@ final class WebHookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
                 throw new AlertNoticeException("Invalid webhook URL: " + e.getMessage());
             }
 
+            // SSRF hardening: reject loopback / link-local / private / ULA / reserved addresses,
+            // unless the host is explicitly allowlisted by the administrator
+            try {
+                InternalUrlValidator.validate(hookUri, alerterProperties.getInternalUrlAllowlist());
+            } catch (IllegalArgumentException e) {
+                throw new AlertNoticeException("Webhook URL rejected: " + e.getMessage());
+            }
+
             HttpHeaders headers = new HttpHeaders();
             if ("Basic".equalsIgnoreCase(receiver.getHookAuthType())) {
                 headers.setBasicAuth(receiver.getHookAuthToken());
@@ -69,8 +86,11 @@ final class WebHookAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl
             webhookJson = webhookJson.replace(",\n  }", "\n }");
 
             HttpEntity<String> alertHttpEntity = new HttpEntity<>(webhookJson, headers);
-            ResponseEntity<String> entity = restTemplate.postForEntity(hookUri, alertHttpEntity, String.class);
-            if (entity.getStatusCode().value() < HttpStatus.BAD_REQUEST.value()) {
+            ResponseEntity<String> entity = notificationRestTemplate.postForEntity(hookUri, alertHttpEntity, String.class);
+            // Only 2xx counts as delivered. Redirects (3xx) are never followed by the
+            // notification client, so a 3xx response means the request did not reach its
+            // destination and must be reported as a failure.
+            if (entity.getStatusCode().is2xxSuccessful()) {
                 log.debug("Send webhook success");
             } else {
                 log.warn("Send webhook failed with status {}", entity.getStatusCode());
