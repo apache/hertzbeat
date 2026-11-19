@@ -72,6 +72,21 @@ params:
     # required-true or false
     required: false
   # field-param field key
+  - field: timeout
+    # name-param field display i18n name
+    name:
+      zh-CN: 超时时间(ms)
+      en-US: Timeout(ms)
+      ja-JP: タイムアウト（ｍｓ）
+    # type-param field type(most mapping the html input type)
+    type: number
+    # when type is number, range is required
+    range: '[1000,120000]'
+    # required-true or false
+    required: false
+    # default value
+    defaultValue: 10000
+  # field-param field key
   - field: uri
     # name-param field display i18n name
     name:
@@ -166,3 +181,4 @@ metrics:
       port: ^_^port^_^
       url: ^_^uri^_^
       ssl: ^_^verify^_^
+      timeout: ^_^timeout^_^

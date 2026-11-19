@@ -189,7 +189,7 @@ public class OnlineParser {
             metricFamily = metricFamilyMap.get(metricName);
         }
         int i = next;
-        if (i == ' ') {
+        if (isSpace(i)) {
             i = skipSpaces(inputStream).getInt();
         }
 
@@ -271,7 +271,7 @@ public class OnlineParser {
         }
 
         private CharChecker maybeSpace() {
-            if (i == ' ') {
+            if (isSpace(i)) {
                 satisfied = true;
             }
             return this;
@@ -517,16 +517,28 @@ public class OnlineParser {
 
     private static CharChecker skipSpaces(InputStream inputStream) throws IOException, FormatException {
         int i = getChar(inputStream);
-        while (i == ' ') {
+        while (isSpace(i)) {
             i = getChar(inputStream);
         }
         return new CharChecker(i);
     }
 
-    private static CharChecker skipToLineEnd(InputStream inputStream) throws IOException, FormatException {
-        int i = getChar(inputStream);
+    /**
+     * Whitespace between tokens, per the Prometheus text format: a space or a tab.
+     */
+    private static boolean isSpace(int i) {
+        return i == ' ' || i == '\t';
+    }
+
+    /**
+     * Skips the rest of the current line (comments, HELP/TYPE lines, or samples filtered out).
+     * Reads raw bytes rather than {@link #getChar}: skipped content must not be escape-validated,
+     * and an escaped {@code \n} in HELP text must not be mistaken for the end of the line.
+     */
+    private static CharChecker skipToLineEnd(InputStream inputStream) throws IOException {
+        int i = inputStream.read();
         while (i != '\n' && i != -1) {
-            i = getChar(inputStream);
+            i = inputStream.read();
         }
         return new CharChecker(i);
     }
@@ -564,7 +576,7 @@ public class OnlineParser {
         i = parseLabelName(inputStream, stringBuilder).maybeSpace().maybeEqualsSign().noElse();
         label.setName(stringBuilder.toString());
         stringBuilder.delete(0, stringBuilder.length());
-        if (i == ' ') {
+        if (isSpace(i)) {
             skipSpaces(inputStream).maybeEqualsSign().noElse();
         }
 
@@ -614,7 +626,7 @@ public class OnlineParser {
             metricFamily = metricFamilyMap.get(metricName);
         }
 
-        if (i == ' ') {
+        if (isSpace(i)) {
             i = skipSpaces(inputStream).getInt();
         }
 

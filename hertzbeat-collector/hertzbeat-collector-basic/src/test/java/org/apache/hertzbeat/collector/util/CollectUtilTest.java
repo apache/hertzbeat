@@ -20,9 +20,12 @@ package org.apache.hertzbeat.collector.util;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -31,6 +34,7 @@ import java.util.stream.Stream;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Configmap;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.util.JsonUtil;
@@ -217,6 +221,26 @@ class CollectUtilTest {
         metricsListTarget.add(metricsTarget);
         JsonElement jsonArrayTarget = new Gson().toJsonTree(metricsListTarget);
         assertEquals(JsonUtil.fromJson(jsonArrayTarget.toString()), JsonUtil.fromJson(res2.toString()));
+    }
+
+    @Test
+    void replaceSmilingPlaceholderWithArrayParamKeepsOrder() {
+        Map<String, Configmap> configmap = new HashMap<>();
+        configmap.put("arr", new Configmap("arr", "x,y", CommonConstants.PARAM_TYPE_ARRAY));
+        configmap.put("b", new Configmap("b", "B", CommonConstants.PARAM_TYPE_STRING));
+
+        JsonArray array = JsonParser.parseString("[\"^_^arr^_^\",\"^_^b^_^\"]").getAsJsonArray();
+        JsonElement res = CollectUtil.replaceSmilingPlaceholder(array, configmap);
+        assertEquals("[\"x\",\"y\",\"B\"]", res.toString());
+        assertSame(array, res);
+
+        JsonArray array2 = JsonParser.parseString("[\"^_^b^_^\",\"^_^arr^_^\",\"^_^b^_^\",\"plain\"]").getAsJsonArray();
+        assertEquals("[\"B\",\"x\",\"y\",\"B\",\"plain\"]",
+                CollectUtil.replaceSmilingPlaceholder(array2, configmap).toString());
+
+        JsonArray array3 = JsonParser.parseString("[\"^_^arr^_^\",\"^_^arr^_^\"]").getAsJsonArray();
+        assertEquals("[\"x\",\"y\",\"x\",\"y\"]",
+                CollectUtil.replaceSmilingPlaceholder(array3, configmap).toString());
     }
 
     @Test

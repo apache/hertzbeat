@@ -37,6 +37,7 @@ import javax.net.ssl.X509TrustManager;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.collector.collect.AbstractCollect;
 import org.apache.hertzbeat.collector.constants.CollectorConstants;
+import org.apache.hertzbeat.collector.util.CollectUtil;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
@@ -52,6 +53,7 @@ import org.springframework.util.StringUtils;
 @Slf4j
 public class SslCertificateCollectImpl extends AbstractCollect {
 
+    private static final int DEFAULT_TIMEOUT = 10_000;
     private static final String NAME_SUBJECT = "subject";
     private static final String NAME_EXPIRED = "expired";
     private static final String NAME_START_TIME = "start_time";
@@ -86,6 +88,12 @@ public class SslCertificateCollectImpl extends AbstractCollect {
                 uri = "https://" + httpProtocol.getHost() + ":" + httpProtocol.getPort();
             }
             urlConnection = (HttpsURLConnection) new URL(uri).openConnection();
+
+            // A TLS handshake against a blackholed or unreachable peer can otherwise hang until the
+            // OS-level TCP timeout, which is minutes. Bound both phases with the monitor's timeout.
+            int timeout = CollectUtil.getTimeout(httpProtocol.getTimeout(), DEFAULT_TIMEOUT);
+            urlConnection.setConnectTimeout(timeout);
+            urlConnection.setReadTimeout(timeout);
 
             boolean verifySsl = Boolean.parseBoolean(httpProtocol.getSsl());
             // ignore ssl verify

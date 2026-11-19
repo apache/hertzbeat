@@ -17,6 +17,9 @@
 
 package org.apache.hertzbeat.common.util;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.math.RoundingMode;
 import java.time.Duration;
 import java.time.Period;
 import java.time.temporal.TemporalAmount;
@@ -51,37 +54,49 @@ public final class TimePeriodUtil {
     }
 
     /**
-     * transform any timestamp to milliseconds
-     * @param timestamp timestamp
+     * Normalize a timestamp to milliseconds. Integral values with at most ten magnitude
+     * digits are seconds; larger integral values are milliseconds. Decimal values,
+     * including floating-point numbers and exponent-form strings, are always seconds.
+     * Sub-millisecond fractions are truncated toward zero.
+     *
+     * @param timestamp a numeric timestamp or its string representation
      * @return milliseconds
+     * @throws IllegalArgumentException if the timestamp is null, invalid, non-finite,
+     *                                  or outside the range of a long
      */
     public static long normalizeToMilliseconds(Object timestamp) {
-        if (timestamp instanceof String timestampStr) {
-            // string type, may be second, millisecond or decimal second
-            // eg: "1672531199000", "1672531199", "1672531199.123"
-            if (timestampStr.contains(".")) {
-                // contains decimal point, parse as second timestamp
-                double seconds = Double.parseDouble(timestampStr);
-                return (long) (seconds * 1000);
-            } else {
-                // integer form, determine second or millisecond
-                long numericTimestamp = Long.parseLong(timestampStr);
-                return convertNumericTimestamp(numericTimestamp);
-            }
-        } else if (timestamp instanceof Number) {
-            // number eg Integer、Long、Double
-            if (timestamp instanceof Double || timestamp instanceof Float) {
-                // float type, treat as second timestamp
-                double seconds = ((Number) timestamp).doubleValue();
-                return (long) (seconds * 1000);
-            } else {
-                // integer type, directly determine second or millisecond
-                long numericTimestamp = ((Number) timestamp).longValue();
-                return convertNumericTimestamp(numericTimestamp);
-            }
-        } else {
-            throw new IllegalArgumentException("Not support this timestamp type: " + timestamp.getClass().getName());
+        if (timestamp == null) {
+            throw new IllegalArgumentException("Timestamp must not be null");
         }
+        try {
+            if (timestamp instanceof String timestampStr) {
+                if (timestampStr.contains(".") || timestampStr.contains("e") || timestampStr.contains("E")) {
+                    return decimalSecondsToMilliseconds(new BigDecimal(timestampStr));
+                }
+                return convertNumericTimestamp(Long.parseLong(timestampStr));
+            }
+            if (timestamp instanceof BigDecimal decimal) {
+                return decimalSecondsToMilliseconds(decimal);
+            }
+            if (timestamp instanceof Double || timestamp instanceof Float) {
+                // Use the decimal representation to avoid rounding millisecond boundaries
+                // during binary floating-point multiplication (for example, 1.001 * 1000).
+                return decimalSecondsToMilliseconds(new BigDecimal(timestamp.toString()));
+            }
+            if (timestamp instanceof BigInteger integer) {
+                return convertNumericTimestamp(integer.longValueExact());
+            }
+            if (timestamp instanceof Number number) {
+                return convertNumericTimestamp(number.longValue());
+            }
+        } catch (ArithmeticException | NumberFormatException e) {
+            throw new IllegalArgumentException("Timestamp is invalid or outside the millisecond range: " + timestamp, e);
+        }
+        throw new IllegalArgumentException("Not support this timestamp type: " + timestamp.getClass().getName());
+    }
+
+    private static long decimalSecondsToMilliseconds(BigDecimal seconds) {
+        return seconds.movePointRight(3).setScale(0, RoundingMode.DOWN).longValueExact();
     }
 
     /**
@@ -94,7 +109,8 @@ public final class TimePeriodUtil {
     }
 
     private static long convertNumericTimestamp(long numericTimestamp) {
-        if (String.valueOf(numericTimestamp).length() <= 10) {
+        // The sign is not a digit; avoid abs() because Long.MIN_VALUE cannot be negated.
+        if (numericTimestamp > -10_000_000_000L && numericTimestamp < 10_000_000_000L) {
             return numericTimestamp * 1000;
         } else {
             return numericTimestamp;

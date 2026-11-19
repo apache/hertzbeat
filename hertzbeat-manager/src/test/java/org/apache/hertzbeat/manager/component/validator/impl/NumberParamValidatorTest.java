@@ -24,6 +24,8 @@ import org.apache.hertzbeat.manager.pojo.dto.MonitorParam;
 import org.apache.hertzbeat.manager.pojo.dto.ParamDefineInfo;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -84,6 +86,51 @@ class NumberParamValidatorTest {
         paramDefine.setRange("[0,100]");
         MonitorParam param = new MonitorParam();
         param.setParamValue("150");
+
+        assertThrows(IllegalArgumentException.class, () -> validator.validate(paramDefine, param));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {
+        "[0,65535,]", "[0,65535]||", "||[0,65535]",
+        "[0,65535]||invalid", "invalid||[0,65535]",
+        "[0,65535]||[1]", "[1]||[0,65535]",
+        "[0,65535]||[2,1]", "[0,65535]||[NaN,10]"
+    })
+    void validateMalformedRange(String range) {
+        ParamDefineInfo paramDefine = new ParamDefineInfo();
+        paramDefine.setType("number");
+        paramDefine.setField("port");
+        paramDefine.setRange(range);
+        MonitorParam param = new MonitorParam();
+        param.setParamValue("8080");
+
+        // Even an otherwise valid port must not bypass a broken range definition.
+        assertThrows(IllegalArgumentException.class, () -> validator.validate(paramDefine, param));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"[1,1023]||[8000,9000]", "[8000,9000]||[1,1023]"})
+    void validatePortInUnion(String range) {
+        ParamDefineInfo paramDefine = new ParamDefineInfo();
+        paramDefine.setType("number");
+        paramDefine.setRange(range);
+        MonitorParam param = new MonitorParam();
+        param.setParamValue("8080");
+
+        validator.validate(paramDefine, param);
+        assertEquals(CommonConstants.PARAM_TYPE_NUMBER, param.getType());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"[1,1023]||[8000,9000]", "[8000,9000]||[1,1023]"})
+    void validatePortOutsideUnion(String range) {
+        ParamDefineInfo paramDefine = new ParamDefineInfo();
+        paramDefine.setType("number");
+        paramDefine.setField("port");
+        paramDefine.setRange(range);
+        MonitorParam param = new MonitorParam();
+        param.setParamValue("7000");
 
         assertThrows(IllegalArgumentException.class, () -> validator.validate(paramDefine, param));
     }

@@ -37,6 +37,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 
 import java.util.ArrayList;
@@ -49,6 +50,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -451,6 +453,89 @@ public class MetricsRealTimeAlertCalculatorMatchTest {
         // unparseable number is defined as null: exists() short-circuits to false, no alarm and no abort
         verify(alarmCommonReduce, never()).reduceAndSendAlarm(any());
         verify(alarmCacheManager, times(1)).removeFiring(any(Long.class), any());
+    }
+
+    @Test
+    void firingAlertIsNotRecreatedOrResentOnSubsequentMatchesWhenTimesIsOne() throws Exception {
+        AlarmCacheManager cacheManager = Mockito.spy(new AlarmCacheManager(singleAlertDao));
+        MetricsRealTimeAlertCalculator calculator = newCalculatorWithCache(cacheManager);
+        AlertDefine define = canalAlertDefine(1);
+        when(alertDefineService.getMetricsRealTimeAlertDefines()).thenReturn(List.of(define));
+
+        calculator.calculate(canalMetricsData());
+        Map<String, SingleAlert> firingAfterFirst = cacheManager.getFiringAlerts(define.getId());
+        assertEquals(1, firingAfterFirst.size());
+        SingleAlert firstFiring = firingAfterFirst.values().iterator().next();
+        long firstStartAt = firstFiring.getStartAt();
+
+        Thread.sleep(5);
+        calculator.calculate(canalMetricsData());
+        calculator.calculate(canalMetricsData());
+
+        SingleAlert currentFiring = cacheManager.getFiringAlerts(define.getId()).values().iterator().next();
+        assertSame(firstFiring, currentFiring);
+        assertEquals(firstStartAt, currentFiring.getStartAt());
+        assertTrue(currentFiring.getActiveAt() > firstStartAt);
+        verify(cacheManager, times(1)).putFiring(eq(define.getId()), any(), any());
+        verify(cacheManager, never()).putPending(any(), any(), any());
+        verify(alarmCommonReduce, times(1)).reduceAndSendAlarm(any());
+    }
+
+    @Test
+    void firingAlertDoesNotReturnToPendingWhenTimesIsGreaterThanOne() throws Exception {
+        AlarmCacheManager cacheManager = Mockito.spy(new AlarmCacheManager(singleAlertDao));
+        MetricsRealTimeAlertCalculator calculator = newCalculatorWithCache(cacheManager);
+        AlertDefine define = canalAlertDefine(2);
+        when(alertDefineService.getMetricsRealTimeAlertDefines()).thenReturn(List.of(define));
+
+        calculator.calculate(canalMetricsData());
+        verify(alarmCommonReduce, never()).reduceAndSendAlarm(any());
+        calculator.calculate(canalMetricsData());
+        verify(alarmCommonReduce, times(1)).reduceAndSendAlarm(any());
+
+        // keep matching for several more cycles: must stay firing, never re-enter pending or re-send
+        for (int i = 0; i < 4; i++) {
+            calculator.calculate(canalMetricsData());
+        }
+        assertTrue(cacheManager.getPendingAlerts(define.getId()).isEmpty());
+        assertEquals(1, cacheManager.getFiringAlerts(define.getId()).size());
+        verify(cacheManager, times(1)).putPending(any(), any(), any());
+        verify(cacheManager, times(1)).putFiring(eq(define.getId()), any(), any());
+        verify(alarmCommonReduce, times(1)).reduceAndSendAlarm(any());
+    }
+
+    private MetricsRealTimeAlertCalculator newCalculatorWithCache(AlarmCacheManager cacheManager) {
+        return new MetricsRealTimeAlertCalculator(workerPool, dataQueue, alertDefineService, singleAlertDao,
+                alarmCommonReduce, cacheManager, new JexlExprCalculator(), false);
+    }
+
+    private static AlertDefine canalAlertDefine(int times) {
+        AlertDefine define = new AlertDefine();
+        define.setId(100L);
+        define.setName("canal_value_positive");
+        define.setExpr("equals(__app__,\"prometheus\") && equals(__metrics__,\"canal_instance\") "
+                + "&& equals(__instance__, \"518789738974464\") && metric_value > 0");
+        define.setTemplate("Canal instance val: ${metric_value}");
+        define.setTimes(times);
+        return define;
+    }
+
+    private static CollectRep.MetricsData canalMetricsData() {
+        CollectRep.Field destination = CollectRep.Field.newBuilder().setName("destination")
+                .setType(CommonConstants.TYPE_STRING).setLabel(true).build();
+        CollectRep.Field metricValue = CollectRep.Field.newBuilder().setName("metric_value")
+                .setType(CommonConstants.TYPE_NUMBER).build();
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+        builder.setId(518789738974464L)
+                .setApp("_prometheus_Cool_Stingray_34Nj_copy")
+                .setMetrics("canal_instance")
+                .setPriority(0)
+                .setCode(CollectRep.Code.SUCCESS);
+        builder.addMetadataAll(Map.of(MetricDataConstants.INSTANCE_NAME, "Cool_Stingray_34Nj_copy",
+                MetricDataConstants.INSTANCE, "127.0.0.1"));
+        builder.addAllFields(List.of(destination, metricValue));
+        builder.addValueRow(CollectRep.ValueRow.newBuilder().addColumn("example").addColumn("1.0").build());
+        return builder.build();
     }
 
 }
