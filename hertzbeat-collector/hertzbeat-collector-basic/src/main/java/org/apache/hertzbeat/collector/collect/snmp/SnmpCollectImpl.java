@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.nio.charset.CharsetDecoder;
 import java.util.HashMap;
 import java.util.List;
@@ -310,7 +311,7 @@ public class SnmpCollectImpl extends AbstractCollect {
                     if (isDateAndTimeOctetString(binding)) {
                         return parseDateAndTime(clearHexStr);
                     }
-                    return new String(bytes);
+                    return new String(bytes, StandardCharsets.UTF_8);
                 }
             } catch (Exception e) {
                 return hexString;

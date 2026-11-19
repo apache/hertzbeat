@@ -19,9 +19,12 @@ package org.apache.hertzbeat.collector.collect.imap;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import java.util.List;
+import java.util.Map;
 import org.apache.commons.net.imap.IMAPClient;
 import org.apache.commons.net.imap.IMAPSClient;
 import org.apache.hertzbeat.common.entity.job.Metrics;
@@ -132,5 +135,41 @@ public class ImapCollectImplTest {
     @Test
     void supportProtocol() {
         assertEquals("imap", imapCollect.supportProtocol());
+    }
+
+    @Test
+    void parseStatusResponseHandlesCompleteReply() {
+        Map<String, String> result = ImapCollectImpl.parseStatusResponse(
+                "* STATUS \"testFolder\" (MESSAGES 3 RECENT 2 UNSEEN 1)", "testFolder");
+        assertEquals("3", result.get("testFolderTotalMessageCount"));
+        assertEquals("2", result.get("testFolderRecentMessageCount"));
+        assertEquals("1", result.get("testFolderUnseenMessageCount"));
+    }
+
+    @Test
+    void parseStatusResponseHandlesTruncatedReply() {
+        // A reply cut short inside the parenthesised list used to index past
+        // the last token and crash the whole collection with
+        // ArrayIndexOutOfBoundsException; it must degrade gracefully instead.
+        Map<String, String> result = assertDoesNotThrow(
+                () -> ImapCollectImpl.parseStatusResponse("* STATUS \"testFolder\" (MESSAGES", "testFolder"));
+        assertFalse(result.containsKey("testFolderTotalMessageCount"));
+    }
+
+    @Test
+    void parseStatusResponseHandlesTrailingKeys() {
+        Map<String, String> result = ImapCollectImpl.parseStatusResponse(
+                "* STATUS \"testFolder\" (MESSAGES 3 RECENT 2 UNSEEN", "testFolder");
+        assertEquals("3", result.get("testFolderTotalMessageCount"));
+        assertEquals("2", result.get("testFolderRecentMessageCount"));
+        assertFalse(result.containsKey("testFolderUnseenMessageCount"));
+    }
+
+    @Test
+    void parseStatusResponseIgnoresOtherReplies() {
+        Map<String, String> result = ImapCollectImpl.parseStatusResponse("* OK IMAP4rev1 ready", "testFolder");
+        assertTrue(result.isEmpty());
+        Map<String, String> nullResult = ImapCollectImpl.parseStatusResponse(null, "testFolder");
+        assertTrue(nullResult.isEmpty());
     }
 }
