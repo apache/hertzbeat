@@ -18,6 +18,8 @@
 package org.apache.hertzbeat.alert.notice.impl;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import lombok.AllArgsConstructor;
@@ -47,44 +49,80 @@ import org.springframework.stereotype.Component;
 @Slf4j
 final class WeComRobotAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
 
+    private static final int MAX_MARKDOWN_BYTES = 4096;
+
     @Override
     public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, GroupAlert alert) {
         try {
-            WeWorkWebHookDto weWorkWebHookDTO = new WeWorkWebHookDto();
-            WeWorkWebHookDto.MarkdownDTO markdownDTO = new WeWorkWebHookDto.MarkdownDTO();
-            markdownDTO.setContent(renderContent(noticeTemplate, alert));
-            weWorkWebHookDTO.setMarkdown(markdownDTO);
+            String content = renderContent(noticeTemplate, alert);
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
-            HttpEntity<WeWorkWebHookDto> httpEntity = new HttpEntity<>(weWorkWebHookDTO, headers);
             String wechatId = receiver.getWechatId();
             if (!isValidWechatId(wechatId)) {
                 log.warn("Invalid WeChat ID: {}", wechatId);
                 throw new AlertNoticeException("Invalid WeChat ID provided.");
             }
             String webHookUrl = alerterProperties.getWeWorkWebhookUrl() + wechatId;
-            ResponseEntity<CommonRobotNotifyResp> entity = restTemplate.postForEntity(webHookUrl, httpEntity, CommonRobotNotifyResp.class);
-            if (entity.getStatusCode() == HttpStatus.OK) {
-                assert entity.getBody() != null;
-                if (entity.getBody().getErrCode() == 0) {
-                    log.debug("Send WeWork webhook success");
-                    WeWorkWebHookDto weWorkWebHookTextDto = checkNeedAtNominator(receiver, alert);
-                    if (!Objects.isNull(weWorkWebHookTextDto)) {
-                        HttpEntity<WeWorkWebHookDto> httpEntityText = new HttpEntity<>(weWorkWebHookTextDto, headers);
-                        restTemplate.postForEntity(webHookUrl, httpEntityText, CommonRobotNotifyResp.class);
-                    }
-
-                } else {
-                    log.warn("Send WeWork webhook failed with code {}", entity.getBody().getErrCode());
-                    throw new AlertNoticeException(entity.getBody().getErrMsg());
+            for (String part : splitMarkdown(content)) {
+                WeWorkWebHookDto request = new WeWorkWebHookDto();
+                WeWorkWebHookDto.MarkdownDTO markdown = new WeWorkWebHookDto.MarkdownDTO();
+                markdown.setContent(part);
+                request.setMarkdown(markdown);
+                ResponseEntity<CommonRobotNotifyResp> entity = restTemplate.postForEntity(
+                        webHookUrl, new HttpEntity<>(request, headers), CommonRobotNotifyResp.class);
+                if (entity.getStatusCode() != HttpStatus.OK) {
+                    throw new AlertNoticeException("Http StatusCode " + entity.getStatusCode());
                 }
-            } else {
-                log.warn("Send WeWork webhook failed with status {}", entity.getStatusCode());
-                throw new AlertNoticeException("Http StatusCode " + entity.getStatusCode());
+                CommonRobotNotifyResp body = entity.getBody();
+                if (body == null) {
+                    throw new AlertNoticeException("Empty WeWork webhook response");
+                }
+                if (body.getErrCode() != 0) {
+                    log.warn("Send WeWork webhook failed with code {}", body.getErrCode());
+                    throw new AlertNoticeException(body.getErrMsg());
+                }
+            }
+            log.debug("Send WeWork webhook success");
+            WeWorkWebHookDto mention = checkNeedAtNominator(receiver, alert);
+            if (!Objects.isNull(mention)) {
+                restTemplate.postForEntity(webHookUrl, new HttpEntity<>(mention, headers), CommonRobotNotifyResp.class);
             }
         } catch (Exception e) {
             throw new AlertNoticeException("[WeWork Notify Error] " + e.getMessage());
         }
+    }
+
+    /** Split at line boundaries when possible, without cutting a UTF-8 code point. */
+    static List<String> splitMarkdown(String content) {
+        List<String> parts = new ArrayList<>();
+        int start = 0;
+        while (start < content.length()) {
+            int end = start;
+            int lastLineEnd = -1;
+            int bytes = 0;
+            while (end < content.length()) {
+                int codePoint = content.codePointAt(end);
+                int next = end + Character.charCount(codePoint);
+                int size = content.substring(end, next).getBytes(StandardCharsets.UTF_8).length;
+                if (bytes + size > MAX_MARKDOWN_BYTES) {
+                    break;
+                }
+                bytes += size;
+                end = next;
+                if (codePoint == '\n') {
+                    lastLineEnd = end;
+                }
+            }
+            if (end < content.length() && lastLineEnd > start) {
+                end = lastLineEnd;
+            }
+            parts.add(content.substring(start, end));
+            start = end;
+        }
+        if (parts.isEmpty()) {
+            parts.add(content);
+        }
+        return parts;
     }
 
     private WeWorkWebHookDto checkNeedAtNominator(NoticeReceiver receiver, GroupAlert alert) {
