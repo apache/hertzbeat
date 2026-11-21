@@ -31,6 +31,11 @@ const catalogCases: Array<[MonitorMetricCatalogEvidence, string]> = [
 ];
 
 describe('MonitorMetricWorkbench', () => {
+  it('keeps the history image download in the header disabled while history is loading', () => {
+    renderWorkbench(controller({ selectedHistoryChart: historyChart('summary.value', { kind: 'loading', rows: [] }) }));
+    expect(screen.getByRole('button', { name: i18n.t('monitorMetrics.saveImage') })).toBeDisabled();
+  });
+
   beforeAll(async () => {
     await initializeI18n();
     await loadLocale('en-US');

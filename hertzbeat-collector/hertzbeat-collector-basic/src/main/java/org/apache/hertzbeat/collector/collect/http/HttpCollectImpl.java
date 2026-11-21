@@ -705,7 +705,9 @@ public class HttpCollectImpl extends AbstractCollect {
                     }
                 }
                 builder.addValueRow(valueRowBuilder.build());
-            } else if (objectValue instanceof String stringValue) {
+            } else if (objectValue instanceof String || objectValue instanceof Number || objectValue instanceof Boolean) {
+                // scalar result, e.g. parseScript points directly at a string, number or boolean leaf
+                String scalarValue = String.valueOf(objectValue);
                 CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
                 for (String alias : aliasFields) {
                     if (NetworkConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
@@ -713,19 +715,7 @@ public class HttpCollectImpl extends AbstractCollect {
                     } else if (CollectorConstants.KEYWORD.equalsIgnoreCase(alias)) {
                         valueRowBuilder.addColumn(Integer.toString(keywordNum));
                     } else {
-                        valueRowBuilder.addColumn(stringValue);
-                    }
-                }
-                builder.addValueRow(valueRowBuilder.build());
-            } else if (objectValue instanceof Number numberValue) {
-                CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
-                for (String alias : aliasFields) {
-                    if (NetworkConstants.RESPONSE_TIME.equalsIgnoreCase(alias)) {
-                        valueRowBuilder.addColumn(responseTime.toString());
-                    } else if (CollectorConstants.KEYWORD.equalsIgnoreCase(alias)) {
-                        valueRowBuilder.addColumn(Integer.toString(keywordNum));
-                    } else {
-                        valueRowBuilder.addColumn(numberValue.toString());
+                        valueRowBuilder.addColumn(scalarValue);
                     }
                 }
                 builder.addValueRow(valueRowBuilder.build());
