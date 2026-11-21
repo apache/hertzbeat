@@ -54,13 +54,17 @@ public class CollectorOnlineProcessor implements NettyRemotingProcessor {
             collectorInfo.setIp(clientIP);
         }
         this.manageServer.addChannel(collector, ctx.channel());
-        this.manageServer.collectorOnline(collector, collectorInfo, true);
         ServerInfo serverInfo = ServerInfo.builder().aesSecret(AesUtil.getDefaultSecretKey()).build();
-        return ClusterMsg.Message.newBuilder()
+        ClusterMsg.Message response = ClusterMsg.Message.newBuilder()
                 .setIdentity(message.getIdentity())
                 .setDirection(ClusterMsg.Direction.RESPONSE)
                 .setMsg(ByteString.copyFromUtf8(JsonUtil.toJson(serverInfo)))
                 .setType(ClusterMsg.MessageType.GO_ONLINE)
                 .build();
+        // Going online dispatches collect jobs on this channel, and their password params are encrypted
+        // with the aes secret. Write the secret first so a freshly started collector can decrypt them.
+        ctx.writeAndFlush(response);
+        this.manageServer.collectorOnline(collector, collectorInfo, true);
+        return null;
     }
 }
