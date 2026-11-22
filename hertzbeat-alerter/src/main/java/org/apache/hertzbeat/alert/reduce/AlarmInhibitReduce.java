@@ -18,7 +18,6 @@
 package org.apache.hertzbeat.alert.reduce;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -27,7 +26,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.AlerterProperties;
 import org.apache.hertzbeat.alert.dao.AlertInhibitDao;
@@ -277,19 +275,8 @@ public class AlarmInhibitReduce implements DisposableBean {
         }
 
         for (AlertInhibit rule : inhibitRules.values()) {
-            if (!matchLabels(alert.getLabels(), rule.getTargetLabels())) {
-                continue;
-            }
-
-            List<SingleAlert> sourceAlerts = getActiveSourceAlerts(workspaceId, rule);
-            if (sourceAlerts.isEmpty()) {
-                continue;
-            }
-
-            for (SingleAlert source : sourceAlerts) {
-                if (matchEqualLabels(source, alert, rule.getEqualLabels())) {
-                    return true;
-                }
+            if (matchLabels(alert.getLabels(), rule.getTargetLabels()) && hasInhibitingSource(workspaceId, rule, alert)) {
+                return true;
             }
         }
         return false;
@@ -305,8 +292,12 @@ public class AlarmInhibitReduce implements DisposableBean {
             log.warn("Received null alertLabels or requiredLabels in matchLabels");
             return false;
         }
-        return requiredLabels.entrySet().stream()
-                .allMatch(entry -> entry.getValue().equals(alertLabels.get(entry.getKey())));
+        for (Map.Entry<String, String> entry : requiredLabels.entrySet()) {
+            if (!entry.getValue().equals(alertLabels.get(entry.getKey()))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -326,11 +317,13 @@ public class AlarmInhibitReduce implements DisposableBean {
         Map<String, String> sourceLabels = source.getLabels();
         Map<String, String> targetLabels = target.getLabels();
 
-        return equalLabels.stream().allMatch(label -> {
+        for (String label : equalLabels) {
             String sourceValue = sourceLabels.get(label);
-            String targetValue = targetLabels.get(label);
-            return sourceValue != null && sourceValue.equals(targetValue);
-        });
+            if (sourceValue == null || !sourceValue.equals(targetLabels.get(label))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -376,27 +369,26 @@ public class AlarmInhibitReduce implements DisposableBean {
         });
     }
 
-    /**
-     * Get active source alerts for inhibit rule
-     * @param rule The rule of inhibition
-     * @return List of active source alerts
-     */
-    private List<SingleAlert> getActiveSourceAlerts(String workspaceId, AlertInhibit rule) {
-        if (rule == null) {
-            log.warn("Received null rule in getActiveSourceAlerts");
-            return Collections.emptyList();
-        }
+    private boolean hasInhibitingSource(String workspaceId, AlertInhibit rule, SingleAlert target) {
         Map<String, SourceAlertEntry> ruleCache = sourceAlertCache.get(
                 new WorkspaceRuleKey(requireWorkspace(workspaceId), rule.getId()));
         if (ruleCache == null || ruleCache.isEmpty()) {
-            return Collections.emptyList();
+            return false;
         }
 
         long now = System.currentTimeMillis();
-        return ruleCache.values().stream()
-                .filter(entry -> entry.getExpiryTime() > now)
-                .map(SourceAlertEntry::getAlert)
-                .collect(Collectors.toList());
+        boolean targetMatchesSource = matchLabels(target.getLabels(), rule.getSourceLabels());
+        for (SourceAlertEntry entry : ruleCache.values()) {
+            SingleAlert source = entry.getAlert();
+            if (entry.getExpiryTime() <= now || !matchEqualLabels(source, target, rule.getEqualLabels())) {
+                continue;
+            }
+            // Alerts matching both sides of the same rule cannot inhibit each other.
+            if (!targetMatchesSource || !matchLabels(source.getLabels(), rule.getTargetLabels())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
