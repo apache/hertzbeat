@@ -85,6 +85,48 @@ class HttpCollectImplTest {
     }
 
     @Test
+    void defaultParserCollectsRowsWithNullAndStructuredFields() throws Exception {
+        byte[] response = """
+                [
+                  {"name":"first","desc":null,"tags":[1,2],"meta":{"ok":true},"keyword":null},
+                  {"name":"second","desc":false,"tags":[],"meta":[null]},
+                  {"name":"third","tags":[7],"meta":[["ok"]],"keyword":9}
+                ]
+                """.getBytes(StandardCharsets.UTF_8);
+        HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+        server.createContext("/metrics", exchange -> {
+            exchange.getResponseHeaders().add("Content-Type", "application/json");
+            exchange.sendResponseHeaders(200, response.length);
+            exchange.getResponseBody().write(response);
+            exchange.close();
+        });
+        server.start();
+        try {
+            HttpProtocol http = HttpProtocol.builder()
+                    .method("GET")
+                    .host("127.0.0.1")
+                    .port(String.valueOf(server.getAddress().getPort()))
+                    .url("/metrics")
+                    .parseType(DispatchConstants.PARSE_DEFAULT)
+                    .keyword("first")
+                    .build();
+            Metrics metrics = Metrics.builder().http(http)
+                    .aliasFields(List.of("name", "desc", "tags", "meta", "keyword")).build();
+            CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+
+            httpCollectImpl.collect(builder, metrics);
+
+            assertEquals(CollectRep.Code.SUCCESS, builder.getCode(), builder.getMsg());
+            assertEquals(3, builder.getValuesCount());
+            assertEquals(List.of("first", CommonConstants.NULL_VALUE, "[1,2]", "{\"ok\":true}", "1"), builder.getValues(0).getColumnsList());
+            assertEquals(List.of("second", "false", "[]", "[null]", "1"), builder.getValues(1).getColumnsList());
+            assertEquals(List.of("third", CommonConstants.NULL_VALUE, "7", "ok", "9"), builder.getValues(2).getColumnsList());
+        } finally {
+            server.stop(0);
+        }
+    }
+
+    @Test
     void parseResponseByWebsite() {
         HttpProtocol http = HttpProtocol.builder().build();
         http.setMethod("GET");
