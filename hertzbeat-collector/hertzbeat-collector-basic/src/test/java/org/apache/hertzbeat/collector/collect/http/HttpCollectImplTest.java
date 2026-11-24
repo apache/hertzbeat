@@ -48,10 +48,19 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
  */
 class HttpCollectImplTest {
     private HttpCollectImpl httpCollectImpl;
+    private Method parseResponseByDefaultMethod;
 
     @BeforeEach
-    void setUp() {
+    void setUp() throws Exception {
         httpCollectImpl = new HttpCollectImpl();
+        parseResponseByDefaultMethod = HttpCollectImpl.class.getDeclaredMethod(
+                "parseResponseByDefault",
+                String.class,
+                List.class,
+                HttpProtocol.class,
+                CollectRep.MetricsData.Builder.class,
+                Long.class);
+        parseResponseByDefaultMethod.setAccessible(true);
     }
 
     @Test
@@ -862,17 +871,9 @@ class HttpCollectImplTest {
                 return super.addValueRow(valueRow);
             }
         };
-        Method parseMethod = HttpCollectImpl.class.getDeclaredMethod(
-                "parseResponseByDefault",
-                String.class,
-                List.class,
-                HttpProtocol.class,
-                CollectRep.MetricsData.Builder.class,
-                Long.class);
-        parseMethod.setAccessible(true);
 
         List<String> aliasFields = Lists.newArrayList("name", "nullField", "arrayField", "objectField", "numField", "responseTime");
-        parseMethod.invoke(httpCollectImpl, jsonResponse, aliasFields, new HttpProtocol(), builder, 150L);
+        parseResponseByDefaultMethod.invoke(httpCollectImpl, jsonResponse, aliasFields, new HttpProtocol(), builder, 150L);
 
         assertEquals(1, capturedRows.size());
         CollectRep.ValueRow row = capturedRows.get(0);
@@ -905,17 +906,9 @@ class HttpCollectImplTest {
                 return super.addValueRow(valueRow);
             }
         };
-        Method parseMethod = HttpCollectImpl.class.getDeclaredMethod(
-                "parseResponseByDefault",
-                String.class,
-                List.class,
-                HttpProtocol.class,
-                CollectRep.MetricsData.Builder.class,
-                Long.class);
-        parseMethod.setAccessible(true);
 
         List<String> aliasFields = Lists.newArrayList("id", "details");
-        parseMethod.invoke(httpCollectImpl, jsonResponse, aliasFields, new HttpProtocol(), builder, 50L);
+        parseResponseByDefaultMethod.invoke(httpCollectImpl, jsonResponse, aliasFields, new HttpProtocol(), builder, 50L);
 
         assertEquals(2, capturedRows.size());
         CollectRep.ValueRow row1 = capturedRows.get(0);
