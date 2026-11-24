@@ -843,4 +843,87 @@ class HttpCollectImplTest {
             server.stop(0);
         }
     }
+
+    @Test
+    void parseResponseByDefaultWithNullArrayAndObjectFields() throws Exception {
+        String jsonResponse = """
+                {
+                  "name": "hertzbeat",
+                  "nullField": null,
+                  "arrayField": [1, 2, 3],
+                  "objectField": {"key": "value"},
+                  "numField": 100
+                }""";
+        List<CollectRep.ValueRow> capturedRows = new ArrayList<>();
+        CollectRep.MetricsData.Builder builder = new CollectRep.MetricsData.Builder() {
+            @Override
+            public CollectRep.MetricsData.Builder addValueRow(CollectRep.ValueRow valueRow) {
+                capturedRows.add(valueRow);
+                return super.addValueRow(valueRow);
+            }
+        };
+        Method parseMethod = HttpCollectImpl.class.getDeclaredMethod(
+                "parseResponseByDefault",
+                String.class,
+                List.class,
+                HttpProtocol.class,
+                CollectRep.MetricsData.Builder.class,
+                Long.class);
+        parseMethod.setAccessible(true);
+
+        List<String> aliasFields = Lists.newArrayList("name", "nullField", "arrayField", "objectField", "numField", "responseTime");
+        parseMethod.invoke(httpCollectImpl, jsonResponse, aliasFields, new HttpProtocol(), builder, 150L);
+
+        assertEquals(1, capturedRows.size());
+        CollectRep.ValueRow row = capturedRows.get(0);
+        assertEquals("hertzbeat", row.getColumns(0));
+        assertEquals(CommonConstants.NULL_VALUE, row.getColumns(1));
+        assertEquals("[1,2,3]", row.getColumns(2));
+        assertEquals("{\"key\":\"value\"}", row.getColumns(3));
+        assertEquals("100", row.getColumns(4));
+        assertEquals("150", row.getColumns(5));
+    }
+
+    @Test
+    void parseResponseByDefaultWithJsonArray() throws Exception {
+        String jsonResponse = """
+                [
+                  {
+                    "id": "1",
+                    "details": null
+                  },
+                  {
+                    "id": "2",
+                    "details": ["item1", "item2"]
+                  }
+                ]""";
+        List<CollectRep.ValueRow> capturedRows = new ArrayList<>();
+        CollectRep.MetricsData.Builder builder = new CollectRep.MetricsData.Builder() {
+            @Override
+            public CollectRep.MetricsData.Builder addValueRow(CollectRep.ValueRow valueRow) {
+                capturedRows.add(valueRow);
+                return super.addValueRow(valueRow);
+            }
+        };
+        Method parseMethod = HttpCollectImpl.class.getDeclaredMethod(
+                "parseResponseByDefault",
+                String.class,
+                List.class,
+                HttpProtocol.class,
+                CollectRep.MetricsData.Builder.class,
+                Long.class);
+        parseMethod.setAccessible(true);
+
+        List<String> aliasFields = Lists.newArrayList("id", "details");
+        parseMethod.invoke(httpCollectImpl, jsonResponse, aliasFields, new HttpProtocol(), builder, 50L);
+
+        assertEquals(2, capturedRows.size());
+        CollectRep.ValueRow row1 = capturedRows.get(0);
+        assertEquals("1", row1.getColumns(0));
+        assertEquals(CommonConstants.NULL_VALUE, row1.getColumns(1));
+
+        CollectRep.ValueRow row2 = capturedRows.get(1);
+        assertEquals("2", row2.getColumns(0));
+        assertEquals("[\"item1\",\"item2\"]", row2.getColumns(1));
+    }
 }
