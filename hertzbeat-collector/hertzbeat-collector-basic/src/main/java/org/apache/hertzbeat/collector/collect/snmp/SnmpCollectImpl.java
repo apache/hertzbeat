@@ -295,22 +295,26 @@ public class SnmpCollectImpl extends AbstractCollect {
         return version;
     }
 
-    private String bingdingHexValueToString(VariableBinding binding) {
+    String bingdingHexValueToString(VariableBinding binding) {
         // whether if binding is hex
         String hexString = binding.toValueString();
         if (hexString.contains(HEX_SPLIT)) {
             try {
                 String clearHexStr = hexString.replace(HEX_SPLIT, "");
                 byte[] bytes = HexFormat.of().parseHex(clearHexStr);
+                // 6-byte octet string represents an IEEE 802 MAC address (PhysAddress)
+                if (bytes.length == 6) {
+                    return hexString;
+                }
+                if (isDateAndTimeOctetString(binding)) {
+                    return parseDateAndTime(clearHexStr);
+                }
                 CharsetDecoder decoder = Charset.forName("GB2312").newDecoder();
                 try {
                     CharBuffer res = decoder.decode(ByteBuffer.wrap(bytes));
                     return res.toString();
                 } catch (Exception e) {
-                    if (isDateAndTimeOctetString(binding)) {
-                        return parseDateAndTime(clearHexStr);
-                    }
-                    return new String(bytes);
+                    return hexString;
                 }
             } catch (Exception e) {
                 return hexString;
