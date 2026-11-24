@@ -91,12 +91,14 @@ class WeComRobotAlertNotifyHandlerImplTest {
         template.setName("test-template");
         template.setContent("test content");
         
-        when(alerterProperties.getWeWorkWebhookUrl()).thenReturn("http://test.url/");
-        when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
+
+
     }
     
     @Test
     public void testNotifyAlertSuccess() {
+        when(alerterProperties.getWeWorkWebhookUrl()).thenReturn("http://test.url/");
+        when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
         CommonRobotNotifyResp successResp = new CommonRobotNotifyResp();
         successResp.setErrCode(0);
         ResponseEntity<CommonRobotNotifyResp> responseEntity = new ResponseEntity<>(successResp, HttpStatus.OK);
@@ -111,6 +113,8 @@ class WeComRobotAlertNotifyHandlerImplTest {
     
     @Test
     public void testNotifyAlertFailure() {
+        when(alerterProperties.getWeWorkWebhookUrl()).thenReturn("http://test.url/");
+        when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
         CommonRobotNotifyResp failResp = new CommonRobotNotifyResp();
         failResp.setCode(1);
         failResp.setErrMsg("Test Error");
