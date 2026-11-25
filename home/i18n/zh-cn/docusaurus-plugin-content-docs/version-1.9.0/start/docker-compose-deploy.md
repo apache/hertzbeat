@@ -80,3 +80,17 @@ sidebar_label: Docker Compose方式安装
 ## 部署常见问题
 
 **最多的问题就是容器网络问题，请先提前排查**
+
+### 浏览器反复弹出用户名和密码输入框
+
+HertzBeat 1.9.0 原始的 Compose 配置启用了 HTTP Digest 认证。当受保护的 API 返回 `401 Unauthorized` 和 `WWW-Authenticate: Digest` 响应头时，浏览器可能会弹出登录对话框。
+
+在 Docker 宿主机上打开所选部署方案目录中的 `conf/application.yml`，只删除 `sureness.auths` 下的 `- digest`，保留 `basic` 和 `jwt`。在同一目录中执行以下命令使更改生效。
+
+```shell
+docker compose restart hertzbeat
+```
+
+### 浏览器显示证书警告
+
+在 Docker 宿主机上访问 `http://localhost:1157/`。如需远程访问，请通过反向代理使用 HTTPS，并确保证书受浏览器信任且与访问地址中的主机名匹配。
