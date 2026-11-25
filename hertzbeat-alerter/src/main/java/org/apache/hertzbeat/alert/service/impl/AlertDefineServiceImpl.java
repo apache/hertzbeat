@@ -52,6 +52,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -137,18 +139,37 @@ public class AlertDefineServiceImpl implements AlertDefineService {
 
     @Override
     public void addAlertDefine(AlertDefine alertDefine) throws RuntimeException {
-        saveNewCustomLabel(alertDefine);
-        alertDefine = alertDefineDao.saveAndFlush(alertDefine);
-        periodicAlertRuleScheduler.updateSchedule(alertDefine);
-        CacheFactory.clearAlertDefineCache();
+        saveAlertDefine(alertDefine);
     }
 
     @Override
     public void modifyAlertDefine(AlertDefine alertDefine) throws RuntimeException {
+        saveAlertDefine(alertDefine);
+    }
+
+    private void saveAlertDefine(AlertDefine alertDefine) {
+        // Reject invalid periods while the write can still be rolled back.
+        if (PeriodicAlertRuleScheduler.isPeriodicRule(alertDefine.getType())
+                && (alertDefine.getPeriod() == null || alertDefine.getPeriod() <= 0)) {
+            throw new IllegalArgumentException("Periodic alert rules require a positive period");
+        }
         saveNewCustomLabel(alertDefine);
-        alertDefineDao.saveAndFlush(alertDefine);
-        periodicAlertRuleScheduler.updateSchedule(alertDefine);
+        AlertDefine saved = alertDefineDao.saveAndFlush(alertDefine);
+        afterCommit(() -> periodicAlertRuleScheduler.updateSchedule(saved));
         CacheFactory.clearAlertDefineCache();
+    }
+
+    private void afterCommit(Runnable action) {
+        if (!TransactionSynchronizationManager.isSynchronizationActive()) {
+            action.run();
+            return;
+        }
+        TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+            @Override
+            public void afterCommit() {
+                action.run();
+            }
+        });
     }
 
     private void saveNewCustomLabel(AlertDefine alertDefine) {
@@ -173,7 +194,7 @@ public class AlertDefineServiceImpl implements AlertDefineService {
     @Override
     public void deleteAlertDefine(long alertId) throws RuntimeException {
         alertDefineDao.deleteById(alertId);
-        periodicAlertRuleScheduler.cancelSchedule(alertId);
+        afterCommit(() -> periodicAlertRuleScheduler.cancelSchedule(alertId));
         CacheFactory.clearAlertDefineCache();
     }
 
@@ -186,9 +207,7 @@ public class AlertDefineServiceImpl implements AlertDefineService {
     @Override
     public void deleteAlertDefines(Set<Long> alertIds) throws RuntimeException {
         alertDefineDao.deleteAlertDefinesByIdIn(alertIds);
-        for (Long alertId : alertIds) {
-            periodicAlertRuleScheduler.cancelSchedule(alertId);
-        }
+        alertIds.forEach(id -> afterCommit(() -> periodicAlertRuleScheduler.cancelSchedule(id)));
         CacheFactory.clearAlertDefineCache();
     }
 
