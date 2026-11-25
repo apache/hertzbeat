@@ -173,6 +173,80 @@ class AlarmInhibitReduceTest {
     }
 
     @Test
+    void whenAlertMatchesBothSides_shouldNotInhibitItself() {
+        alarmInhibitReduce.refreshInhibitRules(Collections.singletonList(createTwoSidedRule()));
+
+        Map<String, String> labels = createLabels("severity", "critical", "app", "mysql", "instance", "h2");
+        GroupAlert groupAlert = createGroupAlert("firing", labels,
+            Stream.of(createSingleAlert("firing", "self", labels)).collect(Collectors.toList()));
+        alarmInhibitReduce.inhibitAlarm(groupAlert);
+
+        assertEquals(1, groupAlert.getAlerts().size());
+        verify(alarmSilenceReduce).silenceAlarm(groupAlert);
+    }
+
+    @Test
+    void whenTwoAlertsMatchBothSides_shouldNotInhibitEachOther() {
+        alarmInhibitReduce.refreshInhibitRules(Collections.singletonList(createTwoSidedRule()));
+
+        Map<String, String> labels1 = createLabels("severity", "critical", "app", "mysql", "instance", "h2",
+            "alertname", "a1");
+        Map<String, String> labels2 = createLabels("severity", "critical", "app", "mysql", "instance", "h2",
+            "alertname", "a2");
+        GroupAlert groupAlert = createGroupAlert("firing", createLabels("instance", "h2"),
+            Stream.of(createSingleAlert("firing", "fp1", labels1), createSingleAlert("firing", "fp2", labels2))
+                .collect(Collectors.toList()));
+        alarmInhibitReduce.inhibitAlarm(groupAlert);
+
+        assertEquals(2, groupAlert.getAlerts().size());
+        verify(alarmSilenceReduce).silenceAlarm(groupAlert);
+    }
+
+    @Test
+    void whenSourceOnlyMatchesSourceSide_shouldStillInhibitTwoSidedAlert() {
+        alarmInhibitReduce.refreshInhibitRules(Collections.singletonList(createTwoSidedRule()));
+
+        Map<String, String> sourceLabels = createLabels("severity", "critical", "app", "redis", "instance", "h2");
+        alarmInhibitReduce.inhibitAlarm(createGroupAlert("firing", sourceLabels,
+            Stream.of(createSingleAlert("firing", "fp1", sourceLabels)).collect(Collectors.toList())));
+
+        Map<String, String> targetLabels = createLabels("severity", "critical", "app", "mysql", "instance", "h2");
+        GroupAlert targetGroupAlert = createGroupAlert("firing", targetLabels,
+            Stream.of(createSingleAlert("firing", "fp2", targetLabels)).collect(Collectors.toList()));
+        alarmInhibitReduce.inhibitAlarm(targetGroupAlert);
+
+        assertTrue(targetGroupAlert.getAlerts().isEmpty());
+        verify(alarmSilenceReduce, never()).silenceAlarm(targetGroupAlert);
+    }
+
+    @Test
+    void whenSourceMatchesBothSides_shouldStillInhibitTargetOnlyAlert() {
+        alarmInhibitReduce.refreshInhibitRules(Collections.singletonList(createTwoSidedRule()));
+
+        Map<String, String> sourceLabels = createLabels("severity", "critical", "app", "mysql", "instance", "h2");
+        alarmInhibitReduce.inhibitAlarm(createGroupAlert("firing", sourceLabels,
+            Stream.of(createSingleAlert("firing", "fp1", sourceLabels)).collect(Collectors.toList())));
+
+        Map<String, String> targetLabels = createLabels("severity", "warning", "app", "mysql", "instance", "h2");
+        GroupAlert targetGroupAlert = createGroupAlert("firing", targetLabels,
+            Stream.of(createSingleAlert("firing", "fp2", targetLabels)).collect(Collectors.toList()));
+        alarmInhibitReduce.inhibitAlarm(targetGroupAlert);
+
+        assertTrue(targetGroupAlert.getAlerts().isEmpty());
+        verify(alarmSilenceReduce, never()).silenceAlarm(targetGroupAlert);
+    }
+
+    private AlertInhibit createTwoSidedRule() {
+        return AlertInhibit.builder()
+                .id(2L)
+                .enable(true)
+                .sourceLabels(createLabels("severity", "critical"))
+                .targetLabels(createLabels("app", "mysql"))
+                .equalLabels(Collections.singletonList("instance"))
+                .build();
+    }
+
+    @Test
     void whenSourceAlertResolved_shouldStopInhibitingTargetAlert() {
         AlertInhibit rule = AlertInhibit.builder()
                 .id(1L)

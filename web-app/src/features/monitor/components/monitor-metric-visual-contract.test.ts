@@ -63,6 +63,15 @@ describe('monitor metric visual contract', () => {
     expect(historyStyles).not.toMatch(/\.historySummary\s*\{/);
   });
 
+  it('wraps history actions within narrow workbenches so image download stays reachable', () => {
+    const controlsRule = historyStyles.match(
+      /@container monitor-workbench \(max-width:\s*860px\)[\s\S]*?\.selectedHistoryControls\s*\{(?<body>[^}]*)\}/
+    )?.groups?.body;
+
+    expect(controlsRule).toMatch(/width:\s*100%/);
+    expect(controlsRule).toMatch(/flex-wrap:\s*wrap/);
+  });
+
   it('presents chart statistics as a quiet inline legend instead of detached pills', () => {
     const statisticsRules = [...historyStyles.matchAll(/\.historyStatistics\s*\{(?<body>[^}]*)\}/g)];
     const statisticsRule = statisticsRules.find(rule => rule.groups?.body?.includes('min-height'))?.groups?.body;

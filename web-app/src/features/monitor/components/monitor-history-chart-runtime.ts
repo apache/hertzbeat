@@ -26,11 +26,12 @@ import {
 export type MonitorHistoryChartRuntime = Omit<TimeSeriesChartRuntime, 'update'> & {
   update: (input: MonitorHistoryChartRenderInput) => void;
 };
-export type MonitorHistoryChartRenderInput = Omit<TimeSeriesChartRenderInput, 'presentation' | 'saveImageTitle'>;
+export type MonitorHistoryChartRenderInput = Omit<TimeSeriesChartRenderInput, 'presentation'>;
 export const createMonitorHistoryChart = (element: HTMLDivElement, input: MonitorHistoryChartRenderInput) => {
   const runtime = createTimeSeriesChart(element, monitorHistoryInput(input));
   return {
     update: (next: MonitorHistoryChartRenderInput) => runtime.update(monitorHistoryInput(next)),
+    exportPng: runtime.exportPng,
     dispose: runtime.dispose
   };
 };
