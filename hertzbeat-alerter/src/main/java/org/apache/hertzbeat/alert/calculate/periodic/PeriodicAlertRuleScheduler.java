@@ -148,7 +148,11 @@ public class PeriodicAlertRuleScheduler {
             return;
         }
         cancelSchedule(rule.getId());
-        if (isPeriodicRule(rule.getType())) {
+        if (Boolean.TRUE.equals(rule.isEnable()) && isPeriodicRule(rule.getType())) {
+            if (rule.getPeriod() == null || rule.getPeriod() <= 0) {
+                log.warn("Periodic alert rule {} has invalid period: {}, skipping schedule.", rule.getId(), rule.getPeriod());
+                return;
+            }
             ScheduledExecutorService currentScheduledExecutor = scheduledExecutor;
             ExecutorService currentPeriodicExecutor = periodicExecutor;
             Semaphore currentPeriodicPermits = periodicPermits;
