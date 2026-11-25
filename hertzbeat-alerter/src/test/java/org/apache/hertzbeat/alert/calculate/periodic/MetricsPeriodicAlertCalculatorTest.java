@@ -108,7 +108,9 @@ class MetricsPeriodicAlertCalculatorTest {
         // Assertion alarm status and content
         SingleAlert alert = alertCaptor.getValue();
         assertAll(() -> assertEquals(CommonConstants.ALERT_STATUS_FIRING, alert.getStatus()),
-                () -> assertEquals("High CPU usage (95.0%)", alert.getContent()));
+                () -> assertEquals("High CPU usage (95.0%)", alert.getContent()),
+                () -> assertEquals("test-team", alert.getLabels().get("team")),
+                () -> assertEquals("P1", alert.getLabels().get("priority")));
     }
 
     @Test

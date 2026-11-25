@@ -242,6 +242,51 @@ public class MetricsRealTimeAlertCalculatorMatchTest {
     }
 
     @Test
+    void testAlertRetainsCustomLabelsFromAlertDefine() throws InterruptedException {
+        CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
+        builder.setId(1)
+                .setApp("_prometheus_Cool_Stingray_34Nj")
+                .setMetrics("canal_instance")
+                .setPriority(0)
+                .setCode(CollectRep.Code.SUCCESS);
+
+        CollectRep.Field destination = CollectRep.Field.newBuilder().setName("destination").setType(CommonConstants.TYPE_STRING).setLabel(true).build();
+        CollectRep.Field metricValue = CollectRep.Field.newBuilder().setName("metric_value").setType(CommonConstants.TYPE_NUMBER).setLabel(true).build();
+
+        Map<String, String> meta = new HashMap<>();
+        meta.put(MetricDataConstants.INSTANCE_NAME, "Cool_Stingray_34Nj");
+        meta.put(MetricDataConstants.INSTANCE, "127.0.0.1");
+
+        builder.addMetadataAll(meta);
+        builder.addAllFields(Lists.newArrayList(destination, metricValue));
+        builder.addValueRow(CollectRep.ValueRow.newBuilder().addColumn("example").addColumn("1.0").build());
+
+        CollectRep.MetricsData metricsData = builder.build();
+
+        AlertDefine matchDefine = new AlertDefine();
+        matchDefine.setId(10L);
+        matchDefine.setName("test-custom-labels");
+        matchDefine.setExpr("equals(__app__,\"prometheus\") && equals(__metrics__,\"canal_instance\") && metric_value > 0");
+        matchDefine.setTimes(1);
+        matchDefine.setLabels(Map.of("custom_tag", "my_custom_value", "team", "sre"));
+
+        List<AlertDefine> allDefines = Collections.singletonList(matchDefine);
+
+        when(alertDefineService.getMetricsRealTimeAlertDefines()).thenReturn(allDefines);
+        when(dataQueue.pollMetricsDataToAlerter()).thenReturn(metricsData).thenThrow(new InterruptedException());
+
+        metricsRealTimeAlertCalculator.startCalculate();
+
+        Thread.sleep(3000);
+
+        ArgumentCaptor<SingleAlert> alertCaptor = ArgumentCaptor.forClass(SingleAlert.class);
+        verify(alarmCacheManager, times(1)).putFiring(Mockito.eq(10L), Mockito.any(), alertCaptor.capture());
+        SingleAlert firedAlert = alertCaptor.getValue();
+        assertEquals("my_custom_value", firedAlert.getLabels().get("custom_tag"));
+        assertEquals("sre", firedAlert.getLabels().get("team"));
+    }
+
+    @Test
     void testPrometheusReplaceApp() throws InterruptedException {
         CollectRep.MetricsData.Builder builder = CollectRep.MetricsData.newBuilder();
         builder.setId(1)
