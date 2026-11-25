@@ -22,16 +22,22 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.locks.Lock;
 import org.apache.hertzbeat.alert.dao.GroupAlertDao;
 import org.apache.hertzbeat.alert.dao.SingleAlertDao;
+import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.SingleAlert;
 import org.apache.hertzbeat.common.observability.gateway.AuthTokenScopes;
@@ -235,6 +241,77 @@ class DbAlertStoreHandlerImplTest {
                 .groupKey(groupKey)
                 .alerts(List.of(alert))
                 .build();
+    }
+
+    @Test
+    public void storeResolvedAlertKeepsGroupFiringWhenOtherGroupAlertsStillFire() {
+        String groupKey = "instance:host1";
+        String resolvedFingerprint = "cpu";
+        String firingFingerprint = "memory";
+        groupAlert.setGroupKey(groupKey);
+        groupAlert.setStatus(CommonConstants.ALERT_STATUS_RESOLVED);
+        singleAlert.setFingerprint(resolvedFingerprint);
+        singleAlert.setStatus(CommonConstants.ALERT_STATUS_RESOLVED);
+
+        GroupAlert existingGroup = new GroupAlert();
+        existingGroup.setId(1L);
+        existingGroup.setAlertFingerprints(List.of(resolvedFingerprint, firingFingerprint));
+        when(groupAlertDao.findByWorkspaceIdAndGroupKey(WORKSPACE_ID, groupKey)).thenReturn(existingGroup);
+
+        SingleAlert previousFiringAlert = new SingleAlert();
+        previousFiringAlert.setId(1L);
+        previousFiringAlert.setFingerprint(resolvedFingerprint);
+        previousFiringAlert.setStatus(CommonConstants.ALERT_STATUS_FIRING);
+        previousFiringAlert.setStartAt(1000L);
+        previousFiringAlert.setActiveAt(2000L);
+        previousFiringAlert.setTriggerTimes(3);
+        when(singleAlertDao.findByWorkspaceIdAndFingerprint(WORKSPACE_ID, resolvedFingerprint))
+                .thenReturn(previousFiringAlert);
+
+        SingleAlert savedResolvedAlert = new SingleAlert();
+        savedResolvedAlert.setId(1L);
+        savedResolvedAlert.setFingerprint(resolvedFingerprint);
+        savedResolvedAlert.setStatus(CommonConstants.ALERT_STATUS_RESOLVED);
+        when(singleAlertDao.save(any(SingleAlert.class))).thenReturn(savedResolvedAlert);
+
+        SingleAlert existingFiringAlert = new SingleAlert();
+        existingFiringAlert.setFingerprint(firingFingerprint);
+        existingFiringAlert.setStatus(CommonConstants.ALERT_STATUS_FIRING);
+        when(singleAlertDao.findSingleAlertsByWorkspaceIdAndFingerprintIn(
+                eq(WORKSPACE_ID), argThat(fingerprints -> fingerprints != null
+                        && new HashSet<>(fingerprints).equals(Set.of(resolvedFingerprint, firingFingerprint)))))
+                .thenReturn(List.of(savedResolvedAlert, existingFiringAlert));
+
+        when(groupAlertDao.save(any(GroupAlert.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        GroupAlert savedGroupAlert = dbAlertStoreHandler.store(groupAlert);
+
+        assertEquals(CommonConstants.ALERT_STATUS_FIRING, savedGroupAlert.getStatus());
+        assertEquals(CommonConstants.ALERT_STATUS_FIRING, groupAlert.getStatus());
+        assertEquals(2, savedGroupAlert.getAlerts().size());
+        assertTrue(savedGroupAlert.getAlerts().stream()
+                .anyMatch(alert -> firingFingerprint.equals(alert.getFingerprint())
+                        && CommonConstants.ALERT_STATUS_FIRING.equals(alert.getStatus())));
+        verify(singleAlertDao).findSingleAlertsByWorkspaceIdAndFingerprintIn(
+                eq(WORKSPACE_ID), argThat(fingerprints -> fingerprints != null
+                        && new HashSet<>(fingerprints).equals(Set.of(resolvedFingerprint, firingFingerprint))));
+    }
+
+    @Test
+    public void storeFiringGroupDoesNotQueryHistoricalAlerts() {
+        String groupKey = "instance:host1";
+        groupAlert.setGroupKey(groupKey);
+        groupAlert.setStatus(CommonConstants.ALERT_STATUS_FIRING);
+        singleAlert.setFingerprint("cpu");
+        singleAlert.setStatus(CommonConstants.ALERT_STATUS_FIRING);
+        when(groupAlertDao.findByWorkspaceIdAndGroupKey(WORKSPACE_ID, groupKey)).thenReturn(null);
+        when(singleAlertDao.save(any(SingleAlert.class))).thenReturn(singleAlert);
+        when(groupAlertDao.save(any(GroupAlert.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        GroupAlert savedGroupAlert = dbAlertStoreHandler.store(groupAlert);
+
+        assertEquals(CommonConstants.ALERT_STATUS_FIRING, savedGroupAlert.getStatus());
+        verify(singleAlertDao, never()).findSingleAlertsByWorkspaceIdAndFingerprintIn(eq(WORKSPACE_ID), anyList());
     }
 
 }
