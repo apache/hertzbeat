@@ -40,12 +40,15 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.transaction.support.TransactionSynchronization;
+import org.springframework.transaction.support.TransactionSynchronizationManager;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 import static org.apache.hertzbeat.common.constants.CommonConstants.LOG_ALERT_THRESHOLD_TYPE_PERIODIC;
 import static org.apache.hertzbeat.common.constants.CommonConstants.LOG_ALERT_THRESHOLD_TYPE_REALTIME;
@@ -61,6 +64,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.anySet;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -155,6 +159,79 @@ class AlertDefineServiceTest {
     void deleteAlertDefines() {
         doNothing().when(alertDefineDao).deleteAlertDefinesByIdIn(anySet());
         assertDoesNotThrow(() -> alertDefineService.deleteAlertDefines(new HashSet<>(1)));
+    }
+
+    @Test
+    void addAlertDefineSchedulesOnlyAfterCommitWhenTransactionActive() {
+        TransactionSynchronizationManager.initSynchronization();
+        try {
+            when(alertDefineDao.saveAndFlush(alertDefine)).thenReturn(alertDefine);
+            alertDefineService.addAlertDefine(alertDefine);
+
+            verify(periodicAlertRuleScheduler, never()).updateSchedule(any());
+
+            TransactionSynchronizationManager.getSynchronizations()
+                    .forEach(TransactionSynchronization::afterCommit);
+
+            verify(periodicAlertRuleScheduler, times(1)).updateSchedule(alertDefine);
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
+    }
+
+    @Test
+    void addAlertDefineDoesNotScheduleWhenTransactionRollsBack() {
+        TransactionSynchronizationManager.initSynchronization();
+        try {
+            when(alertDefineDao.saveAndFlush(alertDefine)).thenReturn(alertDefine);
+            alertDefineService.addAlertDefine(alertDefine);
+
+            verify(periodicAlertRuleScheduler, never()).updateSchedule(any());
+
+            TransactionSynchronizationManager.getSynchronizations()
+                    .forEach(synchronization -> synchronization.afterCompletion(TransactionSynchronization.STATUS_ROLLED_BACK));
+
+            verify(periodicAlertRuleScheduler, never()).updateSchedule(any());
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
+    }
+
+    @Test
+    void deleteAlertDefineCancelsOnlyAfterCommitWhenTransactionActive() {
+        TransactionSynchronizationManager.initSynchronization();
+        try {
+            doNothing().when(alertDefineDao).deleteById(1L);
+            alertDefineService.deleteAlertDefine(1L);
+
+            verify(periodicAlertRuleScheduler, never()).cancelSchedule(any());
+
+            TransactionSynchronizationManager.getSynchronizations()
+                    .forEach(TransactionSynchronization::afterCommit);
+
+            verify(periodicAlertRuleScheduler, times(1)).cancelSchedule(1L);
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
+    }
+
+    @Test
+    void deleteAlertDefinesCancelsOnlyAfterCommitWhenTransactionActive() {
+        TransactionSynchronizationManager.initSynchronization();
+        try {
+            doNothing().when(alertDefineDao).deleteAlertDefinesByIdIn(anySet());
+            alertDefineService.deleteAlertDefines(Set.of(1L, 2L));
+
+            verify(periodicAlertRuleScheduler, never()).cancelSchedule(any());
+
+            TransactionSynchronizationManager.getSynchronizations()
+                    .forEach(TransactionSynchronization::afterCommit);
+
+            verify(periodicAlertRuleScheduler, times(1)).cancelSchedule(1L);
+            verify(periodicAlertRuleScheduler, times(1)).cancelSchedule(2L);
+        } finally {
+            TransactionSynchronizationManager.clearSynchronization();
+        }
     }
 
     @Test
