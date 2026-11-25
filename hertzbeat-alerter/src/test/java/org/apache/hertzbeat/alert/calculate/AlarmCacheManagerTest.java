@@ -30,6 +30,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -177,5 +178,43 @@ public class AlarmCacheManagerTest {
         assertSame(persistedAlert, resolved);
         assertEquals("alertname:disk_full,define_id:7,instance:db-1", resolved.getFingerprint());
         assertNull(alarmCacheManager.getFiring(7L, rebuiltCacheKey));
+    }
+
+    @Test
+    void removeAlertsForMonitorDropsOnlyThatMonitor() {
+        Map<String, String> deletedLabels = new HashMap<>();
+        deletedLabels.put(CommonConstants.LABEL_MONITOR_ID, "42");
+        deletedLabels.put(CommonConstants.LABEL_DEFINE_ID, "5");
+        SingleAlert firing = new SingleAlert();
+        firing.setContent("deleted monitor");
+        firing.setLabels(deletedLabels);
+        String firingFingerprint = AlertUtil.calculateFingerprint(deletedLabels);
+        alarmCacheManager.putFiring(5L, firingFingerprint, firing);
+
+        Map<String, String> pendingLabels = new HashMap<>();
+        pendingLabels.put(CommonConstants.LABEL_MONITOR_ID, "42");
+        pendingLabels.put(CommonConstants.LABEL_DEFINE_ID, "5");
+        pendingLabels.put("state", "pending");
+        SingleAlert pending = new SingleAlert();
+        pending.setLabels(pendingLabels);
+        String pendingFingerprint = AlertUtil.calculateFingerprint(pendingLabels);
+        alarmCacheManager.putPending(5L, pendingFingerprint, pending);
+
+        Map<String, String> otherLabels = new HashMap<>();
+        otherLabels.put(CommonConstants.LABEL_MONITOR_ID, "7");
+        otherLabels.put(CommonConstants.LABEL_DEFINE_ID, "5");
+        SingleAlert other = new SingleAlert();
+        other.setLabels(otherLabels);
+        String otherFingerprint = AlertUtil.calculateFingerprint(otherLabels);
+        alarmCacheManager.putFiring(5L, otherFingerprint, other);
+
+        List<SingleAlert> removed = alarmCacheManager.removeAlertsForMonitor("42");
+
+        assertEquals(1, removed.size());
+        assertEquals("deleted monitor", removed.get(0).getContent());
+        assertNull(alarmCacheManager.getFiring(5L, firingFingerprint));
+        assertNull(alarmCacheManager.getPending(5L, pendingFingerprint));
+        assertNotNull(alarmCacheManager.getFiring(5L, otherFingerprint));
+        assertEquals(0, alarmCacheManager.removeAlertsForMonitor(" ").size());
     }
 }

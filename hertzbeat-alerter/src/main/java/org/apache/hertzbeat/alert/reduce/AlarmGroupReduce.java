@@ -240,6 +240,35 @@ public class AlarmGroupReduce implements DisposableBean {
     }
 
     /**
+     * Remove cached group members for a deleted monitor without sending another notification.
+     * The monitor no longer exists, so a recovery notice would only repeat the orphaned alert.
+     *
+     * @param monitorId {@code hertzbeat.monitor.id} label value
+     * @return number of cached alerts removed
+     */
+    public int dropAlertsForMonitor(String monitorId) {
+        if (monitorId == null || monitorId.isBlank()) {
+            return 0;
+        }
+        int removed = 0;
+        for (GroupAlertCache cache : groupCacheMap.values()) {
+            synchronized (cache) {
+                var iterator = cache.getAlertFingerprints().entrySet().iterator();
+                while (iterator.hasNext()) {
+                    SingleAlert alert = iterator.next().getValue();
+                    if (alert != null
+                            && alert.getLabels() != null
+                            && monitorId.equals(alert.getLabels().get(CommonConstants.LABEL_MONITOR_ID))) {
+                        iterator.remove();
+                        removed++;
+                    }
+                }
+            }
+        }
+        return removed;
+    }
+
+    /**
      * Process single alert and group by defined rules
      */
     public void processGroupAlert(SingleAlert alert) {
