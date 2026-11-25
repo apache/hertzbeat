@@ -85,6 +85,23 @@ params:
     type: boolean
     # required-true or false
     required: false
+  # field-param field key
+  - field: url
+    # name-param field display i18n name
+    name:
+      zh-CN: 状态URL
+      en-US: Status URL
+      ja-JP: ステータスURL
+    # type-param field type(most mapping the html input type)
+    type: text
+    # required-true or false
+    required: false
+    # hide-is hide this field and put it in advanced layout
+    hide: true
+    # default value
+    defaultValue: /nginx-status
+    # placeholder
+    placeholder: /nginx-status
 
 # collect metrics config list
 metrics:
@@ -117,6 +134,8 @@ metrics:
       port: ^_^port^_^
       # timeout
       timeout: ^_^timeout^_^
+      # http url
+      url: ^_^url^_^
       # ssl
       ssl: ^_^ssl^_^
 
@@ -201,7 +220,7 @@ metrics:
       # timeout
       timeout: ^_^timeout^_^
       # http url
-      url: /nginx-status
+      url: ^_^url^_^
       # ssl
       ssl: ^_^ssl^_^
 
