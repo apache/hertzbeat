@@ -286,6 +286,12 @@ public class MonitorServiceImpl implements MonitorService {
         monitorInfo.setCronExpression(schedule.cronExpression());
         monitorInfo.setIntervals(schedule.intervalSeconds());
         Monitor monitor = monitorInfo.toEntity();
+        if (Boolean.TRUE.equals(isModify) && !StringUtils.hasText(monitor.getScrape()) && monitor.getId() != null) {
+            oldMonitorCatalogQueryService.findMonitorById(monitor.getId()).ifPresent(pre -> {
+                monitor.setScrape(pre.getScrape());
+                monitorInfo.setScrape(pre.getScrape());
+            });
+        }
         Map<String, MonitorParam> paramMap = monitorDto.getParamInfos()
                 .stream()
                 .peek(param -> {
@@ -351,9 +357,11 @@ public class MonitorServiceImpl implements MonitorService {
             for (ParamDefineInfo paramDefine : paramDefines) {
                 String field = paramDefine.getField();
                 MonitorParam param = paramMap.get(field);
-                // Get the host from service discovery
-                if (!isStatic && "host".equals(field)) {
-                    continue;
+                // Get the host and port from service discovery
+                if (!isStatic && ("host".equals(field) || "port".equals(field))) {
+                    if (param == null || !StringUtils.hasText(param.getParamValue())) {
+                        continue;
+                    }
                 }
                 if ("password".equals(paramDefine.getType())
                         && param != null
@@ -489,6 +497,9 @@ public class MonitorServiceImpl implements MonitorService {
             // The type of monitoring cannot be modified
             throw new IllegalArgumentException("Can not modify monitor's app type");
         }
+        if (!StringUtils.hasText(monitor.getScrape())) {
+            monitor.setScrape(preMonitor.getScrape());
+        }
         applyScheduleContract(monitor);
         Map<String, String> labels = monitor.getLabels();
         if (labels == null) {
@@ -521,13 +532,20 @@ public class MonitorServiceImpl implements MonitorService {
             if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
                 appDefine.setApp(CommonConstants.PROMETHEUS_APP_PREFIX + monitor.getName());
             }
-            appDefine.setId(preMonitor.getJobId());
+            if (preMonitor.getJobId() != null) {
+                appDefine.setId(preMonitor.getJobId());
+            }
             appDefine.setMonitorId(monitorId);
             MonitorJobScheduleMapper.apply(monitor, appDefine);
             appDefine.setCyclic(true);
             appDefine.setTimestamp(System.currentTimeMillis());
-            Map<String, String> metadata = Map.of(CommonConstants.LABEL_INSTANCE_NAME, monitor.getName(),
-                    CommonConstants.LABEL_INSTANCE, monitor.getInstance());
+            Map<String, String> metadata = new HashMap<>(4);
+            if (monitor.getName() != null) {
+                metadata.put(CommonConstants.LABEL_INSTANCE_NAME, monitor.getName());
+            }
+            if (monitor.getInstance() != null) {
+                metadata.put(CommonConstants.LABEL_INSTANCE, monitor.getInstance());
+            }
             appDefine.setMetadata(metadata);
             appDefine.setLabels(monitor.getLabels());
             appDefine.setAnnotations(monitor.getAnnotations());
@@ -536,13 +554,23 @@ public class MonitorServiceImpl implements MonitorService {
                     .collect(Collectors.toList());
             appDefine.setConfigmap(configmaps);
             long newJobId;
-            if (collector == null) {
-                newJobId = collectJobScheduling.updateAsyncCollectJob(appDefine);
+            if (preMonitor.getJobId() != null) {
+                if (collector == null) {
+                    newJobId = collectJobScheduling.updateAsyncCollectJob(appDefine);
+                } else {
+                    newJobId = collectJobScheduling.updateAsyncCollectJob(appDefine, collector);
+                }
             } else {
-                newJobId = collectJobScheduling.updateAsyncCollectJob(appDefine, collector);
+                if (collector == null) {
+                    newJobId = collectJobScheduling.addAsyncCollectJob(appDefine, null);
+                } else {
+                    newJobId = collectJobScheduling.addAsyncCollectJob(appDefine, collector);
+                }
             }
             monitor.setJobId(newJobId);
             // Keep save responsive; explicit detect owns synchronous probe feedback.
+        } else {
+            monitor.setJobId(preMonitor.getJobId());
         }
 
         // After the update is successfully released, refresh the database
@@ -567,7 +595,9 @@ public class MonitorServiceImpl implements MonitorService {
         } catch (Exception e) {
             log.error(e.getMessage(), e);
             // Repository brushing abnormally cancels the previously delivered task
-            collectJobScheduling.cancelAsyncCollectJob(monitor.getJobId());
+            if (monitor.getJobId() != null) {
+                collectJobScheduling.cancelAsyncCollectJob(monitor.getJobId());
+            }
             throw new MonitorDatabaseException(e.getMessage());
         }
     }
