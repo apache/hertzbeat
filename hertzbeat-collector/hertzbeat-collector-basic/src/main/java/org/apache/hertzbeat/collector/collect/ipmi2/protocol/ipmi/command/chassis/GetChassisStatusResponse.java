@@ -18,6 +18,8 @@
 package org.apache.hertzbeat.collector.collect.ipmi2.protocol.ipmi.command.chassis;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.List;
 import org.apache.hertzbeat.collector.collect.ipmi2.client.IpmiPacketContext;
 import org.apache.hertzbeat.collector.collect.ipmi2.protocol.common.IpmiCode;
 import org.apache.hertzbeat.collector.collect.ipmi2.protocol.ipmi.IpmiCommandName;
@@ -66,29 +68,42 @@ public class GetChassisStatusResponse extends AbstractIpmiResponse {
         }
     }
 
-    enum LastPowerEvent implements IpmiCode.Code {
-        none(0, "None"),
-        unknown(1, "Unknown"),
-        lastPowerOff(2, "Last Power Off"),
-        lastPowerOn(3, "Last Power On");
+    enum LastPowerEvent {
+        acFailed(0x01, "AC Failed"),
+        powerOverload(0x02, "Power Overload"),
+        powerInterlock(0x04, "Power Interlock"),
+        powerFault(0x08, "Power Fault"),
+        powerOnViaIpmi(0x10, "Power On via IPMI");
 
-        private final byte code;
+        private final byte mask;
         private final String description;
 
-        LastPowerEvent(int code, String description) {
-            this.code = ByteConvertUtils.checkCastByte(code);
+        LastPowerEvent(int mask, String description) {
+            this.mask = ByteConvertUtils.checkCastByte(mask);
             this.description = description;
         }
 
-        @Override
-        public byte getCode() {
-            return code;
+        public byte getMask() {
+            return mask;
         }
 
-        @Override
         public String getDescription() {
             return description;
         }
+    }
+
+    public static String parseLastPowerEvent(byte t) {
+        int bits = t & 0x1F;
+        if (bits == 0) {
+            return "None";
+        }
+        List<String> events = new ArrayList<>(LastPowerEvent.values().length);
+        for (LastPowerEvent event : LastPowerEvent.values()) {
+            if ((bits & event.getMask()) != 0) {
+                events.add(event.getDescription());
+            }
+        }
+        return events.isEmpty() ? "None" : String.join(", ", events);
     }
 
     @Override
@@ -106,7 +121,7 @@ public class GetChassisStatusResponse extends AbstractIpmiResponse {
         isPowerControlFault = getBits(t, 4, 0x1) == 1;
         powerRestorePolicy = IpmiCode.fromByte(PowerRestorePolicy.class, getBits(t, 5, 0x3)).getDescription();
         t = buffer.get();
-        lastPowerEvent = IpmiCode.fromByte(LastPowerEvent.class, getBits(t, 0, 0x1F)).getDescription();
+        lastPowerEvent = parseLastPowerEvent(t);
         t = buffer.get();
         isFrontPanelLockoutActive = getBits(t, 1, 0x1) == 1;
         isDriveFault = getBits(t, 2, 0x1) == 1;
