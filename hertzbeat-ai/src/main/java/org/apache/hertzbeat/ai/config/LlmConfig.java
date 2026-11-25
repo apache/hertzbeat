@@ -24,6 +24,7 @@ import io.micrometer.core.instrument.Metrics;
 import io.micrometer.observation.ObservationRegistry;
 import java.time.Duration;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.support.event.AiProviderConfigChangeEvent;
@@ -160,11 +161,7 @@ public class LlmConfig {
                 List.of());
 
         // Create Chat Options
-        OpenAiChatOptions openAiChatOptions = OpenAiChatOptions.builder()
-                .model(modelProviderConfig.getModel())
-                .temperature(0.3)
-                .apiKey(modelProviderConfig.getApiKey())
-                .build();
+        OpenAiChatOptions openAiChatOptions = buildChatOptions(modelProviderConfig);
 
         // Create Chat Model
         OpenAiChatModel openAiChatModel = OpenAiChatModel.builder()
@@ -174,6 +171,32 @@ public class LlmConfig {
 
         // Create and return ChatClient
         return ChatClient.create(openAiChatModel);
+    }
+
+    static OpenAiChatOptions buildChatOptions(ModelProviderConfig modelProviderConfig) {
+        OpenAiChatOptions.Builder optionsBuilder = OpenAiChatOptions.builder()
+                .model(modelProviderConfig.getModel())
+                .apiKey(modelProviderConfig.getApiKey());
+        if (!isReasoningModel(modelProviderConfig.getModel())) {
+            optionsBuilder.temperature(0.3);
+        }
+        return optionsBuilder.build();
+    }
+
+    static boolean isReasoningModel(String model) {
+        if (!StringUtils.hasText(model)) {
+            return false;
+        }
+        String lower = model.toLowerCase(Locale.ROOT);
+        int lastSlash = lower.lastIndexOf('/');
+        if (lastSlash >= 0 && lastSlash < lower.length() - 1) {
+            lower = lower.substring(lastSlash + 1);
+        }
+        return lower.contains("reasoner")
+                || lower.startsWith("o1")
+                || lower.startsWith("o3")
+                || lower.startsWith("o4")
+                || lower.contains("deepseek-r1");
     }
 
     /**
