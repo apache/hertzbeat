@@ -138,7 +138,7 @@ public class TelnetCollectImpl extends AbstractCollect {
         OutputStream outputStream = telnetClient.getOutputStream();
         outputStream.write(cmd.getBytes(StandardCharsets.UTF_8));
         outputStream.flush();
-        String result = new String(telnetClient.getInputStream().readAllBytes());
+        String result = new String(telnetClient.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
         String[] lines = result.split("\n");
         if (lines.length > 0 && CollectorConstants.ZOOKEEPER_APP.equals(app)
                 && CollectorConstants.ZOOKEEPER_ENVI_HEAD.equals(lines[0])) {

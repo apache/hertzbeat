@@ -78,7 +78,9 @@ public class WebsocketCollectImpl extends AbstractCollect {
         try {
             socket = new Socket();
             SocketAddress socketAddress = new InetSocketAddress(host, Integer.parseInt(port));
-            socket.connect(socketAddress);
+            int timeout = parseTimeoutMillis(websocketProtocol.getTimeout());
+            socket.connect(socketAddress, timeout);
+            socket.setSoTimeout(timeout);
 
             if (socket.isConnected()) {
                 long responseTime = System.currentTimeMillis() - startTime;
@@ -141,6 +143,18 @@ public class WebsocketCollectImpl extends AbstractCollect {
         }
     }
 
+    private static int parseTimeoutMillis(String timeout) {
+        try {
+            int millis = Integer.parseInt(timeout);
+            if (millis > 0) {
+                return millis;
+            }
+        } catch (NumberFormatException ignored) {
+            // fall through to the default
+        }
+        return 5000;
+    }
+
     @Override
     public String supportProtocol() {
         return DispatchConstants.PROTOCOL_WEBSOCKET;
@@ -167,7 +181,7 @@ public class WebsocketCollectImpl extends AbstractCollect {
     private Map<String, String> readHeaders(InputStream in) throws IOException {
 
         Map<String, String> map = new HashMap<>(8);
-        BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+        BufferedReader reader = new BufferedReader(new InputStreamReader(in, StandardCharsets.UTF_8));
 
         String line;
         while ((line = reader.readLine()) != null && !line.isEmpty()) {
