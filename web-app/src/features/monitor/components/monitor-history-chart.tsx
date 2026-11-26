@@ -17,7 +17,7 @@
 
 import { Alert } from 'antd';
 import type { ReactNode } from 'react';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import { OperationalStatePanel } from '@/shared/operational-page';
@@ -52,13 +52,14 @@ export function HistoryAvailabilityBoundary({
   );
 }
 
-export function HistoryChartEvidence({
-  chart,
-  title = chart.metric.key
-}: {
+export type HistoryChartImage = { chart: MonitorHistoryChart; exportPng: () => string };
+type HistoryChartProps = {
   chart: MonitorHistoryChart;
   title?: string;
-}) {
+  onImageReady?: ((image: HistoryChartImage | undefined) => void) | undefined;
+};
+
+export function HistoryChartEvidence({ chart, title = chart.metric.key, onImageReady }: HistoryChartProps) {
   const { t } = useTranslation();
   if (chart.result.kind === 'unavailable') return <ChartState kind="unavailable" title={t('common.unavailable')} />;
   if (chart.result.kind === 'error') return <ChartState kind="error" title={t('common.routeError.description')} />;
@@ -66,10 +67,10 @@ export function HistoryChartEvidence({
   if (chart.result.kind === 'unsupported')
     return <ChartState kind="empty" title={t('monitorMetrics.historyUnsupported')} />;
   if (chart.result.kind === 'loading') return <ChartState kind="loading" title={t('monitorMetrics.loading')} />;
-  return <HistoryChartCanvas chart={chart} title={title} />;
+  return <HistoryChartCanvas chart={chart} title={title} onImageReady={onImageReady} />;
 }
 
-function HistoryChartCanvas({ chart, title }: { chart: MonitorHistoryChart; title: string }) {
+function HistoryChartCanvas({ chart, title, onImageReady }: HistoryChartProps & { title: string }) {
   const element = useRef<HTMLDivElement>(null);
   const runtime = useRef<MonitorHistoryChartRuntime | undefined>(undefined);
   const input = useMemo<MonitorHistoryChartRenderInput>(
@@ -80,21 +81,26 @@ function HistoryChartCanvas({ chart, title }: { chart: MonitorHistoryChart; titl
     }),
     [title, chart.metric.unit, chart.result.rows]
   );
-  const latest = useRef(input);
-  useEffect(() => {
-    latest.current = input;
-    runtime.current?.update(input);
-  }, [input]);
+  const latest = useRef({ input, chart, onImageReady });
+  useLayoutEffect(() => {
+    latest.current = { input, chart, onImageReady };
+    if (runtime.current) {
+      runtime.current.update(input);
+      onImageReady?.({ chart, exportPng: runtime.current.exportPng });
+    }
+  }, [input, chart, onImageReady]);
   useEffect(() => {
     let cancelled = false;
     async function mountChart() {
       const module = await import('./monitor-history-chart-runtime');
       if (cancelled || !element.current) return;
-      runtime.current = module.createMonitorHistoryChart(element.current, latest.current);
+      runtime.current = module.createMonitorHistoryChart(element.current, latest.current.input);
+      latest.current.onImageReady?.({ chart: latest.current.chart, exportPng: runtime.current.exportPng });
     }
     void mountChart();
     return () => {
       cancelled = true;
+      latest.current.onImageReady?.(undefined);
       runtime.current?.dispose();
       runtime.current = undefined;
     };

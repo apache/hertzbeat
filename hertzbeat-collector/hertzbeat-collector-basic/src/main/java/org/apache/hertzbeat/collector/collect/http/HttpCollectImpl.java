@@ -779,15 +779,23 @@ public class HttpCollectImpl extends AbstractCollect {
             CollectRep.ValueRow.Builder valueRowBuilder = CollectRep.ValueRow.newBuilder();
             for (String alias : aliasFields) {
                 JsonElement valueElement = object.get(alias);
-                if (valueElement != null) {
-                    String value = valueElement.getAsString();
-                    valueRowBuilder.addColumn(value);
-                } else {
+                if (valueElement == null || valueElement.isJsonNull()) {
                     addColumnForSummary(responseTime, valueRowBuilder, keywordNum, alias);
+                } else {
+                    valueRowBuilder.addColumn(getJsonColumnValue(valueElement));
                 }
             }
             builder.addValueRow(valueRowBuilder.build());
         }
+    }
+
+    private static String getJsonColumnValue(JsonElement value) {
+        // Preserve Gson's scalar conversion for single-element arrays, including nested ones.
+        JsonElement scalar = value;
+        while (scalar.isJsonArray() && scalar.getAsJsonArray().size() == 1) {
+            scalar = scalar.getAsJsonArray().get(0);
+        }
+        return scalar.isJsonPrimitive() ? scalar.getAsString() : value.toString();
     }
 
     /**
