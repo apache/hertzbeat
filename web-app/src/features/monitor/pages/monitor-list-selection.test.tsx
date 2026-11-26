@@ -67,7 +67,7 @@ describe('MonitorListPage scoped bulk selection', () => {
     renderPage('/monitors?search=checkout&pageIndex=0&pageSize=10');
 
     fireEvent.click(await rowCheckbox('checkout-monitor'));
-    expect(screen.getByText('1 selected')).toBeInTheDocument();
+    expect(bulkSelectionCount()).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('search-scope'));
     expect(screen.queryByText('1 selected')).not.toBeInTheDocument();
@@ -88,9 +88,11 @@ describe('MonitorListPage scoped bulk selection', () => {
     expect(screen.queryByText('1 selected')).not.toBeInTheDocument();
 
     fireEvent.click(await rowCheckbox('checkout-page-two'));
-    expect(screen.getByText('1 selected')).toBeInTheDocument();
+    expect(bulkSelectionCount()).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Clear selection' }));
+    const bulk = bulkSelectionCount().parentElement;
+    expect(bulk).not.toBeNull();
+    fireEvent.click(within(bulk!).getByRole('button', { name: 'Clear selection' }));
     expect(screen.queryByText('1 selected')).not.toBeInTheDocument();
     expect(mutateMonitors).not.toHaveBeenCalled();
   });
@@ -103,7 +105,7 @@ describe('MonitorListPage scoped bulk selection', () => {
     renderPage('/monitors?search=checkout&pageIndex=0&pageSize=10');
 
     fireEvent.click(await rowCheckbox('checkout-monitor'));
-    expect(screen.getByText('1 selected')).toBeInTheDocument();
+    expect(bulkSelectionCount()).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: 'Refresh' }));
 
     await screen.findByText('No monitors match the current query.');
@@ -120,7 +122,7 @@ describe('MonitorListPage scoped bulk selection', () => {
     renderPage('/monitors?search=checkout&pageIndex=0&pageSize=10');
 
     fireEvent.click(await rowCheckbox('second-checkout-monitor'));
-    const bulk = screen.getByText('1 selected').parentElement;
+    const bulk = bulkSelectionCount().parentElement;
     expect(bulk).not.toBeNull();
     fireEvent.click(within(bulk!).getByRole('button', { name: 'Enable' }));
     fireEvent.click(screen.getByRole('button', { name: 'OK' }));
@@ -176,6 +178,16 @@ async function rowCheckbox(name: string) {
   const row = (await screen.findByText(name)).closest('tr');
   expect(row).not.toBeNull();
   return within(row!).getByRole('checkbox');
+}
+
+function bulkSelectionCount() {
+  const count = screen
+    .getAllByText('1 selected')
+    .find(
+      candidate => candidate.parentElement && within(candidate.parentElement).queryByRole('button', { name: 'Enable' })
+    );
+  expect(count).toBeDefined();
+  return count!;
 }
 
 function ScopeControls() {
