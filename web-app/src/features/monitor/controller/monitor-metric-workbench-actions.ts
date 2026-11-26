@@ -52,6 +52,8 @@ export function buildWorkbenchActions(input: {
       else input.historySelection.activate(metricKey);
     },
     loadMoreHistoryCharts: input.historySelection.loadMore,
+    setHistoryGroups: input.historySelection.selectGroups,
+    setHistoryCollapsedGroups: input.historySelection.collapseGroups,
     refresh: () => {
       input.refreshDetail();
       void input.investigation.refetch();
@@ -72,6 +74,8 @@ export function buildWorkbenchActions(input: {
     | 'setHistoryChartMode'
     | 'refreshHistoryChart'
     | 'loadMoreHistoryCharts'
+    | 'setHistoryGroups'
+    | 'setHistoryCollapsedGroups'
     | 'refresh'
   >;
 }

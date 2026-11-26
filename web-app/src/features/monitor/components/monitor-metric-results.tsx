@@ -25,6 +25,7 @@ import { availableFavoriteGroups, filterRealtimeGroups } from './monitor-metric-
 import { MonitorMetricToolbar, type MetricView } from './monitor-metric-toolbar';
 import { MonitorRealtimeResult } from './monitor-realtime-results';
 import { MonitorSelectedHistoryTray } from './monitor-selected-history-tray';
+import { MonitorHistoryGroups } from './monitor-history-groups';
 import styles from './monitor-metric-workbench.module.css';
 
 export function MonitorMetricResults({ state, actions }: MonitorMetricWorkbenchController) {
@@ -56,6 +57,7 @@ export function MonitorMetricResults({ state, actions }: MonitorMetricWorkbenchC
         }}
       />
       <MonitorSelectedHistoryTray state={state} actions={actions} />
+      <MonitorHistoryGroups state={state} actions={actions} />
       <MetricResultsBody
         state={state}
         actions={actions}
