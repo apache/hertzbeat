@@ -32,6 +32,9 @@ import org.apache.hertzbeat.ai.gateway.tool.core.AgentToolPolicy;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.Param;
 import org.apache.hertzbeat.common.util.AesUtil;
+import org.apache.hertzbeat.common.util.CommonUtil;
+import org.apache.hertzbeat.common.util.IpDomainUtil;
+import org.apache.hertzbeat.common.util.JdbcUrlSafetyUtil;
 import org.apache.hertzbeat.manager.pojo.dto.MonitorDto;
 import org.apache.hertzbeat.manager.service.MonitorService;
 import org.springframework.ai.tool.annotation.Tool;
@@ -157,9 +160,19 @@ public class AgentDatabaseDiagnosticService {
         }
         String port = param(params, "port");
         String database = param(params, "database");
-        String url = "jdbc:mysql://" + host + ":" + (port == null || port.isBlank() ? "3306" : port)
-                + "/" + (database == null ? "" : database)
+        // host, port and database come from monitor parameters and are concatenated into the url,
+        // so they must not carry url syntax of their own
+        String effectivePort = (port == null || port.isBlank()) ? "3306" : port;
+        String effectiveDb = JdbcUrlSafetyUtil.requireSafeDatabaseName(database);
+        if (!IpDomainUtil.validateIpDomain(host)) {
+            throw new IllegalArgumentException("Invalid database host: " + host);
+        }
+        if (!CommonUtil.isNumeric(effectivePort)) {
+            throw new IllegalArgumentException("Invalid database port: " + effectivePort);
+        }
+        String url = "jdbc:mysql://" + host + ":" + effectivePort + "/" + effectiveDb
                 + "?useUnicode=true&characterEncoding=utf-8&useSSL=false&allowPublicKeyRetrieval=true&connectTimeout=5000";
+        JdbcUrlSafetyUtil.requireSafeJdbcUrl(url);
         try (Connection connection = DriverManager.getConnection(url, username, password);
              Statement statement = connection.createStatement()) {
             statement.setQueryTimeout(QUERY_TIMEOUT_SECONDS);
