@@ -125,41 +125,44 @@ public class MetricsDataServiceImpl implements MetricsDataService {
         if (storageData == null) {
             return null;
         }
-        MetricsData.MetricsDataBuilder dataBuilder = MetricsData.builder();
-        dataBuilder.id(storageData.getId()).app(storageData.getApp()).metrics(storageData.getMetrics())
-                .time(storageData.getTime());
-        dataBuilder.fields(storageData.getFields().stream()
-                .map(field -> Field.builder().name(field.getName())
-                        .type((byte) field.getType())
-                        .label(field.getLabel())
-                        .unit(field.getUnit())
-                        .build())
-                .toList());
+        // Reader-owned snapshot from RealTimeDataReader; close when the DTO is built.
+        try (storageData) {
+            MetricsData.MetricsDataBuilder dataBuilder = MetricsData.builder();
+            dataBuilder.id(storageData.getId()).app(storageData.getApp()).metrics(storageData.getMetrics())
+                    .time(storageData.getTime());
+            dataBuilder.fields(storageData.getFields().stream()
+                    .map(field -> Field.builder().name(field.getName())
+                            .type((byte) field.getType())
+                            .label(field.getLabel())
+                            .unit(field.getUnit())
+                            .build())
+                    .toList());
 
-        List<ValueRow> valueRows = new ArrayList<>();
-        if (storageData.rowCount() > 0) {
-            RowWrapper rowWrapper = storageData.readRow();
-            while (rowWrapper.hasNextRow()) {
-                rowWrapper = rowWrapper.nextRow();
-                Map<String, String> labels = Maps.newHashMapWithExpectedSize(8);
-                List<Value> values = new ArrayList<>();
-                rowWrapper.cellStream().forEach(cell -> {
-                    String origin = cell.getValue();
+            List<ValueRow> valueRows = new ArrayList<>();
+            if (storageData.rowCount() > 0) {
+                RowWrapper rowWrapper = storageData.readRow();
+                while (rowWrapper.hasNextRow()) {
+                    rowWrapper = rowWrapper.nextRow();
+                    Map<String, String> labels = Maps.newHashMapWithExpectedSize(8);
+                    List<Value> values = new ArrayList<>();
+                    rowWrapper.cellStream().forEach(cell -> {
+                        String origin = cell.getValue();
 
-                    if (CommonConstants.NULL_VALUE.equals(origin)) {
-                        values.add(new Value());
-                    } else {
-                        values.add(new Value(origin));
-                        if (cell.getMetadataAsBoolean(MetricDataConstants.LABEL)) {
-                            labels.put(cell.getField().getName(), origin);
+                        if (CommonConstants.NULL_VALUE.equals(origin)) {
+                            values.add(new Value());
+                        } else {
+                            values.add(new Value(origin));
+                            if (cell.getMetadataAsBoolean(MetricDataConstants.LABEL)) {
+                                labels.put(cell.getField().getName(), origin);
+                            }
                         }
-                    }
-                });
-                valueRows.add(ValueRow.builder().labels(labels).values(values).build());
+                    });
+                    valueRows.add(ValueRow.builder().labels(labels).values(values).build());
+                }
+                dataBuilder.valueRows(valueRows);
             }
-            dataBuilder.valueRows(valueRows);
+            return dataBuilder.build();
         }
-        return dataBuilder.build();
     }
 
     @Override
