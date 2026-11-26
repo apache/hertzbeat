@@ -18,6 +18,8 @@
 package org.apache.hertzbeat.alert.notice.impl;
 
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -38,6 +40,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.client.RestTemplate;
 
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -88,12 +91,14 @@ class WeComRobotAlertNotifyHandlerImplTest {
         template.setName("test-template");
         template.setContent("test content");
         
-        when(alerterProperties.getWeWorkWebhookUrl()).thenReturn("http://test.url/");
-        when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
+
+
     }
     
     @Test
     public void testNotifyAlertSuccess() {
+        when(alerterProperties.getWeWorkWebhookUrl()).thenReturn("http://test.url/");
+        when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
         CommonRobotNotifyResp successResp = new CommonRobotNotifyResp();
         successResp.setErrCode(0);
         ResponseEntity<CommonRobotNotifyResp> responseEntity = new ResponseEntity<>(successResp, HttpStatus.OK);
@@ -108,6 +113,8 @@ class WeComRobotAlertNotifyHandlerImplTest {
     
     @Test
     public void testNotifyAlertFailure() {
+        when(alerterProperties.getWeWorkWebhookUrl()).thenReturn("http://test.url/");
+        when(bundle.getString("alerter.notify.title")).thenReturn("Alert Notification");
         CommonRobotNotifyResp failResp = new CommonRobotNotifyResp();
         failResp.setCode(1);
         failResp.setErrMsg("Test Error");
@@ -120,5 +127,19 @@ class WeComRobotAlertNotifyHandlerImplTest {
         
         assertThrows(AlertNoticeException.class,
                 () -> weComRobotAlertNotifyHandler.send(receiver, template, groupAlert));
+    }
+
+    @Test
+    void splitMarkdownPreservesUnicodeAndRespectsByteLimit() {
+        String content = "中文告警😀\n".repeat(800) + "长".repeat(1800);
+        List<String> parts = WeComRobotAlertNotifyHandlerImpl.splitMarkdown(content);
+        assertTrue(parts.size() > 1);
+        assertEquals(content, String.join("", parts));
+        assertTrue(parts.stream().allMatch(part -> part.getBytes(StandardCharsets.UTF_8).length <= 4096));
+    }
+
+    @Test
+    void splitMarkdownKeepsSmallMessagesUnchanged() {
+        assertEquals(List.of("告警😀"), WeComRobotAlertNotifyHandlerImpl.splitMarkdown("告警😀"));
     }
 }
