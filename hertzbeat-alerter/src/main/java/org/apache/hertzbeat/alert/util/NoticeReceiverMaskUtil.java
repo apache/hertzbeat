@@ -66,7 +66,8 @@ public final class NoticeReceiverMaskUtil {
             new SecretField(NoticeReceiver::getServerChanToken, NoticeReceiver::setServerChanToken),
             new SecretField(NoticeReceiver::getGotifyToken, NoticeReceiver::setGotifyToken),
             new SecretField(NoticeReceiver::getNtfyToken, NoticeReceiver::setNtfyToken),
-            new SecretField(NoticeReceiver::getWpushToken, NoticeReceiver::setWpushToken));
+            new SecretField(NoticeReceiver::getWpushToken, NoticeReceiver::setWpushToken),
+            new SecretField(NoticeReceiver::getTeamsWebHookUrl, NoticeReceiver::setTeamsWebHookUrl));
 
     private NoticeReceiverMaskUtil() {
     }
