@@ -85,6 +85,13 @@ class DbAlertStoreTransaction {
                 int triggerTimes = Optional.ofNullable(persisted.getTriggerTimes()).orElse(1)
                         + Optional.ofNullable(incoming.getTriggerTimes()).orElse(1);
                 incoming.setTriggerTimes(triggerTimes);
+                Long activeAt = incoming.getActiveAt();
+                if (activeAt == null) {
+                    activeAt = persisted.getActiveAt();
+                } else if (persisted.getActiveAt() != null) {
+                    activeAt = Math.max(activeAt, persisted.getActiveAt());
+                }
+                incoming.setActiveAt(activeAt);
             }
         } else if (CommonConstants.ALERT_STATUS_RESOLVED.equals(incoming.getStatus())) {
             if (incoming.getEndAt() == null) {

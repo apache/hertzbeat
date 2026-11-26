@@ -137,6 +137,40 @@ class DbAlertStoreHandlerImplTest {
     }
 
     @Test
+    public void testStoreExistingAlertAdvancesActiveAtWhenNewer() {
+        String groupKey = "test-group-advance";
+        String fingerprint = "test-fingerprint-advance";
+
+        groupAlert.setGroupKey(groupKey);
+        singleAlert.setFingerprint(fingerprint);
+        singleAlert.setStatus("firing");
+        singleAlert.setActiveAt(5000L);
+
+        GroupAlert existingGroup = new GroupAlert();
+        existingGroup.setId(1L);
+        when(groupAlertDao.findByWorkspaceIdAndGroupKey(WORKSPACE_ID, groupKey)).thenReturn(existingGroup);
+
+        SingleAlert existingAlert = new SingleAlert();
+        existingAlert.setId(1L);
+        existingAlert.setStatus("firing");
+        existingAlert.setStartAt(1000L);
+        existingAlert.setActiveAt(2000L);
+        existingAlert.setTriggerTimes(1);
+        when(singleAlertDao.findByWorkspaceIdAndFingerprint(WORKSPACE_ID, fingerprint)).thenReturn(existingAlert);
+
+        when(singleAlertDao.save(any(SingleAlert.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(groupAlertDao.save(any(GroupAlert.class))).thenReturn(existingGroup);
+
+        dbAlertStoreHandler.store(groupAlert);
+
+        ArgumentCaptor<SingleAlert> captor = ArgumentCaptor.forClass(SingleAlert.class);
+        verify(singleAlertDao).save(captor.capture());
+        assertEquals(5000L, captor.getValue().getActiveAt());
+        assertEquals(1000L, captor.getValue().getStartAt());
+        assertEquals(2, captor.getValue().getTriggerTimes());
+    }
+
+    @Test
     void preservesCommonLabelKeysWhoseCurrentValueIsNull() {
         groupAlert.setGroupKey("collector-integrated-e2e");
         Map<String, String> currentLabels = new LinkedHashMap<>();
