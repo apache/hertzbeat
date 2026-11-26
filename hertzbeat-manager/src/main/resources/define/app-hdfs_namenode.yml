@@ -61,6 +61,17 @@ params:
     # default value
     defaultValue: 50070
   # field-param field key
+  - field: ssl
+    # name-param field display i18n name
+    name:
+      zh-CN: 启动SSL
+      en-US: SSL
+      ja-JP: SSL利用
+    # type-param field type(boolean mapping the html switch tag)
+    type: boolean
+    # required-true or false
+    required: false
+  # field-param field key
   - field: timeout
     # name-param field display i18n name
     name:
