@@ -260,6 +260,32 @@ class AlarmGroupReduceTest {
         verify(alarmInhibitReduce, times(2)).inhibitAlarm(any());
     }
 
+    @Test
+    void existingAlertAdvancesActiveAtAndPreservesStartAt() throws Exception {
+        alarmGroupReduce.refreshGroupDefines(List.of(groupRule(600)));
+        SingleAlert first = groupAlert("fp-1", "firing");
+        first.setStartAt(1000L);
+        first.setActiveAt(1000L);
+        alarmGroupReduce.processGroupAlert(first);
+
+        SingleAlert second = groupAlert("fp-1", "firing");
+        second.setStartAt(2000L);
+        second.setActiveAt(3000L);
+        alarmGroupReduce.processGroupAlert(second);
+
+        Field cachesField = AlarmGroupReduce.class.getDeclaredField("groupCacheMap");
+        cachesField.setAccessible(true);
+        Map<?, ?> cacheMap = (Map<?, ?>) cachesField.get(alarmGroupReduce);
+        Object cache = cacheMap.values().iterator().next();
+        Field fpField = cache.getClass().getDeclaredField("alertFingerprints");
+        fpField.setAccessible(true);
+        Map<?, ?> fps = (Map<?, ?>) fpField.get(cache);
+        SingleAlert cached = (SingleAlert) fps.get("fp-1");
+
+        assertEquals(1000L, cached.getStartAt());
+        assertEquals(3000L, cached.getActiveAt());
+    }
+
     /**
      * Regression for issue #4446: Prometheus keeps reposting the same resolved alert every
      * resend interval. Once the recovery has been emitted and the member evicted from the

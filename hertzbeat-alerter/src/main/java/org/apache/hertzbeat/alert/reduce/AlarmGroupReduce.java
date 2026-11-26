@@ -317,6 +317,10 @@ public class AlarmGroupReduce implements DisposableBean {
         if (existingAlert != null) {
             // Update existing alert timestamp
             alert.setStartAt(existingAlert.getStartAt());
+            if (alert.getActiveAt() == null
+                    || (existingAlert.getActiveAt() != null && alert.getActiveAt() < existingAlert.getActiveAt())) {
+                alert.setActiveAt(existingAlert.getActiveAt());
+            }
             cache.getAlertFingerprints().put(fingerprint, alert);
             return;
         }
@@ -367,6 +371,16 @@ public class AlarmGroupReduce implements DisposableBean {
                         && cache.getLastRepeatTime() > 0
                         && now - cache.getLastRepeatTime() < repeatInterval) {
                     return;
+                }
+            }
+
+            if (CommonConstants.ALERT_STATUS_FIRING.equals(status) && cache.getLastRepeatTime() > 0) {
+                for (SingleAlert firingAlert : snapshot.values()) {
+                    if (CommonConstants.ALERT_STATUS_FIRING.equals(firingAlert.getStatus())) {
+                        if (firingAlert.getActiveAt() == null || firingAlert.getActiveAt() < now) {
+                            firingAlert.setActiveAt(now);
+                        }
+                    }
                 }
             }
 
