@@ -19,11 +19,13 @@ package org.apache.hertzbeat.manager.config;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.lang.reflect.Field;
+import java.net.http.HttpClient;
 import java.time.Duration;
 import java.util.Map;
 import java.util.Set;
@@ -31,6 +33,7 @@ import org.apache.hertzbeat.common.constants.NetworkConstants;
 import org.junit.jupiter.api.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.http.client.ClientHttpRequestFactory;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.RestTemplate;
 
@@ -62,8 +65,11 @@ class RestTemplateConfigTest {
                     "greptimeQueryRestTemplate", "greptimeQueryClientHttpRequestFactory",
                     "greptimeWriteRestTemplate", "greptimeWriteClientHttpRequestFactory",
                     "greptimeInitRestTemplate", "greptimeInitClientHttpRequestFactory");
-            assertEquals(factories.keySet(), clients.keySet());
-            assertEquals(4, Set.copyOf(clients.values()).size());
+            // The notification client is a fifth, self-contained bean (builds its own
+            // JDK request factory with redirects disabled).
+            assertTrue(clients.containsKey("notificationRestTemplate"));
+            assertEquals(factories.size() + 1, clients.size());
+            assertEquals(5, Set.copyOf(clients.values()).size());
             assertEquals(4, factories.values().stream().map(context::getBean).distinct().count());
             assertSame(clients.get("restTemplate"), context.getBean(RestTemplate.class));
             assertSame(context.getBean("clientHttpRequestFactory"), context.getBean(ClientHttpRequestFactory.class));
@@ -75,6 +81,19 @@ class RestTemplateConfigTest {
                     assertNotSame(context.getBean("clientHttpRequestFactory"), context.getBean(factory));
                 }
             });
+        }
+    }
+
+    @Test
+    void notificationRestTemplateNeverFollowsRedirects() {
+        try (AnnotationConfigApplicationContext context =
+                     new AnnotationConfigApplicationContext(RestTemplateConfig.class)) {
+            RestTemplate template = context.getBean("notificationRestTemplate", RestTemplate.class);
+
+            JdkClientHttpRequestFactory jdkFactory = assertInstanceOf(JdkClientHttpRequestFactory.class,
+                    ReflectionTestUtils.getField(template, "requestFactory"));
+            HttpClient httpClient = (HttpClient) ReflectionTestUtils.getField(jdkFactory, "httpClient");
+            assertEquals(HttpClient.Redirect.NEVER, httpClient.followRedirects());
         }
     }
 }

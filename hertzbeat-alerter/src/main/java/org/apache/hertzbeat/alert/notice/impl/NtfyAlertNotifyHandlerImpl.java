@@ -19,18 +19,21 @@ package org.apache.hertzbeat.alert.notice.impl;
 
 import java.util.Map;
 import java.util.StringJoiner;
+import jakarta.annotation.Resource;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.alert.notice.AlertNoticeException;
 import org.apache.hertzbeat.common.entity.alerter.GroupAlert;
 import org.apache.hertzbeat.common.entity.alerter.NoticeReceiver;
 import org.apache.hertzbeat.common.entity.alerter.NoticeTemplate;
+import org.apache.hertzbeat.common.util.InternalUrlValidator;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 
 /**
  * Send alert notification through ntfy push notification service.
@@ -48,11 +51,26 @@ public class NtfyAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
     private static final String SEVERITY_CRITICAL = "critical";
     private static final String SEVERITY_WARNING = "warning";
 
+    /**
+     * RestTemplate that never follows redirects: URL validation only covers the
+     * initial request, so following redirects could bypass the SSRF guard.
+     */
+    @Resource(name = "notificationRestTemplate")
+    private RestTemplate notificationRestTemplate;
+
     @Override
     public void send(NoticeReceiver receiver, NoticeTemplate noticeTemplate, GroupAlert alert) throws AlertNoticeException {
         try {
             String content = renderContent(noticeTemplate, alert);
             String url = buildNtfyUrl(receiver);
+
+            // SSRF hardening: reject loopback / link-local / private / ULA / reserved addresses,
+            // unless the host is explicitly allowlisted by the administrator
+            try {
+                InternalUrlValidator.validate(url, alerterProperties.getInternalUrlAllowlist());
+            } catch (IllegalArgumentException e) {
+                throw new AlertNoticeException("Ntfy server URL rejected: " + e.getMessage());
+            }
 
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.TEXT_PLAIN);
@@ -74,7 +92,7 @@ public class NtfyAlertNotifyHandlerImpl extends AbstractAlertNotifyHandlerImpl {
             }
 
             HttpEntity<String> httpEntity = new HttpEntity<>(content, headers);
-            ResponseEntity<String> responseEntity = restTemplate.postForEntity(url, httpEntity, String.class);
+            ResponseEntity<String> responseEntity = notificationRestTemplate.postForEntity(url, httpEntity, String.class);
             if (responseEntity.getStatusCode() == HttpStatus.OK) {
                 log.debug("Send ntfy notification to {} Success", url);
             } else {
