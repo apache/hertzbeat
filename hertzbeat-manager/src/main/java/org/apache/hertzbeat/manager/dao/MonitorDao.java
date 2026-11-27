@@ -17,6 +17,7 @@
 
 package org.apache.hertzbeat.manager.dao;
 
+import jakarta.persistence.LockModeType;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -24,6 +25,7 @@ import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.manager.pojo.dto.AppCount;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -32,6 +34,10 @@ import org.springframework.data.repository.query.Param;
  * AuthResources database operation
  */
 public interface MonitorDao extends JpaRepository<Monitor, Long>, JpaSpecificationExecutor<Monitor> {
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("select m from Monitor m where m.id = :id")
+    Optional<Monitor> findForIntervalUpdate(@Param("id") Long id);
 
     /**
      * Delete monitor based on monitor ID list

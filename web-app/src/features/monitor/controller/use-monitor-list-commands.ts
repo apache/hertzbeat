@@ -21,7 +21,7 @@ import { useLayoutEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 
 import type { MonitorCapabilities } from '../model/monitor-capability-model';
-import { type MonitorAction, type MonitorPage } from '../model/monitor-contract';
+import { type MonitorBulkAction, type MonitorPage } from '../model/monitor-contract';
 import { executeMonitorListOperation, refreshMonitorList, type ActiveListOperation } from './monitor-list-operation';
 import { useMonitorInstanceCopy } from './use-monitor-instance-copy';
 import type { MonitorSelectionController } from './use-monitor-selection';
@@ -51,7 +51,7 @@ export function useMonitorListCommands(
     selection.validatedIds
   );
 
-  const run = async (action: MonitorAction, ids: number[]) => {
+  const run = async (action: MonitorBulkAction, ids: number[]) => {
     if (!canStartListCommand(action, ids, currentCapabilitiesRef.current, activeOperationRef.current)) return;
     const operation = { action, source, token: ++sequence.current, controller: new AbortController() };
     activeOperationRef.current = operation;
@@ -75,12 +75,12 @@ export function useMonitorListCommands(
     refresh: () => refreshMonitorList(reread),
     copyInstance,
     run,
-    runBulk: (action: MonitorAction) => run(action, selection.validatedIds())
+    runBulk: (action: MonitorBulkAction) => run(action, selection.validatedIds())
   };
 }
 
 function canStartListCommand(
-  action: MonitorAction,
+  action: MonitorBulkAction,
   ids: number[],
   capabilities: Pick<MonitorCapabilities, 'canWrite' | 'canDelete'>,
   active: ActiveListOperation | null
@@ -89,7 +89,10 @@ function canStartListCommand(
   return canUseListAction(action, capabilities);
 }
 
-function canUseListAction(action: MonitorAction, capabilities: Pick<MonitorCapabilities, 'canWrite' | 'canDelete'>) {
+function canUseListAction(
+  action: MonitorBulkAction,
+  capabilities: Pick<MonitorCapabilities, 'canWrite' | 'canDelete'>
+) {
   return action === 'delete' ? capabilities.canDelete : capabilities.canWrite;
 }
 

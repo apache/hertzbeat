@@ -19,6 +19,7 @@ package org.apache.hertzbeat.manager.service.entity;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.manager.dao.MonitorDao;
@@ -34,6 +35,10 @@ public class OldMonitorCatalogWriteModelService {
 
     public OldMonitorCatalogWriteModelService(MonitorDao monitorDao) {
         this.monitorDao = monitorDao;
+    }
+
+    public Optional<Monitor> findForIntervalUpdate(long monitorId) {
+        return monitorDao.findForIntervalUpdate(monitorId);
     }
 
     public void saveMonitor(Monitor monitor) {

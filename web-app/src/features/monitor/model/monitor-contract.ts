@@ -166,6 +166,7 @@ export type MonitorQuery = {
 };
 export type MonitorPage = PagedCollection<Monitor>;
 export type MonitorAction = 'copy' | 'enable' | 'pause' | 'delete';
+export type MonitorBulkAction = MonitorAction | { intervals: number };
 export type MonitorMetricOption = {
   key: string;
   group: string;

@@ -1737,6 +1737,9 @@
     }
   },
   "monitorActions": {
+    "changeInterval": "修改采集周期",
+    "intervalHelp": "为选中的 {{count}} 个监控设置采集周期（{{min}}–{{max}} 秒）。跳过使用 Cron 的监控。",
+    "intervalResult": "已更新 {{updated}} 个，已跳过 Cron 监控 {{cron}} 个，失败 {{failed}} 个。",
     "copy": "复制",
     "enable": "启用",
     "rowEnableConfirm": "确认启用 {{name}}？",

@@ -60,6 +60,12 @@ export function MonitorListView({ state, actions }: MonitorListViewProps) {
         />
         <MonitorBulkActions
           selectedIds={state.selectedIds}
+          pushOnly={
+            'records' in state.monitors &&
+            state.monitors.records.every(
+              row => !state.selectedIds.includes(row.id) || row.scheduleType === 'cron' || row.app === 'push'
+            )
+          }
           run={actions.runBulk}
           exportSelected={actions.exportSelected}
           canWrite={state.capabilities.canWrite}

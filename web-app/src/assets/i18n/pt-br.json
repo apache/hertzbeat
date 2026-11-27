@@ -1737,6 +1737,9 @@
     }
   },
   "monitorActions": {
+    "changeInterval": "Alterar intervalo de coleta",
+    "intervalHelp": "Defina o intervalo das {{count}} seleções em segundos ({{min}}–{{max}}). Agendamentos Cron serão ignorados.",
+    "intervalResult": "Atualizados: {{updated}}. Ignorados (Cron): {{cron}}. Falhas: {{failed}}.",
     "copy": "Copiar",
     "enable": "Ativar",
     "rowEnableConfirm": "Ativar {{name}}?",

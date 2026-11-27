@@ -37,6 +37,9 @@ import java.util.Set;
  */
 public interface MonitorService {
 
+    /** Updates one interval schedule in its own transaction. Returns false for cron schedules. */
+    boolean updateCollectionInterval(long monitorId, int seconds);
+
     /**
      * Monitoring Availability Probes
      *

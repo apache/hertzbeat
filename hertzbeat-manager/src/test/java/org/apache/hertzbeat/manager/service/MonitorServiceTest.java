@@ -47,6 +47,7 @@ import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Job;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.manager.Collector;
+import org.apache.hertzbeat.common.entity.manager.CollectorMonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
 import org.apache.hertzbeat.common.entity.manager.MonitorBind;
 import org.apache.hertzbeat.common.entity.manager.Param;
@@ -267,6 +268,41 @@ class MonitorServiceTest {
         paramDefine.setType(type);
         paramDefine.setRequired(required);
         return paramDefine;
+    }
+
+    @Test
+    void intervalUpdatePreservesPausedStatusAndCronSchedules() {
+        Monitor monitor = Monitor.builder().id(42L).app("ping").intervals(60)
+                .status(CommonConstants.MONITOR_PAUSED_CODE).build();
+        when(monitorDao.findForIntervalUpdate(42L)).thenReturn(Optional.of(monitor));
+        assertThrows(IllegalArgumentException.class, () -> monitorService.updateCollectionInterval(42L, 9));
+        assertEquals(true, monitorService.updateCollectionInterval(42L, 30));
+        assertEquals(30, monitor.getIntervals());
+        verify(monitorDao).save(monitor);
+        monitor.setScheduleType("cron");
+        monitor.setCronExpression("0 * * * * *");
+        assertEquals(false, monitorService.updateCollectionInterval(42L, 20));
+        assertEquals(30, monitor.getIntervals());
+        assertEquals("0 * * * * *", monitor.getCronExpression());
+        verify(collectJobScheduling, never()).updateAsyncCollectJob(any());
+    }
+
+    @Test
+    void activeIntervalUpdatePreservesCollectorAndAvoidsRedundantDispatch() {
+        Monitor monitor = Monitor.builder().id(42L).jobId(99L).app("ping").instance("localhost").name("test")
+                .intervals(60).status(CommonConstants.MONITOR_UP_CODE).build();
+        Job job = new Job();
+        when(monitorDao.findForIntervalUpdate(42L)).thenReturn(Optional.of(monitor));
+        when(collectorMonitorBindDao.findCollectorMonitorBindByMonitorId(42L))
+                .thenReturn(Optional.of(CollectorMonitorBind.builder().collector("chosen").build()));
+        when(appService.getAppDefine("ping")).thenReturn(job);
+        when(collectJobScheduling.updateAsyncCollectJob(job, "chosen")).thenReturn(100L);
+        monitorService.updateCollectionInterval(42L, 30);
+        monitorService.updateCollectionInterval(42L, 30);
+        assertEquals(30, job.getDefaultInterval());
+        assertEquals(100L, monitor.getJobId());
+        verify(collectJobScheduling).updateAsyncCollectJob(job, "chosen");
+        verify(monitorDao).save(monitor);
     }
 
     @Test

@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.hertzbeat.common.entity.dto.Message;
 import org.apache.hertzbeat.common.entity.dto.PageResponse;
 import org.apache.hertzbeat.common.entity.manager.Monitor;
@@ -53,6 +54,7 @@ import org.springframework.web.multipart.MultipartFile;
 /**
  * Monitor and manage batch API
  */
+@Slf4j
 @Tag(name = "Monitor Manage Batch API")
 @RestController
 @RequestMapping(path = "/api/monitors", produces = {APPLICATION_JSON_VALUE})
@@ -60,6 +62,37 @@ public class MonitorsController {
 
     @Autowired
     private MonitorService monitorService;
+
+    /** Selected monitors and their new interval, in seconds. */
+    public record IntervalUpdate(Set<Long> ids, Integer intervals) { }
+
+    /** Each requested monitor occurs in exactly one outcome. */
+    public record IntervalUpdateResult(List<Long> updated, List<Long> cron, List<Long> failed) { }
+
+    @PutMapping("/interval")
+    @Operation(summary = "Change the collection interval of selected interval-based monitors")
+    public ResponseEntity<Message<IntervalUpdateResult>> updateIntervals(@RequestBody IntervalUpdate update) {
+        if (update.ids() == null || update.ids().isEmpty() || update.intervals() == null
+                || update.ids().stream().anyMatch(id -> id == null || id <= 0)) {
+            throw new IllegalArgumentException("Monitor ids and an interval in seconds are required");
+        }
+        List<Long> updated = new ArrayList<>();
+        List<Long> cron = new ArrayList<>();
+        List<Long> failed = new ArrayList<>();
+        for (long id : update.ids()) {
+            try {
+                if (monitorService.updateCollectionInterval(id, update.intervals())) {
+                    updated.add(id);
+                } else {
+                    cron.add(id);
+                }
+            } catch (RuntimeException exception) {
+                log.warn("Could not update collection interval for monitor {}", id, exception);
+                failed.add(id);
+            }
+        }
+        return ResponseEntity.ok(Message.success(new IntervalUpdateResult(updated, cron, failed)));
+    }
 
     @GetMapping
     @Operation(summary = "Obtain a list of monitoring information based on query filter items",

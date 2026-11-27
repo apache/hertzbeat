@@ -95,6 +95,21 @@ class MonitorsControllerTest {
     }
 
     @Test
+    void updateIntervalsReportsEachDistinctMonitorOutcome() throws Exception {
+        when(monitorService.updateCollectionInterval(1L, 30)).thenReturn(true);
+        when(monitorService.updateCollectionInterval(2L, 30)).thenReturn(false);
+        when(monitorService.updateCollectionInterval(3L, 30)).thenThrow(new IllegalArgumentException("Missing monitor"));
+        mockMvc.perform(MockMvcRequestBuilders.put("/api/monitors/interval")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"ids\":[1,2,3,1],\"intervals\":30}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data.updated[0]").value(1))
+                .andExpect(jsonPath("$.data.cron[0]").value(2))
+                .andExpect(jsonPath("$.data.failed[0]").value(3));
+        verify(monitorService).updateCollectionInterval(1L, 30);
+    }
+
+    @Test
     void getMonitors() throws Exception {
         Monitor monitor = Monitor.builder().id(6565463543L).name("website-prod").app("website").build();
         when(monitorService.getMonitors(Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(), Mockito.any(),

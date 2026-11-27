@@ -1737,6 +1737,9 @@
     }
   },
   "monitorActions": {
+    "changeInterval": "修改採集週期",
+    "intervalHelp": "為選取的 {{count}} 個監控設定採集週期（{{min}}–{{max}} 秒）。略過使用 Cron 的監控。",
+    "intervalResult": "已更新 {{updated}} 個，已略過 Cron 監控 {{cron}} 個，失敗 {{failed}} 個。",
     "copy": "複製",
     "enable": "啟用",
     "rowEnableConfirm": "確認啟用 {{name}}？",
