@@ -82,3 +82,17 @@ Run the `docker compose version` command to check if you have a Docker Compose e
 ## FAQ
 
 **The most common problem is network problems, please check in advance**
+
+### The browser repeatedly asks for a username and password
+
+The original HertzBeat 1.9.0 Compose configuration enables HTTP Digest authentication. When a protected API responds with `401 Unauthorized` and a `WWW-Authenticate: Digest` header, the browser can open its own sign-in dialog.
+
+In your deployment directory, open `conf/application.yml` on the Docker host and remove only `- digest` under `sureness.auths`. Keep `basic` and `jwt` enabled. Run the following command from the same directory to apply the change.
+
+```shell
+docker compose restart hertzbeat
+```
+
+### The browser shows a certificate warning
+
+On the Docker host, open `http://localhost:1157/`. For remote access, use HTTPS through a reverse proxy with a certificate that the browser trusts and that matches the hostname in the URL.
