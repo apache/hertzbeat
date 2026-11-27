@@ -1737,6 +1737,9 @@
     }
   },
   "monitorActions": {
+    "changeInterval": "Change collection interval",
+    "intervalHelp": "Set the interval for {{count}} selected monitor(s), in seconds ({{min}}–{{max}}). Cron schedules are skipped.",
+    "intervalResult": "Updated: {{updated}}. Skipped (Cron): {{cron}}. Failed: {{failed}}.",
     "copy": "Copy",
     "enable": "Enable",
     "rowEnableConfirm": "Enable {{name}}?",

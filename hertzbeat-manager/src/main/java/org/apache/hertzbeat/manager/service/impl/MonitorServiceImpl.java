@@ -512,36 +512,8 @@ public class MonitorServiceImpl implements MonitorService {
                 Objects.isNull(portParam) ? null : portParam.getParamValue());
         monitor.setInstance(instance);
         if (preMonitor.getStatus() != CommonConstants.MONITOR_PAUSED_CODE) {
-            // Construct the collection task Job entity
-            String app = isStatic ? monitor.getApp() : monitor.getScrape();
-            Job appDefine = appService.getAppDefine(app);
-            if (!isStatic) {
-                appDefine.setSd(true);
-            }
-            if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
-                appDefine.setApp(CommonConstants.PROMETHEUS_APP_PREFIX + monitor.getName());
-            }
-            appDefine.setId(preMonitor.getJobId());
-            appDefine.setMonitorId(monitorId);
-            MonitorJobScheduleMapper.apply(monitor, appDefine);
-            appDefine.setCyclic(true);
-            appDefine.setTimestamp(System.currentTimeMillis());
-            Map<String, String> metadata = Map.of(CommonConstants.LABEL_INSTANCE_NAME, monitor.getName(),
-                    CommonConstants.LABEL_INSTANCE, monitor.getInstance());
-            appDefine.setMetadata(metadata);
-            appDefine.setLabels(monitor.getLabels());
-            appDefine.setAnnotations(monitor.getAnnotations());
-            List<Configmap> configmaps = params.stream()
-                    .map(param -> new Configmap(param.getField(), param.getParamValue(), param.getType()))
-                    .collect(Collectors.toList());
-            appDefine.setConfigmap(configmaps);
-            long newJobId;
-            if (collector == null) {
-                newJobId = collectJobScheduling.updateAsyncCollectJob(appDefine);
-            } else {
-                newJobId = collectJobScheduling.updateAsyncCollectJob(appDefine, collector);
-            }
-            monitor.setJobId(newJobId);
+            monitor.setJobId(preMonitor.getJobId());
+            rescheduleMonitor(monitor, params, collector, isStatic);
             // Keep save responsive; explicit detect owns synchronous probe feedback.
         }
 
@@ -570,6 +542,61 @@ public class MonitorServiceImpl implements MonitorService {
             collectJobScheduling.cancelAsyncCollectJob(monitor.getJobId());
             throw new MonitorDatabaseException(e.getMessage());
         }
+    }
+
+    @Override
+    public boolean updateCollectionInterval(long monitorId, int seconds) {
+        Monitor monitor = oldMonitorCatalogWriteModelService.findForIntervalUpdate(monitorId)
+                .orElseThrow(() -> new IllegalArgumentException("Monitor does not exist"));
+        if (SCHEDULE_CRON.equals(monitor.getScheduleType())) {
+            return false;
+        }
+        validateSchedule(monitor.getApp(), SCHEDULE_INTERVAL, null, seconds);
+        if (Objects.equals(monitor.getIntervals(), seconds)) {
+            return true;
+        }
+        monitor.setIntervals(seconds);
+        if (monitor.getStatus() != CommonConstants.MONITOR_PAUSED_CODE) {
+            boolean isStatic = CommonConstants.SCRAPE_STATIC.equals(monitor.getScrape())
+                    || !StringUtils.hasText(monitor.getScrape());
+            rescheduleMonitor(monitor, oldMonitorParamQueryService.findParamsByMonitorId(monitorId),
+                    oldMonitorCollectorBindQueryService.findCollectorByMonitorId(monitorId).orElse(null), isStatic);
+        }
+        oldMonitorCatalogWriteModelService.saveMonitor(monitor);
+        return true;
+    }
+
+    private void rescheduleMonitor(Monitor monitor, List<Param> params, String collector, boolean isStatic) {
+        // Construct the collection task Job entity
+        String app = isStatic ? monitor.getApp() : monitor.getScrape();
+        Job appDefine = appService.getAppDefine(app);
+        if (!isStatic) {
+            appDefine.setSd(true);
+        }
+        if (CommonConstants.PROMETHEUS.equals(monitor.getApp())) {
+            appDefine.setApp(CommonConstants.PROMETHEUS_APP_PREFIX + monitor.getName());
+        }
+        appDefine.setId(monitor.getJobId());
+        appDefine.setMonitorId(monitor.getId());
+        MonitorJobScheduleMapper.apply(monitor, appDefine);
+        appDefine.setCyclic(true);
+        appDefine.setTimestamp(System.currentTimeMillis());
+        Map<String, String> metadata = Map.of(CommonConstants.LABEL_INSTANCE_NAME, monitor.getName(),
+                CommonConstants.LABEL_INSTANCE, monitor.getInstance());
+        appDefine.setMetadata(metadata);
+        appDefine.setLabels(monitor.getLabels());
+        appDefine.setAnnotations(monitor.getAnnotations());
+        List<Configmap> configmaps = params.stream()
+                .map(param -> new Configmap(param.getField(), param.getParamValue(), param.getType()))
+                .collect(Collectors.toList());
+        appDefine.setConfigmap(configmaps);
+        long newJobId;
+        if (collector == null) {
+            newJobId = collectJobScheduling.updateAsyncCollectJob(appDefine);
+        } else {
+            newJobId = collectJobScheduling.updateAsyncCollectJob(appDefine, collector);
+        }
+        monitor.setJobId(newJobId);
     }
 
     @Override

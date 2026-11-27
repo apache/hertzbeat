@@ -18,9 +18,15 @@
 import { Button, Popconfirm, Space, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
 
-import { monitorStatusCodes, type Monitor, type MonitorAction } from '../model/monitor-contract';
+import {
+  monitorStatusCodes,
+  type Monitor,
+  type MonitorAction,
+  type MonitorBulkAction
+} from '../model/monitor-contract';
 import type { MonitorExportFormat } from '../model/monitor-export-model';
 
+import { MonitorIntervalButton } from './monitor-interval-button';
 import { MonitorExportButton } from './monitor-export-button';
 import styles from './monitor-list.module.css';
 
@@ -78,8 +84,21 @@ export function MonitorRowActions({
   );
 }
 
+type BulkActionProps = {
+  selectedIds: number[];
+  pushOnly?: boolean;
+  run: (action: MonitorBulkAction) => void | Promise<void>;
+  exportSelected: (format: MonitorExportFormat) => Promise<boolean>;
+  canWrite: boolean;
+  canDelete: boolean;
+  canExport: boolean;
+  clearSelection: () => void;
+  disabled: boolean;
+};
+
 export function MonitorBulkActions({
   selectedIds,
+  pushOnly = false,
   run,
   exportSelected,
   canWrite,
@@ -87,16 +106,7 @@ export function MonitorBulkActions({
   canExport,
   clearSelection,
   disabled
-}: {
-  selectedIds: number[];
-  run: (action: MonitorAction) => void | Promise<void>;
-  exportSelected: (format: MonitorExportFormat) => Promise<boolean>;
-  canWrite: boolean;
-  canDelete: boolean;
-  canExport: boolean;
-  clearSelection: () => void;
-  disabled: boolean;
-}) {
+}: BulkActionProps) {
   const { t } = useTranslation();
   if (selectedIds.length === 0 || (!canWrite && !canDelete && !canExport)) return null;
   return (
@@ -105,6 +115,13 @@ export function MonitorBulkActions({
       <Space>
         {canWrite ? (
           <>
+            <MonitorIntervalButton
+              key={selectedIds.join(',')}
+              pushOnly={pushOnly}
+              count={selectedIds.length}
+              disabled={disabled}
+              apply={intervals => run({ intervals })}
+            />
             <Popconfirm
               title={t('monitorActions.selectedEnableConfirm', { count: selectedIds.length })}
               onConfirm={() => void run('enable')}

@@ -15,7 +15,7 @@
  * limitations under the License.
  */
 
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { I18nextProvider } from 'react-i18next';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 
@@ -29,6 +29,29 @@ describe('monitor list action permissions', () => {
     await loadLocale('en-US');
   });
   afterEach(cleanup);
+
+  it('submits one interval change for the selection after explicit confirmation', () => {
+    const run = vi.fn();
+    render(
+      <I18nextProvider i18n={i18n}>
+        <MonitorBulkActions
+          selectedIds={[7, 8]}
+          run={run}
+          exportSelected={vi.fn()}
+          canWrite
+          canDelete={false}
+          canExport={false}
+          clearSelection={vi.fn()}
+          disabled={false}
+        />
+      </I18nextProvider>
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Change collection interval' }));
+    fireEvent.change(screen.getByRole('spinbutton'), { target: { value: '30' } });
+    expect(run).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByRole('button', { name: i18n.t('common.confirm') }));
+    expect(run).toHaveBeenCalledWith({ intervals: 30 });
+  });
 
   it('keeps guest rows read-only', () => {
     render(

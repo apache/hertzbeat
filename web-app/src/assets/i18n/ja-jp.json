@@ -1737,6 +1737,9 @@
     }
   },
   "monitorActions": {
+    "changeInterval": "収集間隔を変更",
+    "intervalHelp": "選択した {{count}} 件の監視の収集間隔を秒単位（{{min}}～{{max}}）で設定します。Cron スケジュールはスキップします。",
+    "intervalResult": "更新 {{updated}} 件、Cron によりスキップ {{cron}} 件、失敗 {{failed}} 件。",
     "copy": "コピー",
     "enable": "有効化",
     "rowEnableConfirm": "{{name}} を有効にしますか？",

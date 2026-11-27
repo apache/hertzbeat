@@ -17,7 +17,7 @@
 
 import type { RemotePageState, RemotePayloadState } from '@/shared/remote-state';
 
-import type { MonitorAction, MonitorQuery } from './monitor-contract';
+import type { MonitorAction, MonitorBulkAction, MonitorQuery } from './monitor-contract';
 import type { MonitorCapabilities } from './monitor-capability-model';
 import type { MonitorExportFormat } from './monitor-export-model';
 import type { MonitorImportState } from './monitor-import-model';
@@ -61,7 +61,7 @@ export type MonitorListViewActions = {
   create: (app: string) => void;
   open: (id: number, mode: 'view' | 'edit') => void;
   run: (action: MonitorAction, ids: number[]) => void | Promise<void>;
-  runBulk: (action: MonitorAction) => void | Promise<void>;
+  runBulk: (action: MonitorBulkAction) => void | Promise<void>;
   exportSelected: (format: MonitorExportFormat) => Promise<boolean>;
   exportAll: (format: MonitorExportFormat) => Promise<boolean>;
   openImport: () => void;

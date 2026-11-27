@@ -19,15 +19,16 @@ import type { QueryClient } from '@tanstack/react-query';
 import type { MessageInstance } from 'antd/es/message/interface';
 import type { TFunction } from 'i18next';
 
+import { updateMonitorIntervals } from '../api/monitor-interval-api';
 import { deleteMonitorGrafanaDashboards, mutateMonitors } from '../api/monitor-api';
-import type { MonitorAction, MonitorPage } from '../model/monitor-contract';
+import type { MonitorBulkAction, MonitorPage } from '../model/monitor-contract';
 import type { MonitorWriteVerification } from '../model/monitor-write-verification';
 import { verifyMonitorMutation, type MonitorDetailCacheEvidence } from './monitor-command-verification';
 import { reconcileFailedMonitorCopy } from './monitor-copy-failure-reconciliation';
 import { monitorQueryKeys } from './monitor-query-keys';
 
 export type ActiveListOperation = {
-  action: MonitorAction;
+  action: MonitorBulkAction;
   source: string;
   token: number;
   controller: AbortController;
@@ -49,6 +50,10 @@ export async function executeMonitorListOperation(
 ) {
   const { queryClient, removeSelection, reread, message, t } = publications;
   try {
+    if (typeof operation.action === 'object') {
+      await executeIntervalUpdate(operation, operation.action.intervals, ids, owns, publications);
+      return;
+    }
     await mutateMonitors(operation.action, ids, operation.controller.signal);
     if (!owns()) return;
     const verification = await verifyMonitorMutation(operation.action, ids, operation.controller.signal);
@@ -65,8 +70,36 @@ export async function executeMonitorListOperation(
   } catch (error) {
     if (!owns()) return;
     void message.error(t('monitorActions.failed'));
+    if (typeof operation.action === 'object') {
+      await refreshMonitorList(reread);
+      return;
+    }
     await reconcileFailedMonitorCopy(operation.action, error, reread);
   }
+}
+
+async function executeIntervalUpdate(
+  operation: ActiveListOperation,
+  seconds: number,
+  ids: number[],
+  owns: () => boolean,
+  publications: ListOperationPublications
+) {
+  const { queryClient, removeSelection, reread, message, t } = publications;
+  const result = await updateMonitorIntervals(ids, seconds, operation.controller.signal);
+  if (!owns()) return;
+  removeSelection(result.updated);
+  for (const id of result.updated) {
+    void queryClient.invalidateQueries({ queryKey: monitorQueryKeys.detail(id), exact: true });
+  }
+  const notice = t('monitorActions.intervalResult', {
+    updated: result.updated.length,
+    cron: result.cron.length,
+    failed: result.failed.length
+  });
+  if (result.cron.length || result.failed.length) void message.warning(notice);
+  else void message.success(notice);
+  await refreshMonitorList(reread);
 }
 
 export async function refreshMonitorList(reread: () => Promise<MonitorPage>) {
