@@ -47,6 +47,7 @@ import org.apache.hertzbeat.common.util.CommonUtil;
 import org.apache.sshd.client.channel.ClientChannel;
 import org.apache.sshd.client.channel.ClientChannelEvent;
 import org.apache.sshd.client.session.ClientSession;
+import org.apache.sshd.common.RuntimeSshException;
 import org.apache.sshd.common.SshException;
 import org.apache.sshd.common.channel.exception.SshChannelOpenException;
 import org.apache.sshd.common.future.CloseFuture;
@@ -82,6 +83,7 @@ public class SshCollectImpl extends AbstractCollect {
         int timeout = CollectUtil.getTimeout(sshProtocol.getTimeout(), DEFAULT_TIMEOUT);
         ClientChannel channel = null;
         ClientSession clientSession = null;
+        boolean invalidateCachedSession = false;
         try {
             clientSession = getConnectSession(sshProtocol, timeout, reuseConnection, useProxy);
             if (CommonSshBlacklist.isCommandBlacklisted(sshProtocol.getScript())) {
@@ -136,6 +138,7 @@ public class SshCollectImpl extends AbstractCollect {
                 }
             }
         } catch (ConnectException connectException) {
+            invalidateCachedSession = true;
             String errorMsg = CommonUtil.getMessageFromThrowable(connectException);
             log.info(errorMsg);
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
@@ -144,16 +147,22 @@ public class SshCollectImpl extends AbstractCollect {
             Throwable throwable = sshException.getCause();
             if (throwable instanceof SshChannelOpenException) {
                 log.warn("Remote ssh server no more session channel, please increase sshd_config MaxSessions.");
+            } else {
+                invalidateCachedSession = true;
             }
             String errorMsg = CommonUtil.getMessageFromThrowable(sshException);
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
             builder.setMsg("Peer ssh connection failed: " + errorMsg);
         } catch (IOException ioException) {
+            invalidateCachedSession = true;
             String errorMsg = CommonUtil.getMessageFromThrowable(ioException);
             log.info(errorMsg);
             builder.setCode(CollectRep.Code.UN_CONNECTABLE);
             builder.setMsg("Peer io connection failed: " + errorMsg);
         } catch (Exception exception) {
+            if (exception instanceof RuntimeSshException) {
+                invalidateCachedSession = true;
+            }
             String errorMsg = CommonUtil.getMessageFromThrowable(exception);
             log.warn(errorMsg, exception);
             builder.setCode(CollectRep.Code.FAIL);
@@ -166,7 +175,13 @@ public class SshCollectImpl extends AbstractCollect {
                 channelClosed = false;
                 log.error("Failed to close SSH channel", e);
             }
-            if (clientSession != null && (!channelClosed || (!reuseConnection && !useProxy))) {
+            boolean sessionInvalidated = false;
+            if (clientSession != null && (reuseConnection || useProxy)
+                    && (invalidateCachedSession || !channelClosed
+                            || clientSession.isClosed() || clientSession.isClosing())) {
+                sessionInvalidated = SshHelper.invalidateConnectSession(sshProtocol, useProxy, clientSession);
+            }
+            if (clientSession != null && !sessionInvalidated && (!channelClosed || (!reuseConnection && !useProxy))) {
                 try {
                     clientSession.close();
                 } catch (Exception e) {

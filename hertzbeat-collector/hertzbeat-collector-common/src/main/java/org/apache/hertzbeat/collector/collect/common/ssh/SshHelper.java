@@ -47,6 +47,7 @@ import org.apache.sshd.common.RuntimeSshException;
 import org.apache.sshd.common.SshConstants;
 import org.apache.sshd.common.SshException;
 import org.apache.sshd.common.config.keys.FilePasswordProvider;
+import org.apache.sshd.common.io.IoSession;
 import org.apache.sshd.common.util.security.SecurityUtils;
 import org.springframework.util.StringUtils;
 
@@ -63,20 +64,59 @@ public class SshHelper {
     public static ClientSession getConnectSession(String host, String port, String username, String password, String privateKey,
                                                   String privateKeyPassphrase, int timeout, boolean reuseConnection)
             throws IOException, GeneralSecurityException {
-        SshProtocol sshProtocol = SshProtocol.builder()
-                .host(host)
-                .port(port)
-                .username(username)
-                .password(password)
-                .privateKey(privateKey)
-                .privateKeyPassphrase(privateKeyPassphrase)
-                .build();
-        return getConnectSession(sshProtocol, timeout, reuseConnection, false);
+        return getConnectSession(
+                buildProtocol(host, port, username, password, privateKey, privateKeyPassphrase),
+                timeout, reuseConnection, false);
+    }
+
+    /**
+     * Evict and close a cached SSH session if it matches the supplied session instance.
+     *
+     * @param host                 target host
+     * @param port                 target port
+     * @param username             SSH username
+     * @param password             SSH password
+     * @param privateKey           SSH private key
+     * @param privateKeyPassphrase SSH private key passphrase
+     * @param clientSession        session instance observed to have failed
+     * @return true if a matching cached connection was removed and closed
+     */
+    public static boolean invalidateConnectSession(String host, String port, String username, String password,
+                                                   String privateKey, String privateKeyPassphrase,
+                                                   ClientSession clientSession) {
+        return invalidateConnectSession(
+                buildProtocol(host, port, username, password, privateKey, privateKeyPassphrase),
+                false, clientSession);
+    }
+
+    /**
+     * Evict and close a cached SSH session if it matches the supplied session instance.
+     *
+     * @param sshProtocol   SSH connection parameters
+     * @param useProxy      whether proxy jump was enabled for the session
+     * @param clientSession session instance observed to have failed
+     * @return true if a matching cached connection was removed and closed
+     */
+    public static boolean invalidateConnectSession(SshProtocol sshProtocol, boolean useProxy,
+                                                   ClientSession clientSession) {
+        if (sshProtocol == null || clientSession == null) {
+            return false;
+        }
+        CacheIdentifier identifier = buildCacheIdentifier(sshProtocol, useProxy);
+        Optional<AbstractConnection<?>> cacheOption = CONNECTION_COMMON_CACHE.getCache(identifier, false);
+        if (cacheOption.isEmpty()) {
+            return false;
+        }
+        AbstractConnection<?> cached = cacheOption.get();
+        if (!(cached instanceof SshConnect sshConnect) || sshConnect.getConnection() != clientSession) {
+            return false;
+        }
+        return CONNECTION_COMMON_CACHE.removeCache(identifier, cached);
     }
 
     public static ClientSession getConnectSession(SshProtocol sshProtocol, int timeout, boolean reuseConnection, boolean useProxy)
             throws IOException, GeneralSecurityException {
-        boolean proxyEnabled = useProxy && StringUtils.hasText(sshProtocol.getProxyHost());
+        boolean proxyEnabled = isProxyEnabled(sshProtocol, useProxy);
         boolean cacheConnection = reuseConnection || proxyEnabled;
         List<String> targetIdentity = connectionIdentity(
                 sshProtocol.getPassword(), sshProtocol.getPrivateKey(), sshProtocol.getPrivateKeyPassphrase());
@@ -274,19 +314,52 @@ public class SshHelper {
         if (cacheOption.isEmpty()) {
             return null;
         }
-        ClientSession clientSession;
+        AbstractConnection<?> cached = cacheOption.get();
         try {
-            clientSession = ((SshConnect) cacheOption.get()).getConnection();
-            if (clientSession == null || clientSession.isClosed() || clientSession.isClosing()) {
-                CONNECTION_COMMON_CACHE.removeCache(identifier);
+            ClientSession clientSession = ((SshConnect) cached).getConnection();
+            if (isSessionClosed(clientSession)) {
+                CONNECTION_COMMON_CACHE.removeCache(identifier, cached);
                 return null;
             }
             return clientSession;
         } catch (Exception e) {
             log.warn("Failed to validate cached SSH session for {}", identifier, e);
-            CONNECTION_COMMON_CACHE.removeCache(identifier);
+            CONNECTION_COMMON_CACHE.removeCache(identifier, cached);
             return null;
         }
+    }
+
+    private static boolean isSessionClosed(ClientSession clientSession) {
+        if (clientSession == null || clientSession.isClosed() || clientSession.isClosing()) {
+            return true;
+        }
+        IoSession ioSession = clientSession.getIoSession();
+        return ioSession != null && (ioSession.isClosed() || ioSession.isClosing());
+    }
+
+    private static SshProtocol buildProtocol(String host, String port, String username, String password,
+                                             String privateKey, String privateKeyPassphrase) {
+        return SshProtocol.builder()
+                .host(host)
+                .port(port)
+                .username(username)
+                .password(password)
+                .privateKey(privateKey)
+                .privateKeyPassphrase(privateKeyPassphrase)
+                .build();
+    }
+
+    private static boolean isProxyEnabled(SshProtocol sshProtocol, boolean useProxy) {
+        return useProxy && StringUtils.hasText(sshProtocol.getProxyHost());
+    }
+
+    private static CacheIdentifier buildCacheIdentifier(SshProtocol sshProtocol, boolean useProxy) {
+        boolean proxyEnabled = isProxyEnabled(sshProtocol, useProxy);
+        List<String> targetIdentity = connectionIdentity(
+                sshProtocol.getPassword(), sshProtocol.getPrivateKey(), sshProtocol.getPrivateKeyPassphrase());
+        List<String> connectionIdentity = connectionIdentity(targetIdentity, sshProtocol, proxyEnabled);
+        return buildCacheIdentifier(
+                sshProtocol.getHost(), sshProtocol.getPort(), sshProtocol.getUsername(), connectionIdentity);
     }
 
     private static CacheIdentifier buildCacheIdentifier(

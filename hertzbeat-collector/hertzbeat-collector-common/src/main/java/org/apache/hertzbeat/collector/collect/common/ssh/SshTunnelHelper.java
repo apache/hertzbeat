@@ -92,18 +92,33 @@ public class SshTunnelHelper {
         LocalPortForwardingWrapper forwardingWrapper = selectWrapper(
                 TRACKER_CACHE.get(sessionWrapper), sessionWrapper, remoteHost, remotePort);
         int localPort;
-        if (forwardingWrapper == null) {
-            localPort = getRandomPort();
-            LocalPortForwardingWrapper newForwardingWrapper = sessionWrapper
-                    .createLocalPortForwardingTracker(localPort, remoteHost, Integer.parseInt(remotePort));
-            TRACKER_CACHE.putIfAbsent(sessionWrapper, newForwardingWrapper);
-            log.info("[SSH Tunnel] created ssh forwarding tracker ssh:{}, remote:{}, localPort:{}",
-                    sshTunnel.getHost() + ":" + sshTunnel.getPort(), remoteHost + ":" + remotePort, localPort);
-        } else {
-            localPort = forwardingWrapper.getTracker().getLocalAddress().getPort();
+        try {
+            if (forwardingWrapper == null) {
+                localPort = getRandomPort();
+                LocalPortForwardingWrapper newForwardingWrapper = sessionWrapper
+                        .createLocalPortForwardingTracker(localPort, remoteHost, Integer.parseInt(remotePort));
+                TRACKER_CACHE.putIfAbsent(sessionWrapper, newForwardingWrapper);
+                log.info("[SSH Tunnel] created ssh forwarding tracker ssh:{}, remote:{}, localPort:{}",
+                        sshTunnel.getHost() + ":" + sshTunnel.getPort(), remoteHost + ":" + remotePort, localPort);
+            } else {
+                localPort = forwardingWrapper.getTracker().getLocalAddress().getPort();
+            }
+            return localPort;
+        } catch (IOException | RuntimeException e) {
+            TRACKER_CACHE.remove(sessionWrapper);
+            if (shareConnection) {
+                SshHelper.invalidateConnectSession(sshTunnel.getHost(), sshTunnel.getPort(),
+                        sshTunnel.getUsername(), sshTunnel.getPassword(), sshTunnel.getPrivateKey(),
+                        sshTunnel.getPrivateKeyPassphrase(), session);
+            } else {
+                try {
+                    session.close();
+                } catch (IOException closeException) {
+                    e.addSuppressed(closeException);
+                }
+            }
+            throw e;
         }
-
-        return localPort;
     }
 
     /**
@@ -118,6 +133,11 @@ public class SshTunnelHelper {
     private static LocalPortForwardingWrapper selectWrapper(LocalPortForwardingWrapper wrapper, SshClientSessionWrapper sessionWrapper,
                                                             String remoteHost, String remotePort) {
         if (wrapper == null) {
+            return null;
+        }
+        ClientSession session = sessionWrapper.getClientSession();
+        if (session.isClosed() || session.isClosing()) {
+            wrapper.remove(session);
             return null;
         }
         List<LocalPortForwardingWrapper> selectList = wrapper.select(sessionWrapper.getClientSession(), localPortForwardWrapper -> {

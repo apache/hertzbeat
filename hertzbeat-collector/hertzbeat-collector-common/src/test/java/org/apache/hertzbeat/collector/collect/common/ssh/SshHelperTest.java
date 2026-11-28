@@ -18,6 +18,7 @@
 package org.apache.hertzbeat.collector.collect.common.ssh;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -53,6 +54,7 @@ import org.apache.sshd.client.session.ClientSession;
 import org.apache.sshd.common.SshConstants;
 import org.apache.sshd.common.SshException;
 import org.apache.sshd.common.config.keys.FilePasswordProvider;
+import org.apache.sshd.common.io.IoSession;
 import org.apache.sshd.common.util.security.SecurityUtils;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -504,6 +506,51 @@ class SshHelperTest {
                 Thread.interrupted();
             }
         }
+    }
+
+    @Test
+    void invalidateConnectSessionEvictsMatchingSessionAndSkipsReplacement() throws Exception {
+        ConnectAttempt first = successfulAttempt();
+        ConnectAttempt second = successfulAttempt();
+        when(sshClient.connect("root", host, 22)).thenReturn(first.connectFuture(), second.connectFuture());
+        SshProtocol protocol = protocol("password", null);
+
+        try (MockedStatic<CommonSshClient> commonSshClient = mockStatic(CommonSshClient.class)) {
+            commonSshClient.when(CommonSshClient::getSshClient).thenReturn(sshClient);
+
+            assertSame(first.clientSession(), SshHelper.getConnectSession(protocol, TIMEOUT, true, false));
+            assertTrue(SshHelper.invalidateConnectSession(protocol, false, first.clientSession()));
+            assertFalse(SshHelper.invalidateConnectSession(protocol, false, first.clientSession()));
+            assertSame(second.clientSession(), SshHelper.getConnectSession(protocol, TIMEOUT, true, false));
+            assertFalse(SshHelper.invalidateConnectSession(protocol, false, first.clientSession()));
+        }
+
+        verify(sshClient, times(2)).connect("root", host, 22);
+        verify(first.clientSession()).close();
+        verify(second.clientSession(), never()).close();
+    }
+
+    @Test
+    void reconnectsWhenCachedIoSessionIsClosed() throws Exception {
+        ConnectAttempt first = successfulAttempt();
+        ConnectAttempt second = successfulAttempt();
+        IoSession closedIoSession = mock(IoSession.class);
+        when(closedIoSession.isClosed()).thenReturn(true);
+        when(first.clientSession().getIoSession()).thenReturn(closedIoSession);
+        when(sshClient.connect("root", host, 22)).thenReturn(first.connectFuture(), second.connectFuture());
+
+        try (MockedStatic<CommonSshClient> commonSshClient = mockStatic(CommonSshClient.class)) {
+            commonSshClient.when(CommonSshClient::getSshClient).thenReturn(sshClient);
+
+            assertSame(first.clientSession(), SshHelper.getConnectSession(
+                    host, "22", "root", "password", null, null, TIMEOUT, true));
+            assertSame(second.clientSession(), SshHelper.getConnectSession(
+                    host, "22", "root", "password", null, null, TIMEOUT, true));
+        }
+
+        verify(sshClient, times(2)).connect("root", host, 22);
+        verify(first.clientSession()).close();
+        verify(second.clientSession(), never()).close();
     }
 
     private ClientSession connectWithThreadLocalClient(String password) throws Exception {

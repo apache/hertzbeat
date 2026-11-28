@@ -30,6 +30,7 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -40,19 +41,26 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import org.apache.hertzbeat.collector.collect.common.ssh.CommonSshClient;
 import org.apache.hertzbeat.collector.collect.common.ssh.SshHelper;
 import org.apache.hertzbeat.collector.dispatch.DispatchConstants;
 import org.apache.hertzbeat.common.constants.CommonConstants;
 import org.apache.hertzbeat.common.entity.job.Metrics;
 import org.apache.hertzbeat.common.entity.job.protocol.SshProtocol;
 import org.apache.hertzbeat.common.entity.message.CollectRep;
+import org.apache.sshd.client.SshClient;
 import org.apache.sshd.client.channel.ChannelExec;
 import org.apache.sshd.client.channel.ClientChannel;
 import org.apache.sshd.client.channel.ClientChannelEvent;
+import org.apache.sshd.client.future.AuthFuture;
+import org.apache.sshd.client.future.ConnectFuture;
 import org.apache.sshd.client.future.OpenFuture;
 import org.apache.sshd.client.session.ClientSession;
 import org.apache.sshd.common.SshException;
+import org.apache.sshd.common.channel.exception.SshChannelOpenException;
 import org.apache.sshd.common.future.CloseFuture;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -406,6 +414,184 @@ class SshCollectImplTest {
         assertEquals("40G", builder.getValues(0).getColumns(1));
         assertEquals(CommonConstants.NULL_VALUE, builder.getValues(0).getColumns(2));
         assertEquals(CommonConstants.NULL_VALUE, builder.getValues(0).getColumns(3));
+    }
+
+    @Test
+    void collectRecoversWithReuseConnectionAfterChannelOpenTimeout() throws Exception {
+        String host = UUID.randomUUID() + ".example.com";
+        SshProtocol protocol = reuseProtocol(host);
+        Metrics metrics = reuseMetrics(protocol);
+
+        ChannelExec initialChannel = oneRowChannel("ok", "", 0);
+        ChannelExec timedOutChannel = mock(ChannelExec.class);
+        OpenFuture failedOpen = mock(OpenFuture.class);
+        CloseFuture timedOutGracefulClose = mock(CloseFuture.class);
+        CloseFuture immediateLocalClose = mock(CloseFuture.class);
+        when(timedOutChannel.open()).thenReturn(failedOpen);
+        when(failedOpen.verify(1_000L)).thenThrow(new SshException("Channel opening failed while waiting 1000 msec."));
+        when(timedOutChannel.close(false)).thenReturn(timedOutGracefulClose);
+        when(timedOutGracefulClose.await(1_000L)).thenReturn(false);
+        when(timedOutChannel.close(true)).thenReturn(immediateLocalClose);
+        when(immediateLocalClose.await(1_000L)).thenReturn(true);
+
+        SshClient sshClient = mock(SshClient.class);
+        ClientSession firstSession = mockAuthenticatedSession();
+        when(firstSession.createExecChannel("echo ok")).thenReturn(initialChannel, timedOutChannel);
+        ChannelExec recoveredChannel = oneRowChannel("recovered", "", 0);
+        ClientSession recoveredSession = mockAuthenticatedSession();
+        when(recoveredSession.createExecChannel("echo ok")).thenReturn(recoveredChannel);
+
+        ConnectFuture firstConnect = mockConnectFuture(firstSession);
+        ConnectFuture secondConnect = mockConnectFuture(recoveredSession);
+        when(sshClient.connect("root", host, 22)).thenReturn(firstConnect, secondConnect);
+
+        try (MockedStatic<CommonSshClient> commonSshClient = mockStatic(CommonSshClient.class)) {
+            commonSshClient.when(CommonSshClient::getSshClient).thenReturn(sshClient);
+
+            CollectRep.MetricsData.Builder firstBuilder = CollectRep.MetricsData.newBuilder();
+            sshCollect.collect(firstBuilder, metrics);
+            assertEquals(CollectRep.Code.SUCCESS, firstBuilder.getCode());
+            assertEquals("ok", firstBuilder.getValues(0).getColumns(0));
+
+            CollectRep.MetricsData.Builder failedBuilder = CollectRep.MetricsData.newBuilder();
+            sshCollect.collect(failedBuilder, metrics);
+            assertEquals(CollectRep.Code.UN_CONNECTABLE, failedBuilder.getCode());
+
+            CollectRep.MetricsData.Builder recoveredBuilder = CollectRep.MetricsData.newBuilder();
+            sshCollect.collect(recoveredBuilder, metrics);
+            assertEquals(CollectRep.Code.SUCCESS, recoveredBuilder.getCode());
+            assertEquals("recovered", recoveredBuilder.getValues(0).getColumns(0));
+        }
+
+        verify(sshClient, times(2)).connect("root", host, 22);
+        verify(firstSession).close();
+    }
+
+    @Test
+    void collectRecoversWithReuseConnectionAfterCommandTimeout() throws Exception {
+        String host = UUID.randomUUID() + ".example.com";
+        SshProtocol protocol = reuseProtocol(host);
+        Metrics metrics = reuseMetrics(protocol);
+
+        ChannelExec initialChannel = oneRowChannel("ok", "", 0);
+        ChannelExec hungChannel = mock(ChannelExec.class);
+        OpenFuture openFuture = mock(OpenFuture.class);
+        CloseFuture closeFuture = mock(CloseFuture.class);
+        when(hungChannel.open()).thenReturn(openFuture);
+        when(hungChannel.waitFor(any(), anyLong())).thenReturn(Set.of(ClientChannelEvent.TIMEOUT));
+        when(hungChannel.getInvertedIn()).thenReturn(OutputStream.nullOutputStream());
+        when(hungChannel.close(false)).thenReturn(closeFuture);
+        when(closeFuture.await(1_000L)).thenReturn(true);
+
+        SshClient sshClient = mock(SshClient.class);
+        ClientSession firstSession = mockAuthenticatedSession();
+        when(firstSession.createExecChannel("echo ok")).thenReturn(initialChannel, hungChannel);
+        ChannelExec recoveredChannel = oneRowChannel("recovered", "", 0);
+        ClientSession recoveredSession = mockAuthenticatedSession();
+        when(recoveredSession.createExecChannel("echo ok")).thenReturn(recoveredChannel);
+
+        ConnectFuture firstConnect = mockConnectFuture(firstSession);
+        ConnectFuture secondConnect = mockConnectFuture(recoveredSession);
+        when(sshClient.connect("root", host, 22)).thenReturn(firstConnect, secondConnect);
+
+        try (MockedStatic<CommonSshClient> commonSshClient = mockStatic(CommonSshClient.class)) {
+            commonSshClient.when(CommonSshClient::getSshClient).thenReturn(sshClient);
+
+            CollectRep.MetricsData.Builder firstBuilder = CollectRep.MetricsData.newBuilder();
+            sshCollect.collect(firstBuilder, metrics);
+            assertEquals(CollectRep.Code.SUCCESS, firstBuilder.getCode());
+
+            CollectRep.MetricsData.Builder timedOutBuilder = CollectRep.MetricsData.newBuilder();
+            sshCollect.collect(timedOutBuilder, metrics);
+            assertEquals(CollectRep.Code.UN_CONNECTABLE, timedOutBuilder.getCode());
+
+            CollectRep.MetricsData.Builder recoveredBuilder = CollectRep.MetricsData.newBuilder();
+            sshCollect.collect(recoveredBuilder, metrics);
+            assertEquals(CollectRep.Code.SUCCESS, recoveredBuilder.getCode());
+            assertEquals("recovered", recoveredBuilder.getValues(0).getColumns(0));
+        }
+
+        verify(sshClient, times(2)).connect("root", host, 22);
+        verify(firstSession).close();
+    }
+
+    @Test
+    void collectKeepsCachedSessionOnChannelOpenLimit() throws Exception {
+        String host = UUID.randomUUID() + ".example.com";
+        SshProtocol protocol = reuseProtocol(host);
+        Metrics metrics = reuseMetrics(protocol);
+
+        ChannelExec initialChannel = oneRowChannel("ok", "", 0);
+        ChannelExec rejectedChannel = mock(ChannelExec.class);
+        OpenFuture rejectedOpen = mock(OpenFuture.class);
+        CloseFuture closeFuture = mock(CloseFuture.class);
+        when(rejectedChannel.open()).thenReturn(rejectedOpen);
+        when(rejectedOpen.verify(1_000L))
+                .thenThrow(new SshException("channel limit", new SshChannelOpenException(0L, 1, "MaxSessions")));
+        when(rejectedChannel.close(false)).thenReturn(closeFuture);
+        when(closeFuture.await(1_000L)).thenReturn(true);
+        ChannelExec thirdChannel = oneRowChannel("reused", "", 0);
+
+        SshClient sshClient = mock(SshClient.class);
+        ClientSession session = mockAuthenticatedSession();
+        when(session.createExecChannel("echo ok")).thenReturn(initialChannel, rejectedChannel, thirdChannel);
+        ConnectFuture connectFuture = mockConnectFuture(session);
+        when(sshClient.connect("root", host, 22)).thenReturn(connectFuture);
+
+        try (MockedStatic<CommonSshClient> commonSshClient = mockStatic(CommonSshClient.class)) {
+            commonSshClient.when(CommonSshClient::getSshClient).thenReturn(sshClient);
+
+            CollectRep.MetricsData.Builder firstBuilder = CollectRep.MetricsData.newBuilder();
+            sshCollect.collect(firstBuilder, metrics);
+            assertEquals(CollectRep.Code.SUCCESS, firstBuilder.getCode());
+
+            CollectRep.MetricsData.Builder limitedBuilder = CollectRep.MetricsData.newBuilder();
+            sshCollect.collect(limitedBuilder, metrics);
+            assertEquals(CollectRep.Code.UN_CONNECTABLE, limitedBuilder.getCode());
+
+            CollectRep.MetricsData.Builder reusedBuilder = CollectRep.MetricsData.newBuilder();
+            sshCollect.collect(reusedBuilder, metrics);
+            assertEquals(CollectRep.Code.SUCCESS, reusedBuilder.getCode());
+            assertEquals("reused", reusedBuilder.getValues(0).getColumns(0));
+        }
+
+        verify(sshClient, times(1)).connect("root", host, 22);
+        verify(session, never()).close();
+    }
+
+    private SshProtocol reuseProtocol(String host) {
+        return SshProtocol.builder()
+                .host(host)
+                .port("22")
+                .username("root")
+                .password("password")
+                .timeout("1000")
+                .reuseConnection("true")
+                .useProxy("false")
+                .script("echo ok")
+                .parseType("oneRow")
+                .build();
+    }
+
+    private Metrics reuseMetrics(SshProtocol protocol) {
+        Metrics metrics = Metrics.builder().ssh(protocol).build();
+        metrics.setAliasFields(List.of("status"));
+        return metrics;
+    }
+
+    private ClientSession mockAuthenticatedSession() throws IOException {
+        ClientSession session = mock(ClientSession.class);
+        AuthFuture authFuture = mock(AuthFuture.class);
+        when(session.auth()).thenReturn(authFuture);
+        when(authFuture.verify(1_000, TimeUnit.MILLISECONDS)).thenReturn(authFuture);
+        return session;
+    }
+
+    private ConnectFuture mockConnectFuture(ClientSession session) throws IOException {
+        ConnectFuture connectFuture = mock(ConnectFuture.class);
+        when(connectFuture.verify(1_000, TimeUnit.MILLISECONDS)).thenReturn(connectFuture);
+        when(connectFuture.getSession()).thenReturn(session);
+        return connectFuture;
     }
 
     private SshProtocol multiRowProtocol() {
